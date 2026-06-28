@@ -1,6 +1,5 @@
 package com.nikhil.common_lib.payload.request;
 
-import com.nikhil.common_lib.enums.CabinClassType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

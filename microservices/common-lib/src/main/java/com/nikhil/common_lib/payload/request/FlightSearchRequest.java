@@ -4,7 +4,6 @@ package com.nikhil.common_lib.payload.request;
 
 import com.nikhil.common_lib.enums.CabinClassType;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 

@@ -4,7 +4,6 @@ import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.exception.CityException;
 import com.nikhil.common_lib.payload.request.AirportRequest;
 import com.nikhil.common_lib.payload.response.AirportResponse;
-import jakarta.persistence.EntityNotFoundException;
 
 import java.util.List;
 

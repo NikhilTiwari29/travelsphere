@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        PARENT: services aggregator
+        ============================
+        Inheritance chain: root → services → THIS module
+
+        PREVIOUSLY this had:
+            <parent>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+            </parent>
+
+        That was WRONG because:
+        1. It disconnected user-service from your root POM entirely
+        2. None of your centralized versions/properties were inherited
+        3. It duplicated Spring Cloud BOM import that root already has
+        4. You'd have to maintain versions independently in every service
+
+        By pointing to "services" aggregator, we get the full chain:
+        root (versions + BOMs + pluginManagement) → services → user-service
+        Everything flows down automatically.
+
+        NOTE: We lose spring-boot-starter-parent's "magic" properties like
+        <java.version> auto-configuring the compiler. But our root POM already
+        handles that via pluginManagement with maven-compiler-plugin.
+    -->
+    <parent>
+        <groupId>com.nikhil</groupId>
+        <artifactId>services</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <!-- ../pom.xml → services/pom.xml (correct!) -->
+    </parent>
+
+    <groupId>com.nikhil.services</groupId>
+    <artifactId>user-service</artifactId>
+    <name>User Service</name>
+    <description>Manages users, authentication, profiles, and roles for the airline system.</description>
+
+    <!--
+        NO <properties> needed — java.version and spring.cloud.version
+        are inherited from root POM through the parent chain.
+
+        NO <dependencyManagement> needed — Spring Boot BOM and Spring Cloud BOM
+        are imported in root POM and inherited by all children.
+
+        This is the ENTIRE POINT of a multi-module project: define once, use everywhere.
+    -->
+
+    <dependencies>
+        <!--
+            ========== SPRING BOOT STARTERS ==========
+            Each "starter" is a bundle of related dependencies.
+            e.g., spring-boot-starter-data-jpa includes Hibernate, Spring Data JPA, HikariCP.
+            No version tags needed — managed by spring-boot-dependencies BOM in root.
+        -->
+
+        <dependency>
+            <groupId>com.nikhil</groupId>
+            <artifactId>common-lib</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!-- REST API support (embedded Tomcat, Jackson JSON, Spring MVC) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+
+        <!-- Spring Security for password encoding and authentication -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Bean validation (@Valid, @NotBlank, @Email) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- JJWT — generates JWT tokens for auth responses -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- JPA/Hibernate for database access (entities, repositories, queries) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!--
+            Actuator: Exposes health, metrics, and info endpoints.
+            /actuator/health → used by Eureka for health checks
+            /actuator/info   → service metadata
+            /actuator/metrics → Prometheus-compatible metrics
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+            ========== SPRING CLOUD ==========
+            These connect this service to the cloud infrastructure (Config + Eureka).
+        -->
+
+        <!--
+            Config Client: Fetches configuration from Config Server at startup.
+            Instead of hardcoding DB credentials in this service's application.yaml,
+            they're pulled from config-repo/user-service.yml via Config Server.
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+
+        <!--
+            Eureka Client: Registers this service with Eureka Server.
+            Other services (like API Gateway) can then discover user-service
+            by name instead of hardcoding IP:port.
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <!--
+            ========== RUNTIME ONLY ==========
+            These are needed at runtime but not at compile time.
+        -->
+
+        <!-- MySQL JDBC driver — needed at runtime to connect to MySQL database -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--
+            DevTools: Auto-restarts the app when code changes during development.
+            <optional>true</optional> prevents it from being included in production JARs.
+            <scope>runtime</scope> means it's not available at compile time (not needed there).
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!--
+            ========== TEST ==========
+        -->
+
+        <!-- Spring Boot Test: JUnit 5 + MockMvc + Spring test context + assertions -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>annotationProcessor</scope>
+        </dependency>
+
+        <!--
+            NOTE: The previous POM had these test dependencies:
+              - spring-boot-starter-actuator-test
+              - spring-boot-starter-data-jpa-test
+              - spring-boot-starter-webmvc-test
+
+            spring-boot-starter-test already includes everything you need for testing
+            (JUnit 5, Mockito, MockMvc, AssertJ, Spring Test Context).
+            The individual *-test starters are for specialized module-specific testing.
+            You only need them when you're writing targeted slice tests:
+              @WebMvcTest  → for controller-only tests (already covered by starter-test)
+              @DataJpaTest → for repository-only tests (already covered by starter-test)
+            So spring-boot-starter-test alone is sufficient for most projects.
+        -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                Creates an executable Spring Boot JAR.
+                Version inherited from root's pluginManagement.
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <to>
+                        <image>nikhililo/gds-user:1.0.0</image>
+                    </to>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
