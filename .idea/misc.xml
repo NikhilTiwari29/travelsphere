@@ -9,6 +9,10 @@
         <option value="$PROJECT_DIR$/microservices/services/flight-ops-service/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/services/pricing-service/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/services/seat-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/ancillary-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/booking-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/payment-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/cloud/pom.xml" />
       </list>
     </option>
   </component>

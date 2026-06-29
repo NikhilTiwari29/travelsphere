@@ -1,0 +1,96 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: optional:configserver:http://localhost:8888
+
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2000ms
+
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+        cancel-running-future: true
+    instances:
+      booking-service-cb:
+        timeout-duration: 8s
+      payment-service-cb:
+        timeout-duration: 10s
+  circuitbreaker:
+    configs:
+      gateway-default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+    instances:
+      booking-service-cb:
+        base-config: gateway-default
+        failure-rate-threshold: 40
+        wait-duration-in-open-state: 45s
+      payment-service-cb:
+        base-config: gateway-default
+        failure-rate-threshold: 30
+        wait-duration-in-open-state: 60s
+      flight-ops-service-cb:
+        base-config: gateway-default
+      seat-service-cb:
+        base-config: gateway-default
+      pricing-service-cb:
+        base-config: gateway-default
+      ancillary-service-cb:
+        base-config: gateway-default
+      location-service-cb:
+        base-config: gateway-default
+      airline-core-service-cb:
+        base-config: gateway-default
+      user-service-cb:
+        base-config: gateway-default
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: API Gateway - routes and load balances all incoming requests across microservices
+    version: 1.0.0
+    environment: development
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, circuitbreakers, circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
