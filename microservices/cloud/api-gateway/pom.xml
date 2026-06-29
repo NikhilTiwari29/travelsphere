@@ -106,7 +106,7 @@
                 <version>3.5.1</version>
                 <configuration>
                     <to>
-                        <image>nikhililo/gds-api-gateway:1.0.0</image>
+                        <image>nikhiltiwarip29/gds-api-gateway:1.0.0</image>
                     </to>
                 </configuration>
             </plugin>

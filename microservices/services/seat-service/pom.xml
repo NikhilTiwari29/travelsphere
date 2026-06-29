@@ -109,7 +109,7 @@
 				<version>3.5.1</version>
 				<configuration>
 					<to>
-						<image>nikhililo/gds-seat:1.0.0</image>
+						<image>nikhiltiwarip29/gds-seat:1.0.0</image>
 					</to>
 				</configuration>
 			</plugin>

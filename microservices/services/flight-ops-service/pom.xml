@@ -105,7 +105,7 @@
 				<version>3.5.1</version>
 				<configuration>
 					<to>
-						<image>nikhililo/gds-flight:1.0.0</image>
+						<image>nikhiltiwarip29/gds-flight:1.0.0</image>
 					</to>
 				</configuration>
 			</plugin>
