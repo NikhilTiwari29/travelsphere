@@ -214,7 +214,7 @@ services:
     ports:
 #      - "8888:8888"
     environment:
-      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: "https://github.com/developer407/gds-config"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: "https://github.com/NikhilTiwari29/nikhil-air-config"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8888/actuator/health || exit 1"]

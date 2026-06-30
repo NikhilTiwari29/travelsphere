@@ -261,7 +261,7 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     environment:
-      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: "https://github.com/developer407/gds-config"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: "https://github.com/NikhilTiwari29/nikhil-air-config"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
     healthcheck:
