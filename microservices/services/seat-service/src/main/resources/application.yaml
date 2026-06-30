@@ -9,7 +9,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/airline_seat_db
     username: root
-    password: $7090Ashok
+    password: NikTiwari@1234
   jpa:
     hibernate:
       ddl-auto: update

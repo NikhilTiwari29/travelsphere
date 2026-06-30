@@ -1,0 +1,50 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/NikhilTiwari29/nikhil-air-config
+          clone-on-start: true
+
+# Register this config server with Eureka so microservices can discover it
+# via service name ("config-server") instead of hardcoding localhost:8888.
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: false   # config-server registers so others can discover it, but does not need the registry itself
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: Centralized configuration server for all microservices
+    version: 1.0.0
+    environment: development
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true

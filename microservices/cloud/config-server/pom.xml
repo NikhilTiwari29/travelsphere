@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Inheritance chain: root → cloud → THIS module -->
+    <parent>
+        <groupId>com.nikhil</groupId>
+        <artifactId>cloud</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <groupId>com.nikhil.cloud</groupId>
+    <artifactId>config-server</artifactId>
+    <name>Config Server</name>
+    <description>Centralized configuration management server for all microservices.</description>
+
+    <dependencies>
+        <!--
+            Spring Cloud Config Server: Serves configuration to all microservices.
+
+            How it works:
+            1. You store config files (application.yml per service) in a Git repo
+            2. Config Server reads that Git repo and serves configs via REST API
+            3. Microservices fetch their config from Config Server at startup
+
+            Benefits:
+            - Change config without redeploying services
+            - Environment-specific configs (dev/staging/prod) in one place
+            - Sensitive values (DB passwords) stored in one secured repo, not in each service
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-config-server</artifactId>
+        </dependency>
+
+        <!--
+            Eureka Client: Registers this config server with Eureka.
+            Without this, every microservice must hardcode "localhost:8888" to find config.
+            With this, they just ask Eureka: "where is config-server?"
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <to>
+                        <image>nikhiltiwarip29/gds-config-server:1.0.0</image>
+                    </to>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
