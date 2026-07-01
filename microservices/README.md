@@ -539,7 +539,7 @@ JWT_SECRET=your-256-bit-secret-key
 
 All service configuration is managed by the **Config Server** which pulls from:
 ```
-https://github.com/NikhilTiwari29/nikhil-air-config
+https://github.com/developer407/gds-config
 ```
 
 Each service bootstraps with:
@@ -585,7 +585,7 @@ spring:
 microservices/
 ├── pom.xml                          # Root parent POM — version management
 ├── common-lib/                      # Shared DTOs, enums, events, exceptions
-│   └── src/main/java/com/nikhil/common_lib/
+│   └── src/main/java/com/zosh/common_lib/
 │       ├── dto/                     # Shared data transfer objects
 │       ├── embeddable/              # JPA embeddables (ContactInfo, Address, GeoCode)
 │       ├── enums/                   # All shared enums (BookingStatus, CabinClassType, etc.)
