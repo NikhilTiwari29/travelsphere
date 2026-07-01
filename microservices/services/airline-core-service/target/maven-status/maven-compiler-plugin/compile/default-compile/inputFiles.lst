@@ -1,0 +1,14 @@
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\AirlineCoreServiceApplication.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\config\RedisConfig.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\controller\AircraftController.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\controller\AirlineController.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\mapper\AircraftMapper.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\mapper\AirlineMapper.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\model\Aircraft.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\model\Airline.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\repository\AircraftRepository.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\repository\AirlineRepository.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\service\AircraftService.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\service\AirlineService.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\service\impl\AircraftServiceImpl.java
+C:\project\TravelSphere\microservices\services\airline-core-service\src\main\java\com\nikhil\services\service\impl\AirlineServiceImpl.java

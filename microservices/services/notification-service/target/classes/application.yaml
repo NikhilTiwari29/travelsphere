@@ -1,0 +1,101 @@
+# ── Server ─────────────────────────────────────────────────────────────────────
+server:
+  port: 8094
+
+
+spring:
+  application:
+    name: notification-service
+
+  config:
+    import: optional:configserver:http://localhost:8888
+
+  # ── Kafka Consumer ──────────────────────────────────────────────────────────
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.nikhil.common_lib.event"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.nikhil.common_lib.event.BookingConfirmedEvent
+
+  # ── Email (Gmail SMTP) ──────────────────────────────────────────────────────
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:your email}
+    password: ${MAIL_APP_PASSWORD:your gmail app password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: false
+
+  # ── Thymeleaf ───────────────────────────────────────────────────────────────
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false   # set to true in production
+
+# ── Eureka ─────────────────────────────────────────────────────────────────────
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+
+
+# ── Twilio SMS ─────────────────────────────────────────────────────────────────
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  from-number: ${TWILIO_FROM_NUMBER:}
+  enabled: ${TWILIO_ENABLED:false}
+
+# ── Notification Settings ──────────────────────────────────────────────────────
+notification:
+  from-email: ${MAIL_FROM:nikhiltiwarip29@gmail.com}
+  from-name: "nikhilAir Notifications"
+  support-email: nikhiltiwarip29@gmail.com
+  support-phone: "1800-XXX-XXXX"
+  checkin-url: localhost:5173
+  manage-booking-url: localhost:5173
+# ── Actuator ───────────────────────────────────────────────────────────────────
+info:
+  app:
+    name: ${spring.application.name}
+    description: Sends email and SMS notifications for booking confirmations and alerts
+    version: 1.0.0
+    environment: development
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
