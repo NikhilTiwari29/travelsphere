@@ -63,7 +63,7 @@
         <dependency>
             <groupId>com.nikhil</groupId>
             <artifactId>common-lib</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- REST API support (embedded Tomcat, Jackson JSON, Spring MVC) -->

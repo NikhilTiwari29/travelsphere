@@ -32,6 +32,7 @@
     -->
     <modules>
         <module>common-lib</module>
+        <module>cloud</module>
         <module>services</module>
     </modules>
 
@@ -44,7 +45,7 @@
     -->
     <properties>
         <!-- Java version for compilation -->
-        <java.version>17</java.version>
+        <java.version>21</java.version>
 
         <!--
             Source encoding: prevents "platform default encoding" warnings.

@@ -68,9 +68,9 @@ twilio:
 
 # ── Notification Settings ──────────────────────────────────────────────────────
 notification:
-  from-email: ${MAIL_FROM:nikhiltiwarip29@gmail.com}
+  from-email: ${MAIL_FROM:codewithnikhil@gmail.com}
   from-name: "nikhilAir Notifications"
-  support-email: nikhiltiwarip29@gmail.com
+  support-email: codewithnikhil@gmail.co
   support-phone: "1800-XXX-XXXX"
   checkin-url: localhost:5173
   manage-booking-url: localhost:5173

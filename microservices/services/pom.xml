@@ -41,6 +41,10 @@
         <module>flight-ops-service</module>
         <module>pricing-service</module>
         <module>ancillary-service</module>
+        <module>booking-service</module>
+        <module>subscription-service</module>
+        <module>payment-service</module>
+        <module>notification-service</module>
     </modules>
 
 </project>

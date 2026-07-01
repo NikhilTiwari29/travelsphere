@@ -8,9 +8,7 @@ spring:
     name: notification-service
 
   config:
-    import:
-      - optional:file:.env[.properties]
-      - optional:configserver:http://localhost:8888
+    import: optional:configserver:http://localhost:8888
 
   # ── Kafka Consumer ──────────────────────────────────────────────────────────
   kafka:
@@ -29,8 +27,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_APP_PASSWORD}
+    username: ${MAIL_USERNAME:your email}
+    password: ${MAIL_APP_PASSWORD:your gmail app password}
     properties:
       mail:
         smtp:
@@ -70,9 +68,9 @@ twilio:
 
 # ── Notification Settings ──────────────────────────────────────────────────────
 notification:
-  from-email: ${MAIL_FROM}
+  from-email: ${MAIL_FROM:codewithnikhil@gmail.com}
   from-name: "nikhilAir Notifications"
-  support-email: nikhiltiwarip29@gmail.com
+  support-email: codewithnikhil@gmail.co
   support-phone: "1800-XXX-XXXX"
   checkin-url: localhost:5173
   manage-booking-url: localhost:5173

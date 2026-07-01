@@ -1,10 +1,10 @@
-package com.nikhil.cloud;
+package com.nikhil.services;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ServiceRegistryApplicationTests {
+class SubscriptionServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

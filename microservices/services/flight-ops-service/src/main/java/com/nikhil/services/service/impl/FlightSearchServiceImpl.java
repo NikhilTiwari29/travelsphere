@@ -12,7 +12,6 @@ import com.nikhil.services.model.FlightInstance;
 import com.nikhil.services.repository.FlightInstanceRepository;
 import com.nikhil.services.service.FlightSearchService;
 import com.nikhil.services.specification.FlightInstanceSpecification;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service

@@ -1,6 +1,5 @@
 package com.nikhil.services.controller;
 
-import com.nikhil.common_lib.enums.FlightStatus;
 import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.FlightInstanceRequest;
 import com.nikhil.common_lib.payload.response.FlightInstanceResponse;
@@ -14,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
