@@ -10,9 +10,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/*
+ * Feign client used by Booking Service to initiate payment and read payment
+ * status from Payment Service.
+ */
 @FeignClient(name = "payment-service", fallback = PaymentClientFallback.class)
 public interface PaymentClient {
 
+    /*
+     * Called at end of createBooking. Payment Service persists PENDING payment
+     * and returns Razorpay checkout URL; verify step emits Kafka events.
+     */
     @PostMapping("/api/payments/initiate")
     PaymentInitiateResponse initiatePayment(
             @Valid @RequestBody PaymentInitiateRequest request,

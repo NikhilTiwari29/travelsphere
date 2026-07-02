@@ -15,6 +15,12 @@ import java.util.Set;
 /**
  * JPA Specification for dynamic {@link FlightInstance} search.
  *
+ * <p><b>Gateway:</b> Results surface through api-gateway {@code /api/flight-instances/**}
+ * (JWT-protected). Clients never hit flight-ops directly in production.
+ *
+ * <p><b>Feign (downstream):</b> Price filtering is <em>not</em> in this spec — after the DB query,
+ * FlightInstanceServiceImpl batch-calls pricing-service via PricingClient to apply fare filters.
+ *
  * <h3>What this class handles (pure DB filters)</h3>
  * <ul>
  *   <li>isActive = true</li>

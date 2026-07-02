@@ -13,6 +13,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * Physical aircraft asset linked to a local Airline entity.
+ * currentAirportId references location-service. Seat counts drive flight-ops
+ * instance capacity and seat-service cabin layout generation via Feign reads.
+ */
 @Entity
 @Getter
 @Setter

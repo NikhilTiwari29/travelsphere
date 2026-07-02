@@ -5,8 +5,13 @@ import com.nikhil.services.model.Payment;
 
 import java.time.ZoneId;
 
+/*
+ * Maps Payment entity fields to the shared PaymentDTO returned by REST and Feign.
+ * Keeps service/controller layers free of manual field copying.
+ */
 public class PaymentMapper {
 
+    /** Converts a persisted Payment to API payload; null-safe on input and timestamps. */
     public static PaymentDTO toDTO(Payment payment) {
         if (payment == null) {
             return null;

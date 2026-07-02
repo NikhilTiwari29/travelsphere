@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST API for aircraft fleet records belonging to airlines.
+ * Gateway: /api/aircrafts/** (JWT). Feign callers: flight-ops, ancillary, seat-service.
+ * Returns seating capacity used when generating flight instances and seat maps.
+ */
 @RestController
 @RequestMapping("/api/aircrafts")
 @RequiredArgsConstructor

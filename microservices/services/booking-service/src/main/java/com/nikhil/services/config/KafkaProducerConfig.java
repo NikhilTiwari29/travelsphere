@@ -13,6 +13,11 @@ import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * Kafka producer wiring for BookingEventProducer.
+ * Publishes booking.confirmed after payment.completed is consumed and the
+ * booking row is updated to CONFIRMED in the local DB.
+ */
 @Configuration
 public class KafkaProducerConfig {
 

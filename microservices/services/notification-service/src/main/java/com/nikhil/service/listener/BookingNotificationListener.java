@@ -9,6 +9,10 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
+/*
+ * Kafka consumer for booking.confirmed — last mile of the booking pipeline.
+ * Delegates to EmailService and SmsService; no local booking DB in this service.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -17,6 +21,16 @@ public class BookingNotificationListener {
     private final EmailService emailService;
     private final SmsService smsService;
 
+    /*
+     * Sends customer notifications after Booking Service confirms a booking.
+     *
+     * Event Flow:
+     * Booking Service → booking.confirmed
+     *      ↓
+     * Notification Service
+     *      ↓
+     * EmailService and SmsService.
+     */
     @KafkaListener(
             topics = "booking.confirmed",
             groupId = "notification-service-group",

@@ -30,6 +30,13 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/*
+ * Payment orchestration: persists payment rows, calls Razorpay, and emits
+ * Kafka events that drive Booking Service confirmation.
+ *
+ * Flow: initiate → UserClient + Razorpay link → verify → PaymentEventProducer
+ *       → payment.completed → Booking Service → booking.confirmed
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -40,6 +47,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final RazorpayService razorpayService;
     private final UserClient userClient;
 
+    /*
+     * Creates PENDING payment, fetches user via Feign, builds Razorpay checkout.
+     * Stripe branch is stubbed; no dedicated StripeService exists yet.
+     */
     @Override
     @Transactional
     public PaymentInitiateResponse initiatePayment(PaymentInitiateRequest request) throws PaymentException {
@@ -105,6 +116,10 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /*
+     * Confirms gateway capture, updates payment DB, then publishes Kafka event
+     * consumed by Booking Service PaymentEventListener.
+     */
     @Override
     @Transactional
     public PaymentDTO verifyPayment(PaymentVerifyRequest request) throws PaymentException

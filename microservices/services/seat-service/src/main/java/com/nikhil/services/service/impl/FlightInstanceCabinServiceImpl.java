@@ -21,6 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/*
+ * Provisions FlightInstanceCabin and SeatInstance rows for a flight instance.
+ *
+ * Request Flow
+ * ------------
+ * FlightInstanceCabinController / flight-instance-created Kafka
+ *     ↓
+ * SeatMap seats → SeatInstance copies (SeatMap → Seat → SeatInstance)
+ *
+ * Mirrors logic in FlightInstanceEventConsumer for REST-based provisioning.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -32,6 +43,10 @@ public class FlightInstanceCabinServiceImpl implements FlightInstanceCabinServic
     private final SeatMapRepository seatMapRepository;
     private final SeatInstanceRepository seatInstanceRepository;
 
+    /*
+     * Creates cabin bucket and clones every Seat from the CabinClass SeatMap
+     * into AVAILABLE SeatInstances for the given flight instance.
+     */
     @Override
     public FlightInstanceCabinResponse createFlightInstanceCabin(FlightInstanceCabinRequest request)
             throws ResourceNotFoundException {

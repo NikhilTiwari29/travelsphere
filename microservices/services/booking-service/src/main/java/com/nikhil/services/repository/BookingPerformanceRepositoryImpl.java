@@ -11,12 +11,14 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/** Criteria API implementation of {@link BookingPerformanceRepository} airline analytics queries. */
 @Repository
 public class BookingPerformanceRepositoryImpl implements BookingPerformanceRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    /** Counts non-cancelled bookings for a flight template within a bookingDate window. */
     @Override
     public Long countBookingsByFlightIdAndDateRange(Long flightId, LocalDateTime startDate, LocalDateTime endDate) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -34,6 +36,7 @@ public class BookingPerformanceRepositoryImpl implements BookingPerformanceRepos
         return entityManager.createQuery(query).getSingleResult();
     }
 
+    /** Sums successful payment amounts joined from Booking.payment for revenue reporting. */
     @Override
     public Double sumRevenueByFlightIdAndDateRange(Long flightId, LocalDateTime startDate, LocalDateTime endDate) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -54,6 +57,7 @@ public class BookingPerformanceRepositoryImpl implements BookingPerformanceRepos
         return entityManager.createQuery(query).getSingleResult();
     }
 
+    /** Lists non-cancelled bookings with payment fetched, ordered by bookingDate ascending. */
     @Override
     public List<Booking> findBookingsByFlightIdAndDateRange(
             Long flightId, LocalDateTime startDate, LocalDateTime endDate) {

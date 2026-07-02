@@ -7,6 +7,13 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
+/*
+ * Service contract for template Seat rows within a SeatMap.
+ *
+ * generateSeats() materializes layout rows; updateSeat() adjusts attributes.
+ * Runtime availability is managed on SeatInstance, not here.
+ * Exposed indirectly via /api/seats/** gateway route.
+ */
 public interface SeatService {
 
 

@@ -20,6 +20,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Binds ancillaries to flight + cabinClassId with price and inventory caps.
+ * booking-service AncillaryClient queries by flight/cabin/type during add-ons step.
+ * cabinClassId references seat-service; coverage data joined from local InsuranceCoverage.
+ */
 @Service
 @RequiredArgsConstructor
 public class FlightCabinAncillaryServiceImpl implements FlightCabinAncillaryService {

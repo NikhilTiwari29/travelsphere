@@ -17,6 +17,11 @@ import org.springframework.util.backoff.FixedBackOff;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * Kafka consumer setup for booking.confirmed in Notification Service.
+ * Typed deserializer + retry handler; group notification-service-group matches
+ * BookingNotificationListener @KafkaListener configuration.
+ */
 @Configuration
 @EnableKafka
 public class KafkaConsumerConfig {

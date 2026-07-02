@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+/** JPA repository for {@link Passenger}; custom queries below support profile lookup and admin search. */
 @Repository
 public interface PassengerRepository extends JpaRepository<Passenger, Long> {
 
@@ -26,6 +27,7 @@ public interface PassengerRepository extends JpaRepository<Passenger, Long> {
 
     List<Passenger> findByLastNameContainingIgnoreCase(String lastName);
 
+    /** Case-insensitive partial match on first or last name (admin / support search). */
     @Query("SELECT p FROM Passenger p WHERE " +
             "LOWER(p.firstName) LIKE LOWER(CONCAT('%', :name, '%')) OR " +
             "LOWER(p.lastName) LIKE LOWER(CONCAT('%', :name, '%'))")
@@ -35,6 +37,7 @@ public interface PassengerRepository extends JpaRepository<Passenger, Long> {
 
     Page<Passenger> findByPrimaryUserId(Long primaryUserId, Pageable pageable);
 
+    /** Returns only active passenger profiles (soft-delete guard for saved-traveller lists). */
     @Query("SELECT p FROM Passenger p WHERE p.isActive = true")
     List<Passenger> findAllActive();
 }

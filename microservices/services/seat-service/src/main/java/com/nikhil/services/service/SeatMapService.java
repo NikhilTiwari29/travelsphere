@@ -7,6 +7,13 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
+/*
+ * Service contract for seat-map layout management.
+ *
+ * Backed by SeatMapController (/api/seat-maps/**).
+ * Resolves airline via AirlineClient Feign; triggers Seat generation on create.
+ * SeatMap sits between CabinClass and Seat in the entity chain.
+ */
 public interface SeatMapService {
 
     SeatMapResponse createSeatMap(Long userId, SeatMapRequest request) throws Exception;

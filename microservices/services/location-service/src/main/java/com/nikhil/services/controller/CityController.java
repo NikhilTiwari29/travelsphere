@@ -19,6 +19,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST API for city master data used by airport and search UIs.
+ * Gateway: /api/cities/** (JWT); POST requires ROLE_SYSTEM_ADMIN via admin route.
+ * No Feign deps; consumed by location UI and indirectly by flight search airport pickers.
+ */
 @RestController
 @RequestMapping("/api/cities")
 @RequiredArgsConstructor

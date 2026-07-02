@@ -9,6 +9,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/*
+ * JPA entity for the local payments table.
+ *
+ * One row per booking payment attempt. userId and bookingId are logical refs
+ * to user-service and booking-service; status transitions are driven by
+ * PaymentServiceImpl after Razorpay initiate/verify.
+ */
 @Entity
 @Table(name = "payments")
 @Getter
@@ -32,17 +39,23 @@ public class Payment {
 
     private Double amount;
 
+    /** Razorpay (or future gateway) used for this payment. */
     @Enumerated(EnumType.STRING)
     private PaymentGateway provider;
 
+    /** Gateway-side payment / order identifier returned by Razorpay. */
     private String providerPaymentId;
+    /** Internal correlation id sent to Razorpay and stored on the payment link. */
     private String transactionId;
+    /** Card/UPI/netbanking method reported by Razorpay on successful capture. */
     private String method;
 
+    /** PENDING → SUCCESS | FAILED; consumed by Booking Service via Kafka events. */
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
     private String failureReason;
+    /** Set when status becomes SUCCESS after verify. */
     private LocalDateTime paidAt;
     private String refundId;
 

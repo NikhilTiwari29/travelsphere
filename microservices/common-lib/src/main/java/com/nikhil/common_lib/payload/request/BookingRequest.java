@@ -9,6 +9,13 @@ import lombok.*;
 
 import java.util.List;
 
+/**
+ * Request body for creating a new flight booking.
+ *
+ * Sent from the client via API Gateway to booking-service. Captures flight/cabin/fare
+ * selection, passengers, optional ancillaries/meals, seat numbers, and contact info.
+ * A PENDING booking is created; confirmation follows after payment via Kafka events.
+ */
 @Data
 @Builder
 @NoArgsConstructor

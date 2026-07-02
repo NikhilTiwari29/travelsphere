@@ -6,6 +6,11 @@ import lombok.*;
 
 import java.time.Instant;
 
+/**
+ * Change and refund rules for a specific fare product.
+ * airlineId references airline-core-service; fare is a local JPA parent.
+ * Exposed via /api/fare-rules/** for booking and admin fare configuration.
+ */
 @Entity
 @Table(name = "fare_rules")
 @Getter

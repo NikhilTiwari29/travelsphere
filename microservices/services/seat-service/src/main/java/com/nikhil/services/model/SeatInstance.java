@@ -8,6 +8,13 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 
+/*
+ * Per-flight copy of a template Seat with live availability status.
+ *
+ * Entity chain: SeatMap → Seat → SeatInstance (one row per seat per flight).
+ * Created when flight-ops publishes flight-instance-created, or via REST/Kafka.
+ * booking-service SeatClient reads instances; booking.confirmed marks them BOOKED.
+ */
 @Entity
 @Table(name = "seat_instances")
 @Getter

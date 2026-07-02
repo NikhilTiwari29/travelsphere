@@ -1,3 +1,5 @@
+# Eureka Service Registry is the discovery hub for the microservices.
+# Services register here, and callers resolve service names instead of hardcoded hosts.
 server:
   port: 8761
 
@@ -5,6 +7,7 @@ spring:
   application:
     name: service-registry
 
+# A Eureka server does not register with itself or fetch a registry from itself.
 eureka:
   client:
     register-with-eureka: false

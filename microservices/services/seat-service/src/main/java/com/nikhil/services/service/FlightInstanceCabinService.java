@@ -7,6 +7,13 @@ import com.nikhil.common_lib.payload.response.FlightInstanceResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+/*
+ * Service contract for cabin-level buckets on a flight instance.
+ *
+ * Backed by FlightInstanceCabinController (/api/flight-instance-cabins/**).
+ * Provisions SeatInstances from SeatMap seats; also triggered by
+ * flight-instance-created Kafka event from flight-ops-service.
+ */
 public interface FlightInstanceCabinService {
 
     FlightInstanceCabinResponse createFlightInstanceCabin(FlightInstanceCabinRequest request) throws ResourceNotFoundException;

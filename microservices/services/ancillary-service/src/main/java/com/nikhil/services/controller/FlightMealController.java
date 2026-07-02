@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Links catalog meals to flights with per-flight price and availability.
+ * Gateway: /api/flight-meals/** (JWT). booking-service calls price/total during checkout.
+ * flightId references flight-ops-service; mealId is local to ancillary-service.
+ */
 @RestController
 @RequestMapping("/api/flight-meals")
 @RequiredArgsConstructor
@@ -33,8 +38,10 @@ public class FlightMealController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
+    /**
+     * Aggregates meal line-item prices; booking-service calls during checkout total.
+     */
     @PostMapping("/price/total")
-    public ResponseEntity<Double> calculateMealPrice(
             @RequestBody List<Long> requests) {
         double responses = flightMealService.calculateMealPrice(requests);
         return ResponseEntity.status(HttpStatus.OK).body(responses);

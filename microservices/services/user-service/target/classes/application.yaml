@@ -18,6 +18,8 @@
 # Everything else (port, DB, eureka, jpa) comes from Config Server.
 # =============================================================================
 
+# Registers user-service so Gateway can forward /auth/** and /api/users/**
+# requests through Eureka + LoadBalancer.
 eureka:
   instance:
     prefer-ip-address: true
@@ -39,6 +41,7 @@ spring:
     # Without "optional:", the service REFUSES to start if Config Server is unreachable.
     import: optional:configserver:http://localhost:8888
 
+# Metadata exposed through Actuator info.
 info:
   app:
     name: ${spring.application.name}
@@ -46,6 +49,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Health/info endpoints confirm authentication service readiness.
 management:
   endpoints:
     web:

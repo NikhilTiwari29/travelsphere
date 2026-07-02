@@ -23,6 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @Slf4j
+/**
+ * Core flight-search orchestrator; no HTTP layer—invoked by FlightSearchController.
+ * Gateway entry: GET /api/flights/search. Feign deps: PricingClient, AirlineClient,
+ * LocationClient, SeatClient. Data flow: JPA spec on local instances → per-row fare/cabin
+ * filter via pricing + seat → enrich with airline/airport/aircraft from Feign caches.
+ */
 @Service
 @RequiredArgsConstructor
 public class FlightSearchServiceImpl implements FlightSearchService {

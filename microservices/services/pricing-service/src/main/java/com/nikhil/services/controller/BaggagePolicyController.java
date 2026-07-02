@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST API for baggage allowance rules linked to fares.
+ * Gateway route: /api/baggage-policies/** → pricing-service (JWT required).
+ * Read during booking fare selection; no Feign dependencies in this service.
+ */
 @RestController
 @RequestMapping("/api/baggage-policies")
 @RequiredArgsConstructor

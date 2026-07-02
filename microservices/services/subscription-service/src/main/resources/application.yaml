@@ -1,3 +1,4 @@
+# Registers subscription-service with Eureka for future Gateway/Feign routing.
 eureka:
   instance:
     prefer-ip-address: true
@@ -9,9 +10,12 @@ eureka:
 spring:
   application:
     name: subscription-service
+
+  # Loads service-specific settings from Config Server when available.
   config:
     import: optional:configserver:http://localhost:8888
 
+# Metadata exposed through Actuator info.
 info:
   app:
     name: ${spring.application.name}
@@ -19,6 +23,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Health/info endpoints confirm subscription-service readiness.
 management:
   endpoints:
     web:

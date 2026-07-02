@@ -18,6 +18,11 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * Kafka consumer wiring for PaymentEventListener.
+ * Deserializes payment.completed and payment.failed from Payment Service;
+ * group-id booking-service-group drives offset commits per partition.
+ */
 @Configuration
 public class KafkaConsumerConfig {
 

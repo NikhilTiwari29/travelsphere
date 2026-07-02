@@ -19,34 +19,56 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/*
+ * Core authentication business logic: credential validation, user
+ * registration, JWT issuance, and SecurityContext population.
+ *
+ * Architecture Fit
+ * ----------------
+ * Called by AuthController on /auth/** routes. Issues JWTs that the
+ * Gateway later validates on protected routes (/api/users/**, etc.).
+ *
+ * JWT Flow (login/signup)
+ * -----------------------
+ * Validate/create user → build Authentication → JwtProvider.generateToken
+ * → return AuthResponse with JWT to client
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    // Repository for performing CRUD operations on User entity
     private final UserRepository userRepository;
+
+    // BCrypt password encoder used to hash passwords and verify credentials
     private final PasswordEncoder passwordEncoder;
+
+    // Generates JWT tokens after successful authentication
     private final JwtProvider jwtProvider;
+
+    // Loads user details required for authentication
     private final CustomUserDetailsService customUserDetailsService;
 
     /*
-    Steps:
-        1. Check if email already exists
-        2. Encode password using BCrypt
-        3. Save user in database
-        4. Generate JWT token
-        5. Return token and user information
-    */
+     * Purpose: Register a new user and return a JWT.
+     * Called By: AuthController.signup()
+     * Flow: duplicate check → encode password → save → Authentication → JWT
+     */
     @Override
     public AuthResponse signup(UserDTO req) throws UserException {
+
+        // Check for duplicate email
         User existingUser = userRepository.findByEmail(req.getEmail());
         if (existingUser != null) {
             throw new UserException("Email already registered");
         }
 
+        // Prevent users from creating SYSTEM_ADMIN accounts
         if (req.getRole() == UserRole.ROLE_SYSTEM_ADMIN) {
             throw new UserException("Cannot register as SYSTEM_ADMIN");
         }
 
+        // Create and populate the User entity
         User createdUser = new User();
         createdUser.setEmail(req.getEmail());
         createdUser.setPassword(passwordEncoder.encode(req.getPassword()));
@@ -55,60 +77,93 @@ public class AuthServiceImpl implements AuthService {
         createdUser.setRole(req.getRole());
         createdUser.setLastLogin(LocalDateTime.now());
 
+        // Persist the user
         User savedUser = userRepository.save(createdUser);
 
-        Authentication authentication
-                = new UsernamePasswordAuthenticationToken(
-                savedUser.getEmail(), savedUser.getPassword()
-        );
+        /*
+         * Create an Authentication object representing the logged-in user.
+         * Since the user has just been registered successfully, password
+         * verification is not required here.
+         */
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(
+                        savedUser.getEmail(),
+                        savedUser.getPassword()
+                );
+
+        // Store authentication in the current SecurityContext
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Generate JWT containing authenticated user's information
         String jwt = jwtProvider.generateToken(authentication, savedUser.getId());
 
+        // Build response
         AuthResponse response = new AuthResponse();
         response.setTitle("Welcome " + savedUser.getFullName());
         response.setMessage("Registration successful");
         response.setUser(UserMapper.toDTO(savedUser));
         response.setJwt(jwt);
+
         return response;
     }
 
     /*
-    Steps:
-        1. Load user by email
-        2. Compare password with BCrypt
-        3. Update `lastLogin` time
-        4. Generate JWT token
-        5. Return token and user information
-    */
+     * Purpose: Authenticate credentials and return a JWT.
+     * Called By: AuthController.login()
+     * Flow: authenticate → SecurityContext → JWT → update lastLogin
+     */
     @Override
     public AuthResponse login(String email, String password) throws UserException {
+
+        // Authenticate user credentials
         Authentication authentication = authenticate(email, password);
+
+        // Store authenticated user in Spring Security context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User user = userRepository.findByEmail(email);
+
+        // Generate JWT for authenticated user
         String token = jwtProvider.generateToken(authentication, user.getId());
 
+        // Record the latest successful login
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
+        // Build response
         AuthResponse response = new AuthResponse();
         response.setTitle("Login successful");
         response.setMessage("Welcome back " + user.getFullName());
         response.setJwt(token);
         response.setUser(UserMapper.toDTO(user));
+
         return response;
     }
 
+    /*
+     * Purpose: Verify email/password against stored BCrypt hash.
+     * Called By: login()
+     * Flow: CustomUserDetailsService.loadUserByUsername → passwordEncoder.matches
+     */
     private Authentication authenticate(String email, String password) throws UserException {
-        UserDetails userDetails = customUserDetailsService
-                .loadUserByUsername(email);
-        if (userDetails == null) {
-            throw new UserException("User not found with email: " + email);
-        }
+
+        // Load user from database through UserDetailsService
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+
+        // Compare raw password with the stored BCrypt hash
         if (!passwordEncoder.matches(password, userDetails.getPassword())) {
             throw new UserException("Invalid password");
         }
+
+        /*
+         * Create an authenticated Authentication object.
+         * Credentials are set to null because they are no longer needed
+         * after successful authentication.
+         */
         return new UsernamePasswordAuthenticationToken(
-                email, null, userDetails.getAuthorities());
+                email,
+                null,
+                userDetails.getAuthorities()
+        );
     }
 }

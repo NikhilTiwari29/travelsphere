@@ -20,6 +20,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 import java.util.Map;
 
+/*
+ * Redis-backed Spring Cache for flight-ops-service read-heavy endpoints.
+ *
+ * Used by FlightInstanceServiceImpl and FlightSearchServiceImpl to avoid repeated DB hits.
+ * If Redis is down, CacheErrorHandler logs and falls through to the database.
+ */
 @Slf4j
 @Configuration
 public class RedisConfig implements CachingConfigurer {

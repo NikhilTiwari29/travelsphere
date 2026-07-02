@@ -9,6 +9,10 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/*
+ * Kafka consumer that finalizes seat inventory after booking confirmation.
+ * Downstream of booking.confirmed published by Booking Service.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -16,6 +20,14 @@ public class BookingEventListener {
 
     private final SeatInstanceService seatInstanceService;
 
+    /*
+     * Marks selected seats as booked after Booking Service confirms payment.
+     *
+     * Event Flow:
+     * Booking Service → booking.confirmed
+     *      ↓
+     * Seat Service updates SeatInstance status to BOOKED.
+     */
     @KafkaListener(topics = "booking.confirmed", groupId = "seat-service-group")
     @Transactional
     public void handleBookingConfirmed(BookingConfirmedEvent event) {

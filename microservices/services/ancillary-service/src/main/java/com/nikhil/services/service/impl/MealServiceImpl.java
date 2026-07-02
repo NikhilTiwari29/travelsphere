@@ -19,6 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Manages airline meal catalog entries scoped by owner user ID.
+ * Gateway: /api/meals/**. Uses AirlineIntegrationService (Feign) to map user → airlineId.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

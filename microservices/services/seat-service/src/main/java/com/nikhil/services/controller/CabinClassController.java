@@ -12,6 +12,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/*
+ * REST API for cabin-class definitions on an aircraft layout.
+ *
+ * Gateway route: /api/cabin-classes/** → seat-service (JWT required).
+ * Feign caller: flight-ops-service SeatClient resolves cabinClassId during search.
+ *
+ * CabinClass is the root of the seat hierarchy:
+ *   CabinClass → SeatMap → Seat → SeatInstance (per flight).
+ */
 @RestController
 @RequestMapping("/api/cabin-classes")
 @RequiredArgsConstructor
@@ -38,6 +47,10 @@ public class CabinClassController {
         return ResponseEntity.ok(cabinClassService.getCabinClassById(id));
     }
 
+    /*
+     * Resolves cabin class by aircraft and enum name; flight-ops SeatClient uses
+     * this before pricing calls during flight search.
+     */
     @GetMapping("/aircraft/{id}/name/{cabinClass}")
     public ResponseEntity<CabinClassResponse> getCabinClassByAircraftIdAndName(
             @PathVariable CabinClassType cabinClass,
@@ -48,6 +61,9 @@ public class CabinClassController {
         ));
     }
 
+    /*
+     * Lists cabin classes for an aircraft; used during layout and search setup.
+     */
     @GetMapping("/aircraft/{aircraftId}")
     public ResponseEntity<List<CabinClassResponse>> getCabinClassesByAircraftId(
             @PathVariable Long aircraftId) {

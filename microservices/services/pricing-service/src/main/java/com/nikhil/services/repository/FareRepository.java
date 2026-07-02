@@ -13,6 +13,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Spring Data access for Fare entities in pricing-service DB.
+ * Supports CRUD, bulk duplicate detection, and batch search queries
+ * used by flight-ops-service during GET /api/flights/search enrichment.
+ */
 public interface FareRepository extends JpaRepository<Fare, Long> {
 
     List<Fare> findByFlightId(Long flightId);

@@ -16,6 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * CRUD for insurance coverage options linked to ancillary products.
+ * Exposed via InsuranceCoverageController; embedded in ancillary read responses.
+ * Purely local persistence—no Feign calls.
+ */
 @Service
 @RequiredArgsConstructor
 public class InsuranceCoverageServiceImpl implements InsuranceCoverageService {

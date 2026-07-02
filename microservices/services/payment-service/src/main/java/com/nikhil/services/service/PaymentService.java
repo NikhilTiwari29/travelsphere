@@ -11,6 +11,10 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 
+/*
+ * Payment domain contract: initiate checkout, verify gateway callback,
+ * and expose payment rows for Booking Service enrichment queries.
+ */
 public interface PaymentService {
 
     PaymentInitiateResponse initiatePayment(PaymentInitiateRequest request) throws PaymentException;

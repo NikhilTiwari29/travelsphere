@@ -14,6 +14,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/*
+ * REST entry point for the booking lifecycle in Booking Service.
+ * Routes are reached via API Gateway with X-User-Id injected from JWT.
+ *
+ * Cross-service flow (create):
+ *   Client → POST /api/bookings → BookingServiceImpl
+ *     → Feign: flight-ops, pricing, seat, ancillary (price/validate)
+ *     → Feign: payment-service /initiate → Razorpay checkout URL
+ *   After payment:
+ *     payment.completed (Kafka) → PaymentEventListener → booking.confirmed (Kafka)
+ *     → seat-service (BOOKED) + notification-service (email/SMS)
+ */
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
@@ -21,6 +33,10 @@ public class BookingController {
 
     private final BookingService bookingService;
 
+    /*
+     * Creates a PENDING booking, persists passengers/tickets locally, then
+     * calls Payment Service via Feign to start checkout. Returns payment link.
+     */
     @PostMapping
     public ResponseEntity<PaymentInitiateResponse> createBooking(
             @Valid @RequestBody BookingRequest request,
@@ -71,6 +87,9 @@ public class BookingController {
         return ResponseEntity.ok(responses);
     }
 
+    /*
+     * Local status update only; does not publish Kafka events or release seats.
+     */
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BookingResponse> cancelBooking(
             @PathVariable Long id,

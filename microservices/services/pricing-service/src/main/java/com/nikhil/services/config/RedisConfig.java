@@ -25,10 +25,19 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/*
+ * Redis-backed Spring Cache for pricing-service fare endpoints.
+ *
+ * Paired with @EnableCaching on PricingServiceApplication. Cache names "fares" and
+ * "faresByFlight" use a 2-minute TTL because airlines may reprice frequently.
+ * sortedListKeyGenerator keeps list-parameter cache keys stable (order-independent).
+ * errorHandler logs Redis failures and falls through to the DB so pricing stays available.
+ */
 @Slf4j
 @Configuration
 public class RedisConfig implements CachingConfigurer {
 
+    /** Builds RedisCacheManager with JSON value serialization and per-cache TTL overrides. */
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
         ObjectMapper mapper = new ObjectMapper();

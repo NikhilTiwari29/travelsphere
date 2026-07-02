@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/*
+ * Read/update endpoints for tickets stored in Booking Service DB.
+ * Tickets are generated at booking creation; confirmation is driven by
+ * payment.completed Kafka events, not by these endpoints.
+ */
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor

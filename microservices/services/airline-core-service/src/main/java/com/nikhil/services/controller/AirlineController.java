@@ -14,6 +14,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST API for airline master data (carriers, alliances, status).
+ * Gateway: /api/airlines/** (JWT); GET /api/airlines list requires ROLE_SYSTEM_ADMIN.
+ * Feign callers: flight-ops, ancillary, booking, seat-service for enrichment and ownership.
+ * No outbound Feign; headquartersCityId references location-service by ID only.
+ */
 @RestController
 @RequestMapping("/api/airlines")
 @RequiredArgsConstructor
@@ -32,6 +38,10 @@ public class AirlineController {
 
 
 
+    /**
+     * Owner lookup used by flight-ops, ancillary, and other services via Feign.
+     * Gateway forwards X-User-Id from JWT on internal service-to-service calls.
+     */
     @GetMapping("/admin")
     public ResponseEntity<AirlineResponse> getAirlineByOwner(
             @RequestHeader("X-User-Id") Long userId) {

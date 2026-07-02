@@ -585,7 +585,7 @@ spring:
 microservices/
 ├── pom.xml                          # Root parent POM — version management
 ├── common-lib/                      # Shared DTOs, enums, events, exceptions
-│   └── src/main/java/com/zosh/common_lib/
+│   └── src/main/java/com/nikhil/common_lib/
 │       ├── dto/                     # Shared data transfer objects
 │       ├── embeddable/              # JPA embeddables (ContactInfo, Address, GeoCode)
 │       ├── enums/                   # All shared enums (BookingStatus, CabinClassType, etc.)

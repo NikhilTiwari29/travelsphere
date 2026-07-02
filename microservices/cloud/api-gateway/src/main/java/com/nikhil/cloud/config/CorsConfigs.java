@@ -8,9 +8,24 @@ import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
+/**
+ * CORS configuration for the API Gateway.
+ *
+ * Allows trusted frontend origins (Vercel deployments and local dev) to call
+ * the gateway with credentials and read the Authorization response header.
+ */
 @Configuration
 public class CorsConfigs {
 
+    /*
+     * Registers a servlet-based CORS filter for Spring Cloud Gateway MVC.
+     *
+     * Called by:
+     * Spring Boot during startup when building the servlet filter chain.
+     *
+     * Purpose:
+     * Allows trusted frontend origins to call the Gateway and read auth headers.
+     */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
@@ -30,6 +45,6 @@ public class CorsConfigs {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
 
-        return new CorsFilter(source);  // ✅ Servlet-based, works with Gateway MVC
+        return new CorsFilter(source);  // Servlet-based filter required for Gateway MVC.
     }
 }

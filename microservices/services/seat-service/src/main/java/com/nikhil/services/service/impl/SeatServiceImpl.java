@@ -23,6 +23,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/*
+ * Generates and manages template Seat rows from SeatMap dimensions.
+ *
+ * Request Flow
+ * ------------
+ * SeatMapServiceImpl.createSeatMap → generateSeats → SeatRepository
+ *
+ * Seats are cloned into SeatInstances when a flight instance is provisioned.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -33,6 +42,10 @@ public class SeatServiceImpl implements SeatService {
     private final CabinClassRepository cabinClassRepository;
 
 
+    /*
+     * Builds row/column grid from SeatMap layout; one Seat per physical position.
+     * Idempotent guard rejects duplicate generation for the same map.
+     */
     public void generateSeats(Long seatMapId
     ) throws Exception {
 

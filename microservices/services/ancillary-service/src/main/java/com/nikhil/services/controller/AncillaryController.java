@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * CRUD for airline-level ancillary product definitions (insurance, lounge, etc.).
+ * Gateway: /api/ancillaries/** (JWT). booking-service AncillaryClient reads offerings.
+ * Resolves airlineId from X-User-Id via AirlineIntegrationService → airline-core Feign.
+ */
 @RestController
 @RequestMapping("/api/ancillaries")
 @RequiredArgsConstructor

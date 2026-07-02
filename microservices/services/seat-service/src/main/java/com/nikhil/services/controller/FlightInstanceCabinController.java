@@ -11,6 +11,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/*
+ * REST API for cabin-level inventory on a specific flight instance.
+ *
+ * Gateway route: /api/flight-instance-cabins/** → seat-service (JWT required).
+ * Also provisioned asynchronously via flight-instance-created Kafka event
+ * from flight-ops-service when a new flight instance is published.
+ *
+ * FlightInstanceCabin aggregates SeatInstances for one cabin on one flight.
+ */
 @RestController
 @RequestMapping("/api/flight-instance-cabins")
 @RequiredArgsConstructor
@@ -18,6 +27,9 @@ public class FlightInstanceCabinController {
 
     private final FlightInstanceCabinService flightInstanceCabinService;
 
+    /*
+     * Manual provisioning of cabin inventory; Kafka path preferred for new instances.
+     */
     @PostMapping
     public ResponseEntity<FlightInstanceCabinResponse> createFlightInstanceCabin(
             @Valid @RequestBody FlightInstanceCabinRequest request) throws Exception {
@@ -31,6 +43,9 @@ public class FlightInstanceCabinController {
         return ResponseEntity.ok(flightInstanceCabinService.getFlightInstanceCabinById(id));
     }
 
+    /*
+     * Resolves cabin bucket for a flight instance + cabin class pair.
+     */
     @GetMapping("/flight-instance/{flightInstanceId}/cabin-class/{cabinClassId}")
     public ResponseEntity<?> getByFlightInstanceIdAndCabinClassId(
             @PathVariable Long cabinClassId,

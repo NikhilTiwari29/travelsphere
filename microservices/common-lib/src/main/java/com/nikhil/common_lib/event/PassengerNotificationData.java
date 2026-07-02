@@ -5,6 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Per-passenger slice embedded in {@link BookingConfirmedEvent#passengers}.
+ *
+ * Built by booking-service from Passenger and Ticket entities; consumed by
+ * notification-service for ticket details in email/SMS templates.
+ */
 @Data
 @Builder
 @NoArgsConstructor

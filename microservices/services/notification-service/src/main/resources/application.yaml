@@ -1,20 +1,25 @@
-# ── Server ─────────────────────────────────────────────────────────────────────
+# Notification Service is event-driven — it does not receive booking HTTP calls directly.
+# It consumes booking.confirmed from Kafka and sends email/SMS to passengers.
 server:
+  # Fixed port for local dev; not exposed through API Gateway in current architecture.
   port: 8094
-
 
 spring:
   application:
+    # Registered with Eureka; other services do not call this synchronously today.
     name: notification-service
 
   config:
+    # Pulls SMTP/Twilio secrets from Config Server when deployed.
     import: optional:configserver:http://localhost:8888
 
-  # ── Kafka Consumer ──────────────────────────────────────────────────────────
+  # Kafka consumer: booking-service publishes BookingConfirmedEvent after payment succeeds.
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
+      # Consumer group ensures each message is processed once per notification instance.
       group-id: notification-service-group
+      # Read from beginning when no committed offset exists (first deployment).
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer

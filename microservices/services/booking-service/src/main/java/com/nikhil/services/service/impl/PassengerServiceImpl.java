@@ -14,6 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+/*
+ * Local passenger persistence used during booking creation.
+ * Deduplicates by passport or email/phone/DOB before linking to a booking.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -31,6 +35,10 @@ public class PassengerServiceImpl implements PassengerService {
         return PassengerMapper.toResponse(saved);
     }
 
+    /*
+     * Called from BookingServiceImpl for each passenger in the request.
+     * Updates existing record or inserts a new one tied to primaryUserId.
+     */
     @Override
     @Transactional
     public Passenger findOrCreatePassengerEntity(

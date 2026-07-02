@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
+/*
+ * Twilio SMS adapter for booking confirmation.
+ * Same BookingConfirmedEvent as EmailService; gated by twilio.enabled flag.
+ */
 @Service
 @Slf4j
 public class SmsService {
@@ -41,6 +45,10 @@ public class SmsService {
         }
     }
 
+    /*
+     * Sends compact confirmation SMS when Twilio is enabled and contactPhone
+     * is present on the Kafka event from Booking Service.
+     */
     public void sendBookingConfirmation(BookingConfirmedEvent event) {
         if (!enabled) {
             log.debug("SMS skipped (disabled): booking={}", event.getBookingReference());

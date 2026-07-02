@@ -1,3 +1,4 @@
+# Registers location-service so Gateway and Feign clients can resolve city/airport APIs.
 eureka:
   instance:
     prefer-ip-address: true
@@ -10,9 +11,11 @@ spring:
   application:
     name: location-service
 
+  # Loads shared database/cache configuration from Config Server when available.
   config:
     import: optional:configserver:http://localhost:8888
 
+  # Redis backs Spring Cache for airport and city lookup data.
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -26,6 +29,7 @@ spring:
   cache:
     type: redis
 
+# Metadata exposed through Actuator info.
 info:
   app:
     name: ${spring.application.name}
@@ -33,6 +37,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Health/info endpoints confirm location-service readiness.
 management:
   endpoints:
     web:

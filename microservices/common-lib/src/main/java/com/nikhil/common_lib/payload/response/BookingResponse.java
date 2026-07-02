@@ -11,6 +11,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Booking details returned by booking-service after create or lookup.
+ *
+ * Aggregates flight summary, passengers, seats, fare breakdown, payment link/status,
+ * and {@link com.nikhil.common_lib.enums.BookingStatus}. Used by the frontend to
+ * display booking state and drive the payment step.
+ */
 @Data
 @Builder
 @NoArgsConstructor

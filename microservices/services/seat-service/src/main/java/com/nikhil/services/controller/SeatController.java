@@ -13,6 +13,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/*
+ * REST API for template Seat rows belonging to a SeatMap.
+ *
+ * Gateway route: /api/seats/** → seat-service (JWT required).
+ * Seats are static layout definitions; runtime availability lives in SeatInstance.
+ *
+ * Entity chain: SeatMap → Seat → SeatInstance (cloned per flight instance).
+ */
 @RestController
 @RequestMapping("/api/seats")
 @RequiredArgsConstructor

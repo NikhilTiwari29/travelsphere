@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * CRUD for flight route definitions (master data, not dated instances).
+ * Gateway route: /api/flights/** → flight-ops-service (JWT required).
+ * Also consumed by booking-service via FlightClient Feign for batch lookups.
+ * Data flow: airline owner (X-User-Id) → local Flight DB; aircraft/airport IDs are cross-service refs.
+ */
 @RestController
 @RequestMapping("/api/flights")
 @RequiredArgsConstructor
@@ -23,6 +29,10 @@ public class FlightController {
 
     private final FlightService flightService;
 
+    /**
+     * Creates a route for the authenticated airline owner.
+     * Persists Flight entity; validates airports/aircraft via stored IDs only.
+     */
     @PostMapping
     public ResponseEntity<FlightResponse> createFlight(
             @RequestHeader("X-User-Id") Long userId,
@@ -39,6 +49,9 @@ public class FlightController {
                 .body(flightService.createFlights(userId, requests));
     }
 
+    /**
+     * Batch lookup used by booking-service Feign client during checkout enrichment.
+     */
     @PostMapping("/batch")
     public ResponseEntity<Map<Long, FlightResponse>> getFlightsByIds(@RequestBody List<Long> ids) {
         return ResponseEntity.ok(flightService.getFlightsByIds(ids));

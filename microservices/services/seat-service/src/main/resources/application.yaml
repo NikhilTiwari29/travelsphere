@@ -1,11 +1,16 @@
+# Seat Service owns cabin classes, seat maps, and per-flight seat inventory.
 server:
   port: 5005
 
 spring:
   application:
     name: seat-service
+
+  # Imports shared configuration from Config Server when available.
   config:
     import: optional:configserver:http://localhost:8888
+
+  # Local datasource is used when Config Server does not override these values.
   datasource:
     url: jdbc:mysql://localhost:3306/airline_seat_db
     username: root
@@ -13,6 +18,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+  # Consumes flight-instance-created and booking events to maintain seat inventory.
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -23,12 +30,14 @@ spring:
       properties:
         spring.json.trusted.packages: com.nikhil.common_lib.event
   cloud:
+    # Feign circuit breakers protect calls to airline-core-service.
     openfeign:
       circuitbreaker:
         enabled: true
         group:
           enabled: true
 
+# Resilience4j controls fallback behavior for Seat Service Feign dependencies.
 resilience4j:
   circuitbreaker:
     configs:
@@ -56,6 +65,7 @@ resilience4j:
         failure-rate-threshold: 60
         wait-duration-in-open-state: 20s
 
+# Registers seat-service with Eureka and enables service-name based calls.
 eureka:
   instance:
     prefer-ip-address: true
@@ -64,6 +74,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
 
+# Metadata exposed through Actuator info.
 info:
   app:
     name: ${spring.application.name}
@@ -71,6 +82,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Exposes health and circuit-breaker state for seat inventory operations.
 management:
   endpoints:
     web:

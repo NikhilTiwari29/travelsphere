@@ -14,6 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST API for airport reference data (IATA codes, city linkage).
+ * Gateway: /api/airports/** (JWT); POST requires ROLE_SYSTEM_ADMIN.
+ * Feign callers: flight-ops-service, ancillary-service for response enrichment.
+ */
 @RestController
 @RequestMapping("/api/airports")
 @RequiredArgsConstructor
@@ -34,8 +39,10 @@ public class AirportController {
         return ResponseEntity.status(HttpStatus.CREATED).body(airportService.createBulkAirports(requests));
     }
 
+    /**
+     * Primary Feign endpoint; flight-ops LocationClient calls GET /api/airports/{id}.
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<AirportResponse> getAirportById(@PathVariable Long id) throws AirportException {
         return ResponseEntity.ok(airportService.getAirportById(id));
     }
 

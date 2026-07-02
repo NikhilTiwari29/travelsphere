@@ -21,6 +21,11 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * City CRUD, search, and validation with Redis caching.
+ * Gateway /api/cities/** → this service. Airports reference cities via local FK.
+ * Data flow: CityRequest → CityRepository → CityResponse; no outbound Feign.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

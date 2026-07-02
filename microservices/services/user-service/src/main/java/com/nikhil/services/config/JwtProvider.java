@@ -13,12 +13,27 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+/*
+ * JWT token creation for authenticated users after login/signup.
+ *
+ * Architecture Fit
+ * ----------------
+ * Signs tokens here; api-gateway JwtUtil validates them using the same
+ * JwtConstant.SECRET_KEY on protected routes (/api/users/**, etc.).
+ *
+ * Token Claims: email, authorities (roles), userId, issuedAt, expiration (24h)
+ */
 @Service
 public class JwtProvider {
 
     private final SecretKey key = Keys.hmacShaKeyFor(
             JwtConstant.SECRET_KEY.getBytes());
 
+    /*
+     * Purpose: Create signed JWT for authenticated user.
+     * Called By: AuthServiceImpl login/signup
+     * Flow: authorities → claims (email, roles, userId) → sign → compact token
+     */
     public String generateToken(Authentication auth, Long userId) {
         Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
         String roles = populateAuthorities(authorities);

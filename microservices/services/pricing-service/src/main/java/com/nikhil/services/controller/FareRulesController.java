@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST API for change/cancellation rules attached to fares.
+ * Gateway route: /api/fare-rules/** → pricing-service (JWT required).
+ * Queried by booking UI when displaying fare flexibility options.
+ */
 @RestController
 @RequestMapping("/api/fare-rules")
 @RequiredArgsConstructor

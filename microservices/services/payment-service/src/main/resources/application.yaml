@@ -2,12 +2,15 @@ spring:
   application:
     name: payment-service
 
+  # Loads shared payment-service configuration from Config Server when available.
   config:
     import: optional:configserver:http://localhost:8888
 
+  # Publishes payment.completed and payment.failed events consumed by Booking Service.
   kafka:
     bootstrap-servers: localhost:9092
 
+  # Feign circuit breakers protect calls back to User Service during payment flows.
   cloud:
     openfeign:
       circuitbreaker:
@@ -15,6 +18,7 @@ spring:
         group:
           enabled: true
 
+# Razorpay settings are used when creating hosted payment links.
 razorpay:
   api:
     key: your razorpay key
@@ -22,10 +26,12 @@ razorpay:
   callback:
     base-url: http://localhost:5173
 
+# Stripe settings support alternate payment gateway integration.
 stripe:
   api:
     key: your stripe api key
 
+# Resilience4j protects Feign calls used during payment processing.
 resilience4j:
   circuitbreaker:
     configs:
@@ -52,6 +58,7 @@ resilience4j:
         base-config: default
         failure-rate-threshold: 40
 
+# Registers payment-service with Eureka and discovers other services.
 eureka:
   instance:
     prefer-ip-address: true
@@ -60,6 +67,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
 
+# Metadata exposed through Actuator info.
 info:
   app:
     name: ${spring.application.name}
@@ -67,6 +75,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Exposes health and circuit-breaker status for payment operations.
 management:
   endpoints:
     web:

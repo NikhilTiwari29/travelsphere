@@ -10,6 +10,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Traveller on a {@link Booking} — PII and special-service flags owned by booking-service.
+ *
+ * Linked ManyToOne to Booking; one passenger may map to one {@link Ticket} when issued.
+ * primaryUserId references user-service for saved-traveller profiles; passport/email normalized
+ * in {@link #normalizeData()} before persist.
+ */
 @Entity
 @Table(name = "passengers")
 @Data

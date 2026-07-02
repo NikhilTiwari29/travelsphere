@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/** JPA repository for {@link Ticket}; custom fetch query loads booking + passenger for e-ticket PDFs. */
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
@@ -23,6 +24,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     boolean existsByTicketNumber(String ticketNumber);
 
+    /** Loads all tickets for a booking with booking and passenger graphs for issuance / reprint. */
     @Query("SELECT t FROM Ticket t " +
             "LEFT JOIN FETCH t.booking " +
             "LEFT JOIN FETCH t.passenger " +

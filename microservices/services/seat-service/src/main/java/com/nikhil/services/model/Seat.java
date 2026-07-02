@@ -12,6 +12,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+/*
+ * Template seat row within a SeatMap layout.
+ *
+ * Part of: SeatMap → Seat → SeatInstance (runtime copy per flight instance).
+ * Holds static attributes (number, type, premium flags); availability and
+ * booking state live on SeatInstance. Exposed via /api/seats/** gateway route.
+ */
 @Entity
 @Table(name = "seats")
 @Getter
@@ -127,6 +134,9 @@ public class Seat {
     @Column(name = "version")
     private Long version;
 
+    /*
+     * Computes base + premium surcharge for display and pricing helpers.
+     */
     public Double getTotalPrice() {
         Double total = basePrice != null ? basePrice : 0.0;
         if (premiumSurcharge != null) {
@@ -135,6 +145,9 @@ public class Seat {
         return total;
     }
 
+    /*
+     * True when seat is active, available, and not blocked in the template map.
+     */
     public boolean isBookable() {
         return isActive && isAvailable && !isBlocked;
     }

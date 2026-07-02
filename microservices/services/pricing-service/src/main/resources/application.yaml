@@ -1,3 +1,4 @@
+# Registers pricing-service so Gateway, Booking, and Flight Ops can resolve fare APIs.
 eureka:
   instance:
     prefer-ip-address: true
@@ -10,9 +11,11 @@ spring:
   application:
     name: pricing-service
 
+  # Loads shared database/cache configuration from Config Server when available.
   config:
     import: optional:configserver:http://localhost:8888
 
+  # Redis backs Spring Cache for fare, fare-rule, and baggage-policy reads.
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -26,6 +29,7 @@ spring:
   cache:
     type: redis
 
+# Metadata exposed through Actuator info.
 info:
   app:
     name: ${spring.application.name}
@@ -33,6 +37,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Health/info endpoints confirm pricing-service readiness.
 management:
   endpoints:
     web:

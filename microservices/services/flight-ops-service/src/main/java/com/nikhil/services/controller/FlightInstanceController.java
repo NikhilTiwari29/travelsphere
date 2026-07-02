@@ -16,6 +16,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manages dated flight occurrences (instances) tied to routes and schedules.
+ * Gateway route: /api/flight-instances/** → flight-ops-service (JWT required).
+ * booking-service calls POST /batch via FlightClient; seat-service reacts to Kafka create events.
+ * Feign enrichment: airline-core-service (airline/aircraft), location-service (airports).
+ */
 @RestController
 @RequestMapping("/api/flight-instances")
 @RequiredArgsConstructor
@@ -23,8 +29,11 @@ public class FlightInstanceController {
 
     private final FlightInstanceService flightInstanceService;
 
+    /**
+     * Creates an instance, publishes FlightInstanceCreatedEvent, and triggers seat map setup.
+     * Resolves airline from X-User-Id via airline-core-service Feign.
+     */
     @PostMapping
-    public ResponseEntity<FlightInstanceResponse> createFlightInstance(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FlightInstanceRequest request) throws Exception {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -32,8 +41,10 @@ public class FlightInstanceController {
                         .createFlightInstanceWithCabins(userId,request));
     }
 
+    /**
+     * Bulk fetch by IDs; booking-service FlightClient uses this for booking detail screens.
+     */
     @PostMapping("/batch")
-    public ResponseEntity<Map<Long, FlightInstanceResponse>> getFlightInstancesByIds(@RequestBody List<Long> ids) {
         return ResponseEntity.ok(flightInstanceService.getFlightInstancesByIds(ids));
     }
 

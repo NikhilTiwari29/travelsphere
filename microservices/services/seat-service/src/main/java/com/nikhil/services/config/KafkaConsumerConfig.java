@@ -14,12 +14,26 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * Kafka listener infrastructure for seat-service-group.
+ *
+ * Consumed Topics
+ * ---------------
+ * flight-instance-created  → FlightInstanceEventConsumer (from flight-ops-service)
+ * booking.confirmed        → BookingEventListener (from booking-service)
+ *
+ * JsonDeserializer trusts com.nikhil.common_lib.event payloads from both producers.
+ */
 @Configuration
 public class KafkaConsumerConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    /*
+     * Builds the shared consumer factory for seat-service-group.
+     * AUTO_OFFSET_RESET earliest replays from topic start on first join.
+     */
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
@@ -33,6 +47,9 @@ public class KafkaConsumerConfig {
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
+    /*
+     * Container factory wired to @KafkaListener methods in the event package.
+     */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =

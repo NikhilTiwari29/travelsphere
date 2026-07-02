@@ -14,6 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
+/*
+ * External Razorpay gateway adapter used during payment initiation and verify.
+ * Embeds payment_id in link notes so verify can map gateway payment → local row.
+ */
 @Service
 @RequiredArgsConstructor
 public class RazorpayService {
@@ -27,6 +31,10 @@ public class RazorpayService {
     @Value("${razorpay.callback.base-url}")
     private String callbackBaseUrl;
 
+    /*
+     * Creates hosted checkout URL returned to Booking Service via initiatePayment.
+     * Notes carry payment_id for the later verify → Kafka publish step.
+     */
     public PaymentLinkResponse createPaymentLink(
             UserDTO user,
             Payment payment) throws PaymentException {
@@ -98,6 +106,7 @@ public class RazorpayService {
         }
     }
 
+    /** Called from verifyPayment; status "captured" triggers payment.completed. */
     public JSONObject fetchPaymentDetails(String paymentId) throws PaymentException {
         if (!isConfigured()) throw new PaymentException("razorpay not configured. please setup api key and secret");
 

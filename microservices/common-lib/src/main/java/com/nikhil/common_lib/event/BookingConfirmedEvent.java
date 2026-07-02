@@ -8,6 +8,18 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Kafka event published after a booking is confirmed post-payment.
+ *
+ * Topic: {@code booking.confirmed}
+ * Producer: booking-service ({@code BookingEventProducer})
+ * Consumers:
+ *   - notification-service — sends confirmation email/SMS
+ *   - seat-service — marks seat instances as BOOKED
+ *
+ * Payload is a denormalized snapshot (booking, flight, fare, payment, passengers)
+ * so consumers do not need synchronous Feign calls to enrich notifications.
+ */
 @Data
 @Builder
 @NoArgsConstructor

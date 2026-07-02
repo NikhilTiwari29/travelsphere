@@ -7,6 +7,12 @@ import lombok.*;
 
 import java.time.Instant;
 
+/**
+ * JPA entity for a sellable fare bucket on a flight + cabin class combination.
+ * flightId references flight-ops-service; cabinClassId references seat-service.
+ * Owns 1:1 BaggagePolicy and FareRules in this bounded context. Used by search
+ * (lowest price), booking (fareId selection), and airline fare management UIs.
+ */
 @Entity
 @Table(name = "fares")
 @Getter

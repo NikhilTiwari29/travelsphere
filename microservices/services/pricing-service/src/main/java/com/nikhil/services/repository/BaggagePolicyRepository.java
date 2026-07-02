@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Persistence for BaggagePolicy rows; supports lookup by fareId or airlineId.
+ */
 public interface BaggagePolicyRepository extends JpaRepository<BaggagePolicy, Long> {
 
     Optional<BaggagePolicy> findByFareId(Long fareId);

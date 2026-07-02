@@ -11,12 +11,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.Map;
 
+/*
+ * Feign client used by Booking Service to read flight and flight-instance
+ * details from Flight Ops Service.
+ */
 @FeignClient(name = "flight-ops-service", fallback = FlightClientFallback.class)
 public interface FlightClient
 {
+    /** Validates flight and resolves airlineId during booking creation. */
     @GetMapping("/api/flights/{id}")
     FlightResponse getFlightById(@PathVariable Long id);
 
+    /** Flight schedule/airport data for booking.confirmed enrichment. */
     @GetMapping("/api/flight-instances/{id}")
     FlightInstanceResponse getFlightInstanceResponse(@PathVariable Long id);
 

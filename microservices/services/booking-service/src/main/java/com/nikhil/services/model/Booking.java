@@ -14,6 +14,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Root aggregate for a flight reservation stored in booking-service.
+ *
+ * Holds cross-service foreign keys (user, flight instance, fare, seats, ancillaries, payment)
+ * as Long IDs — enriched at read time via Feign, not JPA joins. Exposed at gateway /api/bookings/**.
+ * Publishes booking.confirmed to Kafka after payment.completed; passengers and tickets cascade here.
+ */
 @Entity
 @Getter
 @Setter

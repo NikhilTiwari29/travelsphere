@@ -30,6 +30,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+/**
+ * Manages recurring flight schedules and expands them into concrete instances.
+ * Gateway: /api/flight-schedules/**. Delegates instance creation to FlightInstanceServiceImpl.
+ * Feign: LocationClient (airport labels), AirlineIntegrationService → airline-core-service.
+ */
 public class FlightScheduleServiceImpl implements FlightScheduleService {
 
     private final FlightScheduleRepository flightScheduleRepository;
@@ -39,6 +44,9 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
     private final LocationClient locationClient;
 
     @Override
+    /**
+     * Saves schedule, loops operating days, creates instances via FlightInstanceService.
+     */
     public FlightScheduleResponse createFlightSchedule(Long userId, FlightScheduleRequest request) throws Exception {
         Flight flight = flightRepository.findById(request.getFlightId())
                 .orElseThrow(() -> new EntityNotFoundException(

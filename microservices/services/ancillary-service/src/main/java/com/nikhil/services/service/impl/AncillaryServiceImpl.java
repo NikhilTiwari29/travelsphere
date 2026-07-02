@@ -18,6 +18,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Business logic for airline-scoped ancillary product definitions.
+ * Gateway callers via AncillaryController; booking-service reads via Feign.
+ * Feign: AirlineIntegrationService resolves owner → airlineId. Local DB only for writes.
+ */
 @Service
 @RequiredArgsConstructor
 public class AncillaryServiceImpl implements AncillaryService {

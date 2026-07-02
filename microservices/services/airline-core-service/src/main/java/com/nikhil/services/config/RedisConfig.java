@@ -27,10 +27,18 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+/*
+ * Redis-backed Spring Cache for airline-core-service reference lookups.
+ *
+ * Cache regions cover airlines (by id, owner, IATA, alliance) and aircraft models with 2–6 h TTL.
+ * sortedListKeyGenerator normalizes collection-based keys for batch IATA lookups.
+ * errorHandler prevents Redis outages from breaking airline API responses served via the gateway.
+ */
 @Slf4j
 @Configuration
 public class RedisConfig implements CachingConfigurer {
 
+    /** Configures per-cache TTLs for airlines* and aircrafts* @Cacheable service methods. */
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
         ObjectMapper mapper = new ObjectMapper();

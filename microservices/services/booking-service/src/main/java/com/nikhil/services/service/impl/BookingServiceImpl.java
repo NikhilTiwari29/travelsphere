@@ -36,6 +36,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/*
+ * Core booking orchestrator: persists booking state locally and coordinates
+ * pricing, inventory, and payment through Feign clients.
+ *
+ * End-to-end flow:
+ *   createBooking → save PENDING booking → PaymentClient.initiatePayment
+ *   Payment verify (payment-service) → payment.completed Kafka
+ *   PaymentEventListener → CONFIRMED + BookingEventProducer → booking.confirmed
+ *
+ * Read paths batch Feign calls (pricing, flight-ops, payment, seat, ancillary)
+ * to hydrate BookingResponse DTOs without N+1 remote calls.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -53,6 +65,11 @@ public class BookingServiceImpl implements BookingService {
     private final AirlineClient airlineClient;
 
 
+    /*
+     * Synchronous orchestration step before async payment confirmation.
+     * Feign: FlightClient (airlineId), Pricing/Seat/Ancillary (totals),
+     * PaymentClient (checkout). Booking stays PENDING until Kafka event.
+     */
     @Override
     @Transactional
     public PaymentInitiateResponse createBooking(BookingRequest request, Long userId)
@@ -292,6 +309,10 @@ public class BookingServiceImpl implements BookingService {
         return reference;
     }
 
+    /*
+     * Batch enrichment for airline dashboard: one Feign call per downstream
+     * service instead of per-booking calls in convertBookingResponse.
+     */
     private List<BookingResponse> enrichBatch(List<Booking> bookings) {
         if (bookings.isEmpty()) return Collections.emptyList();
 
@@ -359,6 +380,9 @@ public class BookingServiceImpl implements BookingService {
         }).collect(Collectors.toList());
     }
 
+    /*
+     * Single-booking enrichment via Feign (payment, fare, flight, seats, ancillaries).
+     */
     private BookingResponse convertBookingResponse(Booking booking)  {
         List<FlightCabinAncillaryResponse> ancillaryResponses=ancillaryClient.getAllByIds(
                 booking.getAncillaryIds()

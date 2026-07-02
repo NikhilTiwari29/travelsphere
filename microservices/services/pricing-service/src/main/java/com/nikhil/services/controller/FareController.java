@@ -15,6 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST API for fare products tied to flights and cabin classes.
+ * Gateway route: /api/fares/** → pricing-service (JWT required).
+ * Internal callers: flight-ops-service (search), booking-service (price validation).
+ * Data flow: request DTO → FareServiceImpl → FareRepository → FareResponse.
+ */
 @RestController
 @RequestMapping("/api/fares")
 @RequiredArgsConstructor
@@ -102,8 +108,10 @@ public class FareController {
         return ResponseEntity.ok(fareService.getFaresByIds(ids));
     }
 
+    /**
+     * Internal search endpoint consumed by flight-ops-service PricingClient Feign.
+     */
     @PostMapping("/search")
-    public ResponseEntity<Map<Long, FareResponse>> getLowestFarePerFlight(
             @RequestBody List<Long> flightIds,
             @RequestParam Long cabinClassId) {
         Map<Long, FareResponse> res= fareService.getLowestFarePerFlight(flightIds, cabinClassId);
@@ -111,8 +119,10 @@ public class FareController {
         return ResponseEntity.ok(res);
     }
 
+    /**
+     * Per-flight lowest fare; flight-ops calls once per search result when cabin IDs differ.
+     */
     @GetMapping("/lowest/flight/{flightId}/cabin-class/{cabinClassId}")
-    public ResponseEntity<FareResponse> getLowestFareForFlightAndCabinClass(
             @PathVariable Long flightId,
             @PathVariable Long cabinClassId) {
         return ResponseEntity.ok(

@@ -36,6 +36,12 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional
+/**
+ * Lifecycle manager for dated flight instances (create, query, update, delete).
+ * Callers: Gateway /api/flight-instances/**, booking-service FlightClient batch API.
+ * Feign: AirlineClient (owner airline, aircraft), LocationClient (airports).
+ * On create: saves locally, publishes Kafka event consumed by seat-service.
+ */
 public class FlightInstanceServiceImpl implements FlightInstanceService {
 
     private final FlightInstanceRepository flightInstanceRepository;
@@ -44,6 +50,9 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
     private final FlightInstanceEventProducer flightInstanceEventProducer;
     private final LocationClient locationClient;
 
+    /**
+     * Creates instance, emits Kafka event for seat-service, returns enriched response.
+     */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "flightInstances", allEntries = true)
@@ -147,6 +156,9 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
         flightInstanceRepository.delete(fi);
     }
 
+    /**
+     * Batch fetch with Feign-cached airline/aircraft/airport enrichment for booking flows.
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<Long, FlightInstanceResponse> getFlightInstancesByIds(List<Long> ids) {

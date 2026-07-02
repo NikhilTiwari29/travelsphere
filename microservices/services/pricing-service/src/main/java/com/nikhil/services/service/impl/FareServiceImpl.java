@@ -22,6 +22,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Fare CRUD and search logic for pricing-service.
+ * Gateway: /api/fares/** (JWT). Feign callers: flight-ops-service PricingClient,
+ * booking-service PricingClient during checkout. No outbound Feign; stores flightId
+ * and cabinClassId as cross-service references. Redis caches individual fare lookups.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -146,6 +152,9 @@ public class FareServiceImpl implements FareService {
                 .collect(Collectors.toMap(Fare::getId, FareMapper::toResponse));
     }
 
+    /**
+     * Batch lowest fare per flight; invoked by flight-ops search via POST /api/fares/search.
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<Long, FareResponse> getLowestFarePerFlight(List<Long> flightIds, Long cabinClassId) {
@@ -174,6 +183,9 @@ public class FareServiceImpl implements FareService {
         return result;
     }
 
+    /**
+     * Single lowest fare; used when each instance may map to a different cabinClassId.
+     */
     @Override
     public FareResponse getLowestFareForFlightAndCabin(Long flightId, Long cabinClassId) {
 

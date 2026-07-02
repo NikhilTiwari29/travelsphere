@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Insurance coverage tiers nested under ancillary products.
+ * Gateway: /api/insurance-coverages/** (JWT). Returned embedded in ancillary detail responses.
+ */
 @RestController
 @RequestMapping("/api/insurance-coverages")
 @RequiredArgsConstructor

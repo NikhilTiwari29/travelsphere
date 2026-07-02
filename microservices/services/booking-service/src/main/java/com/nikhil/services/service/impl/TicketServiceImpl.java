@@ -17,6 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/*
+ * Generates and manages per-passenger tickets in Booking Service DB.
+ * Ticket numbers are included later in booking.confirmed for notifications.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,6 +28,10 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
 
+    /*
+     * Invoked during createBooking before payment; status BOOKED until
+     * booking is cancelled via payment.failed or manual cancel endpoints.
+     */
     @Override
     @Transactional
     public List<Ticket> generateTicketsForBooking(Booking booking) {

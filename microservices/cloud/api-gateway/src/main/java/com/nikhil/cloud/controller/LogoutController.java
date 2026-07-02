@@ -30,6 +30,15 @@ public class LogoutController {
     private final JwtUtil jwtUtil;
     private final TokenBlacklistService blacklistService;
 
+    /*
+     * Revokes the caller's JWT by storing it in Redis until it naturally expires.
+     *
+     * Called by:
+     * Client → Gateway → POST /auth/logout
+     *
+     * Next step:
+     * RouteConfig.jwtAuthFilter() rejects future requests carrying this token.
+     */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(
             @RequestHeader(value = JwtConstant.JWT_HEADER, required = false) String authHeader) {

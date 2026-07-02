@@ -10,29 +10,34 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
+/*
+ * Feign client to airline-core-service for airline and aircraft master data.
+ * Callers: FlightSearchServiceImpl, FlightInstanceServiceImpl, FlightScheduleServiceImpl.
+ * Gateway exposes /api/airlines/** publicly; this client uses internal Eureka routing.
+ * Resolves owner airline (X-User-Id), IATA/alliance filters, and aircraft seat counts.
+ */
 @FeignClient(name = "airline-core-service", fallback = AirlineClientFallback.class)
 public interface AirlineClient {
 
+    /** Resolves airline owned by authenticated user; used for airline-scoped writes. */
     @GetMapping("/api/airlines/admin")
     AirlineResponse getAirlineByOwner(@RequestHeader("X-User-Id") Long userId);
 
+    /** Enriches search/instance responses with airline branding and alliance. */
     @GetMapping("/api/airlines/{airlineId}")
     AirlineResponse getAirlineById(@PathVariable Long airlineId);
 
+    /** Fetches seat capacity and model when creating instances from schedules. */
     @GetMapping("/api/aircrafts/{id}")
     AircraftResponse getAircraftById(@PathVariable("id") Long id);
 
     /**
-     * Bulk-resolves a list of IATA codes to {@link AirlineResponse} objects.
-     * Used during flight search to translate airline filter codes to IDs.
+     * Bulk IATA → airline lookup for optional search filter (Phase 1 resolution).
      */
     @GetMapping("/api/airlines/by-iata")
     List<AirlineResponse> getAirlinesByIataCodes(@RequestParam("codes") List<String> codes);
 
-    /**
-     * Returns all airlines belonging to the given alliance name.
-     * Used during flight search to apply the alliance filter.
-     */
+    /** Resolves alliance name to airline IDs for search filtering. */
     @GetMapping("/api/airlines/by-alliance")
     List<AirlineResponse> getAirlinesByAlliance(@RequestParam("alliance") String alliance);
 }

@@ -5,6 +5,13 @@ import lombok.*;
 
 import java.util.List;
 
+/*
+ * Physical seat layout for one cabin class on an aircraft.
+ *
+ * Middle of the hierarchy: CabinClass (1) → SeatMap (1) → Seat (many).
+ * SeatServiceImpl.generateSeats() populates Seat rows from map dimensions.
+ * Exposed via /api/seat-maps/**; airlineId resolved via AirlineClient Feign.
+ */
 @Entity
 @Table(name = "seat_maps")
 @Getter

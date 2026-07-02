@@ -20,10 +20,17 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 import java.util.Map;
 
+/*
+ * Redis-backed Spring Cache for location-service airport and city endpoints.
+ *
+ * Long TTLs (2–6 h) suit rarely changing reference data exposed at /api/airports/** and /api/cities/**.
+ * errorHandler logs cache failures and lets @Cacheable methods fall through to JPA when Redis is down.
+ */
 @Slf4j
 @Configuration
 public class RedisConfig implements CachingConfigurer {
 
+    /** Registers airports*, cities*, and allAirports cache regions with JSON serialization. */
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
         ObjectMapper mapper = new ObjectMapper();

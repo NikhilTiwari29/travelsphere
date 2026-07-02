@@ -8,29 +8,25 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Feign client for the pricing-service.
- *
- * <p>Used during flight search to fetch the cheapest fare per flight
- * for a given cabin class, enabling price-range filtering across
- * the result page in a single network call.
+ * Feign client to pricing-service for fare lookup during flight search.
+ * Called by FlightSearchServiceImpl (not exposed via Gateway from flight-ops).
+ * Endpoints: POST /api/fares/search, GET /api/fares/lowest/flight/{id}/cabin-class/{id}.
+ * Fallback factory returns empty fares so search degrades gracefully on outage.
  */
 @FeignClient(name = "pricing-service", fallbackFactory = PricingClientFallbackFactory.class)
 public interface PricingClient {
 
     /**
-     * Returns a map of {@code flightId → cheapest FareResponse} for each flight
-     * that has at least one fare for the requested cabin class.
-     *
-     * <p>Flights with no fare for the given cabin class are absent from the map.
-     *
-     * @param flightIds  list of flight IDs to query
-     * @param cabinClassId the requested cabin class
+     * Batch lowest-fare map for a page of flights and one cabin class ID.
      */
     @PostMapping("/api/fares/search")
     Map<Long, FareResponse> getLowestFarePerFlight(
             @RequestBody List<Long> flightIds,
             @RequestParam("cabinClassId") Long cabinClassId);
 
+    /**
+     * Single flight + cabin lowest fare; used when aircraft-specific cabin IDs differ.
+     */
     @GetMapping("/api/fares/lowest/flight/{flightId}/cabin-class/{cabinClassId}")
     FareResponse getLowestFareForFlightAndCabinClass(
             @PathVariable Long flightId,

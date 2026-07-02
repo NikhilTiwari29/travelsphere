@@ -18,6 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/*
+ * Provisions seat inventory when Flight Ops publishes a new flight instance.
+ * Upstream: flight-instance-created → local SeatInstance rows (AVAILABLE).
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,14 @@ public class FlightInstanceEventConsumer {
     private final FlightInstanceCabinRepository flightInstanceCabinRepository;
     private final SeatInstanceRepository seatInstanceRepository;
 
+    /*
+     * Creates seat inventory for a newly generated flight instance.
+     *
+     * Event Flow:
+     * Flight Ops Service → flight-instance-created
+     *      ↓
+     * Seat Service creates FlightInstanceCabin and SeatInstance rows.
+     */
     @KafkaListener(topics = "flight-instance-created", groupId = "seat-service-group")
     @Transactional
     public void handleFlightInstanceCreated(FlightInstanceCreatedEvent event) {

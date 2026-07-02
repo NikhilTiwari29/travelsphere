@@ -1,71 +1,213 @@
+# ==========================================================
+# API Gateway
+#
+# Entry point for all client requests.
+#
+# Request Flow
+# Client
+#    ↓
+# API Gateway
+#    ↓
+# JWT Validation
+#    ↓
+# LoadBalancer (Eureka)
+#    ↓
+# Target Microservice
+# ==========================================================
+
 server:
+  # Gateway listens on this port.
+  # Clients communicate only with the gateway, not individual services.
   port: 5000
 
 spring:
   application:
+    # Unique service name registered with Eureka.
+    # Also used by Config Server to locate gateway-specific configuration.
     name: api-gateway
-  config:
-    import: optional:configserver:http://localhost:8888
 
+  config:
+    # Loads centralized configuration from Config Server.
+    #
+    # "optional:" allows the gateway to start even if
+    # Config Server is temporarily unavailable.
+    import: optional:configserver:http://localhost:8888
 
   data:
     redis:
+      # Redis is used by TokenBlacklistService.
+      # Logged-out JWTs are stored here so they cannot be reused.
       host: ${SPRING_DATA_REDIS_HOST:localhost}
+
+      # Redis server port.
       port: ${SPRING_DATA_REDIS_PORT:6379}
+
+      # Maximum time to wait for a Redis response.
       timeout: 2000ms
 
+# ==========================================================
+# Resilience4j
+#
+# Protects the gateway from downstream service failures.
+#
+# Request Flow
+# Gateway
+#      ↓
+# Circuit Breaker
+#      ↓
+# LoadBalancer
+#      ↓
+# Target Service
+#
+# If the service is unavailable, the request is
+# forwarded to the configured fallback endpoint.
+# ==========================================================
+
 resilience4j:
+
   timelimiter:
+
     configs:
+
       default:
+
+        # Maximum time allowed for a downstream service
+        # to respond before timing out.
         timeout-duration: 5s
+
+        # Cancels the running task after timeout.
         cancel-running-future: true
+
     instances:
+
+      # Booking may call multiple downstream services,
+      # so it is allowed to run slightly longer.
       booking-service-cb:
         timeout-duration: 8s
+
+      # Payment providers can legitimately take longer.
       payment-service-cb:
         timeout-duration: 10s
+
   circuitbreaker:
+
     configs:
+
+      # Default circuit breaker configuration inherited
+      # by all service-specific circuit breakers mentioned below.
       gateway-default:
+
+        # Keeps the latest 10 requests in memory.
+        # Example:
+        # Request 1-10  -> Window = [1..10]
+        # Request 11    -> Window = [2..11]
         sliding-window-size: 10
+
+        # Wait until at least 5 requests have been received before
+        # calculating the failure rate. Once 5 requests are reached,
+        # the failure rate is recalculated after every new request.
         minimum-number-of-calls: 5
+
+        # Opens the circuit when 50% or more requests in the current
+        # sliding window have failed.
         failure-rate-threshold: 50
+
+        # Duration to remain OPEN before allowing trial requests.
         wait-duration-in-open-state: 30s
+
+        # Trial requests allowed in HALF_OPEN state.
         permitted-number-of-calls-in-half-open-state: 3
+
+        # Automatically transition
+        # OPEN → HALF_OPEN.
         automatic-transition-from-open-to-half-open-enabled: true
+
+        # Exposes circuit breaker status through Actuator.
         register-health-indicator: true
+
     instances:
+
+      # Inherits all common settings from gateway-default and overrides only the values below.
       booking-service-cb:
         base-config: gateway-default
+
+        # Open the circuit after 40% failures.
         failure-rate-threshold: 40
+
+        # Stay OPEN longer before retrying.
         wait-duration-in-open-state: 45s
+
+      # Inherits gateway-default configuration and applies payment-specific thresholds.
       payment-service-cb:
         base-config: gateway-default
         failure-rate-threshold: 30
         wait-duration-in-open-state: 60s
+
+      # These services use the default gateway circuit breaker configuration without any overrides.
       flight-ops-service-cb:
         base-config: gateway-default
+
       seat-service-cb:
         base-config: gateway-default
+
       pricing-service-cb:
         base-config: gateway-default
+
       ancillary-service-cb:
         base-config: gateway-default
+
       location-service-cb:
         base-config: gateway-default
+
       airline-core-service-cb:
         base-config: gateway-default
+
       user-service-cb:
         base-config: gateway-default
 
+# ==========================================================
+# Eureka Service Discovery
+#
+# Startup
+# Gateway
+#      ↓
+# Register with Eureka
+#      ↓
+# Download Service Registry
+#
+# Runtime
+# Gateway
+#      ↓
+# LoadBalancer
+#      ↓
+# Eureka
+#      ↓
+# Resolve user-service → http://host:port
+# ==========================================================
+
 eureka:
+
   instance:
+
+    # Registers this gateway using its IP address.
     prefer-ip-address: true
+
+    # Generates a unique instance ID when multiple gateway instances are running.
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
   client:
+
+    # Registers this gateway with Eureka.
     register-with-eureka: true
+
+    # Downloads all registered service instances.
+    # Required by LoadBalancerFilterFunctions.lb(...).
     fetch-registry: true
+
+# ==========================================================
+# Application metadata exposed through:
+# /actuator/info
+# ==========================================================
 
 info:
   app:
@@ -74,23 +216,47 @@ info:
     version: 1.0.0
     environment: development
 
+# ==========================================================
+# Spring Boot Actuator
+#
+# Provides runtime health and monitoring endpoints.
+# ==========================================================
+
 management:
+
   endpoints:
+
     web:
+
       exposure:
+
+        # HTTP endpoints exposed by Actuator.
         include: health, info, circuitbreakers, circuitbreakerevents
+
   endpoint:
+
     health:
+
+      # Displays detailed health information.
       show-details: always
+
     info:
       enabled: true
+
   info:
+
     env:
       enabled: true
+
     java:
       enabled: true
+
     os:
       enabled: true
+
   health:
+
     circuitbreakers:
+
+      # Includes circuit breaker status in /actuator/health.
       enabled: true

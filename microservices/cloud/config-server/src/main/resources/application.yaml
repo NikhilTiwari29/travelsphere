@@ -1,3 +1,5 @@
+# Config Server provides centralized configuration to every microservice.
+# Services import this server at startup and merge remote config with local defaults.
 server:
   port: 8888
 
@@ -8,12 +10,12 @@ spring:
   cloud:
     config:
       server:
+        # The Git repository is the source of shared and service-specific config files.
         git:
           uri: https://github.com/NikhilTiwari29/nikhil-air-config
           clone-on-start: true
 
-# Register this config server with Eureka so microservices can discover it
-# via service name ("config-server") instead of hardcoding localhost:8888.
+# Registers Config Server with Eureka so services can discover it by service name.
 eureka:
   client:
     service-url:
@@ -24,6 +26,7 @@ eureka:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
+# Metadata exposed through the Actuator info endpoint.
 info:
   app:
     name: ${spring.application.name}
@@ -31,6 +34,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Health/info endpoints confirm the config server is reachable before services start.
 management:
   endpoints:
     web:

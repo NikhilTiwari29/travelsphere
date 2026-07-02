@@ -13,17 +13,26 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.Collections;
 
-/*This class is used by Spring Security.
-Spring Security needs a way to load a user from the database.
-This class does exactly that — it finds a user using their email
-and converts it into a UserDetails object that Spring Security understands.
-*/
+/*
+ * Spring Security UserDetailsService adapter for credential lookup.
+ *
+ * Called By: AuthServiceImpl.authenticate() during login.
+ * Flow: findByEmail → map UserRole to GrantedAuthority → Spring UserDetails.
+ *
+ * Does not validate passwords; AuthServiceImpl uses PasswordEncoder
+ * after loading user details through this service.
+ */
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+    /*
+     * Purpose: Load user by email for Spring Security authentication.
+     * Called By: AuthServiceImpl.authenticate()
+     * Flow: UserRepository.findByEmail → build UserDetails with role authority
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email);

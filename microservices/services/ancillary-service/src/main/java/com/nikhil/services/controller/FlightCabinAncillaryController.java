@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Attaches ancillaries to a flight + cabin class with price and quantity limits.
+ * Gateway: /api/flight-cabin-ancillaries/** (JWT). booking-service AncillaryClient
+ * fetches by flight/cabin/type and POST /price/total for order totals.
+ */
 @RestController
 @RequestMapping("/api/flight-cabin-ancillaries")
 @RequiredArgsConstructor
@@ -86,8 +91,10 @@ public class FlightCabinAncillaryController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Sums selected flight-cabin ancillary prices for booking-service checkout.
+     */
     @PostMapping("/price/total")
-    public ResponseEntity<?> calculateAncillariesPrice(
             @RequestBody List<Long> flightCabinAncillaryIds)
              {
         return ResponseEntity.ok(service.calculateAncillaryPrice(flightCabinAncillaryIds));

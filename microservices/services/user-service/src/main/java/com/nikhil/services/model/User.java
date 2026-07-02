@@ -12,6 +12,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/*
+ * JPA entity mapped to the users table; central persistence model
+ * for authentication and profile data in user-service.
+ *
+ * Password is BCrypt-hashed before save. Role drives JWT authorities
+ * and gateway role checks on protected routes across the platform.
+ */
 @Entity
 @Table(name = "users")
 @EqualsAndHashCode
@@ -40,6 +47,7 @@ public class User {
 
     @Column(nullable = false)
     @NotNull(message = "Role is mandatory")
+    @Enumerated(EnumType.STRING)
     private UserRole role;
 
     @Column(nullable = false, updatable = false)

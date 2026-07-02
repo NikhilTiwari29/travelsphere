@@ -18,6 +18,10 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/*
+ * Bridges Payment Service Kafka events into booking state and downstream fan-out.
+ * On success: DB update → Feign enrichment → booking.confirmed for seat + notification.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,6 +33,18 @@ public class PaymentEventListener {
     private final PricingClient pricingClient;
     private final UserClient userClient;
 
+    /*
+     * Confirms a booking after Payment Service reports successful payment.
+     *
+     * Event Flow:
+     * Payment Service → payment.completed → Booking Service
+     *      ↓
+     * Update booking status
+     *      ↓
+     * Fetch enrichment data through Feign clients
+     *      ↓
+     * Publish booking.confirmed
+     */
     @KafkaListener(topics = "payment.completed", groupId = "booking-service-group")
     @Transactional
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
@@ -54,6 +70,12 @@ public class PaymentEventListener {
         bookingEventProducer.sendBookingConfirmed(booking, event, flightInstance, fareResponse, userDTO);
     }
 
+    /*
+     * Cancels a booking when Payment Service reports payment failure.
+     *
+     * Side effect:
+     * Updates booking status in the Booking database.
+     */
     @KafkaListener(topics = "payment.failed", groupId = "booking-service-group")
     @Transactional
     public void handlePaymentFailed(PaymentFailedEvent event) {
@@ -73,6 +95,11 @@ public class PaymentEventListener {
 
     // ── Private Helpers ───────────────────────────────────────────────────────
 
+    /*
+     * Calls Flight Ops Service for notification data.
+     * Failure is non-fatal because booking confirmation must not be rolled back
+     * only because enrichment data is unavailable.
+     */
     private FlightInstanceResponse fetchFlightInstance(Long flightInstanceId) {
         if (flightInstanceId == null) return null;
         try {
@@ -84,6 +111,9 @@ public class PaymentEventListener {
         }
     }
 
+    /*
+     * Calls Pricing Service for fare and baggage details used in notifications.
+     */
     private FareResponse fetchFare(Long fareId) {
         if (fareId == null) return null;
         try {
@@ -95,6 +125,9 @@ public class PaymentEventListener {
         }
     }
 
+    /*
+     * Calls User Service to personalize the booking confirmation message.
+     */
     private UserDTO fetchUser(Long userId) {
         if (userId == null) return null;
         try {

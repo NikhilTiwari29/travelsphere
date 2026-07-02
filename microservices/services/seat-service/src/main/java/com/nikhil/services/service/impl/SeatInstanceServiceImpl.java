@@ -19,6 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/*
+ * Per-flight seat inventory, pricing, and status management.
+ *
+ * Request Flow
+ * ------------
+ * SeatInstanceController / BookingEventListener → this service → SeatInstanceRepository
+ *
+ * booking-service SeatClient calls calculateSeatPrice and getAllByIds.
+ * updateSeatInstanceStatus uses pessimistic lock for booking.confirmed events.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -70,6 +80,9 @@ public class SeatInstanceServiceImpl implements SeatInstanceService {
                 .collect(Collectors.toList());
     }
 
+    /*
+     * Batch fetch for booking detail enrichment; booking-service SeatClient GET /all.
+     */
     @Override
     public List<SeatInstanceResponse> getAllByIds(List<Long> Ids) {
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllById(Ids);
@@ -78,6 +91,10 @@ public class SeatInstanceServiceImpl implements SeatInstanceService {
         ).collect(Collectors.toList());
     }
 
+    /*
+     * Marks seat BOOKED/AVAILABLE with pessimistic lock; invoked by
+     * BookingEventListener on booking.confirmed from booking-service.
+     */
     @Override
     public SeatInstanceResponse updateSeatInstanceStatus(Long id, SeatAvailabilityStatus status) {
         SeatInstance si = seatInstanceRepository.findByIdForUpdate(id)
@@ -102,6 +119,9 @@ public class SeatInstanceServiceImpl implements SeatInstanceService {
         return seatInstanceRepository.countAvailableByFlightId(flightId);
     }
 
+    /*
+     * Sums premium surcharges; booking-service SeatClient POST /price/total.
+     */
     @Override
     public Double calculateSeatPrice(List<Long> seatInstanceIds) {
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllById(seatInstanceIds);

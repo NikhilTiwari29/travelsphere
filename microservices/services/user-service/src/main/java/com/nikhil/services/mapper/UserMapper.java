@@ -7,6 +7,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/*
+ * Static mapper between User entity and UserDTO (common-lib).
+ *
+ * Strips sensitive fields (password) before API responses. Used by
+ * AuthServiceImpl and UserController to shape outbound DTOs.
+ */
 public class UserMapper {
 
     private UserMapper() {}

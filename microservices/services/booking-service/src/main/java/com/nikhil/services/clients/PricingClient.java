@@ -10,12 +10,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.Map;
 
+/*
+ * Feign client used by Booking Service to fetch fare details from Pricing Service
+ * for pricing validation and booking summaries.
+ */
 @FeignClient(name = "pricing-service", fallback = PricingClientFallback.class)
 public interface PricingClient {
 
     @GetMapping("/api/fares/{id}")
     FareResponse getFareById(@PathVariable Long id);
 
+    /** Used by enrichBatch to avoid one Feign call per booking row. */
     @PostMapping("/api/fares/batch-by-ids")
     Map<Long, FareResponse> getFaresByIds(@RequestBody List<Long> ids);
 }

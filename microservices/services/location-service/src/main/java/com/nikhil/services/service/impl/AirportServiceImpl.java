@@ -24,6 +24,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Airport CRUD and queries; enriches flight and ancillary responses via Feign.
+ * Gateway /api/airports/**; GET /{id} is the primary Feign endpoint for other services.
+ * Data flow: AirportRequest → validate City FK → AirportRepository → cached response.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

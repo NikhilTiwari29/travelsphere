@@ -15,6 +15,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/*
+ * Cabin-class persistence and mapping layer.
+ *
+ * Request Flow
+ * ------------
+ * CabinClassController → this service → CabinClassRepository
+ *
+ * flight-ops-service SeatClient reads by aircraft + name during search.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -68,6 +77,9 @@ public class CabinClassServiceImpl implements CabinClassService {
                 .collect(Collectors.toList());
     }
 
+    /*
+     * Resolves cabin by aircraft and enum; primary lookup for flight-ops SeatClient.
+     */
     @Override
     public CabinClassResponse getByAircraftIdAndName(Long aircraftId, CabinClassType name) {
         CabinClass cabinClass= cabinClassRepository.findByAircraftIdAndName(aircraftId,name);

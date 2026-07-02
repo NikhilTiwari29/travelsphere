@@ -13,6 +13,10 @@ import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * Kafka producer wiring for PaymentEventProducer.
+ * Emits payment.completed and payment.failed after verifyPayment updates the DB.
+ */
 @Configuration
 public class KafkaProducerConfig {
 

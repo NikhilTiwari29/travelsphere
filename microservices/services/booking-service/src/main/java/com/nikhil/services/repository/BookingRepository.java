@@ -11,6 +11,12 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Spring Data JPA repository for {@link Booking}.
+ *
+ * Extends {@link BookingPerformanceRepository} for airline analytics criteria queries.
+ * Custom @Query methods below use JOIN FETCH to avoid N+1 when loading booking detail screens.
+ */
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long>, BookingPerformanceRepository {
 
@@ -23,6 +29,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Booking
     long countByFlightInstanceId(Long flightInstanceId);
 
 
+    /** Eager-loads passengers and tickets in one round-trip for booking detail / confirm flows. */
     @Query("SELECT b FROM Booking b " +
             "LEFT JOIN FETCH b.passengers " +
 //            "LEFT JOIN FETCH b.payment " +
@@ -31,6 +38,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Booking
     Optional<Booking> findByIdWithDetails(@Param("id") Long id);
 
 
+    /** Airline ops dashboard search — optional text match across reference, passenger, and contact fields. */
     @Query("SELECT DISTINCT b FROM Booking b " +
             "LEFT JOIN FETCH b.passengers p " +
             "WHERE b.airlineId = :airlineId " +

@@ -6,6 +6,12 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * E-ticket issued for one passenger on a {@link Booking}.
+ *
+ * ticketNumber is the business key (unique). status tracks lifecycle (ISSUED, VOID, etc.).
+ * Created after payment confirmation — often asynchronously via @EnableAsync on booking-service.
+ */
 @Entity
 @Table(name = "tickets")
 @Getter

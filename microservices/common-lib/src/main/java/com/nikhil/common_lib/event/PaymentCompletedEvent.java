@@ -7,6 +7,14 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Kafka event published when payment verification succeeds.
+ *
+ * Topic: {@code payment.completed}
+ * Producer: payment-service ({@code PaymentEventProducer})
+ * Consumer: booking-service ({@code PaymentEventListener}) — sets booking status
+ * to CONFIRMED and republishes {@link BookingConfirmedEvent}.
+ */
 @Data
 @Builder
 @NoArgsConstructor

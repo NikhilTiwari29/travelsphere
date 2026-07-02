@@ -11,12 +11,31 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/*
+ * Protected user profile and lookup REST endpoints.
+ *
+ * Architecture Fit
+ * ----------------
+ * Gateway RouteConfig.userServiceRoutes() forwards /api/users/** here
+ * after jwtAuthFilter validates JWT and injects X-User-* headers.
+ *
+ * Request Flow
+ * ------------
+ * Client (Bearer JWT) → Gateway (JWT check) → UserController → UserService
+ *
+ * Profile endpoint reads X-User-Email set by the Gateway, not the JWT directly.
+ */
 @RestController
 @RequiredArgsConstructor
 public class        UserController {
 
     private final UserService userService;
 
+    /*
+     * Purpose: Return the authenticated user's profile.
+     * Called By: Client via Gateway GET /api/users/profile
+     * Flow: Read X-User-Email header → UserService → UserMapper.toDTO
+     */
     @GetMapping("/api/users/profile")
     public ResponseEntity<UserDTO> getUserProfile(
             @RequestHeader("X-User-Email") String email) throws UserException {

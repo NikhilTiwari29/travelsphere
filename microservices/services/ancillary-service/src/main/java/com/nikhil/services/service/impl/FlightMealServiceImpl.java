@@ -20,6 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Assigns catalog meals to flights with per-route pricing.
+ * Consumed by booking-service for meal selection and POST /price/total aggregation.
+ * No outbound Feign; validates mealId locally and stores flightId as external ref.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

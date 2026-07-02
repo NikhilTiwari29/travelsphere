@@ -6,6 +6,11 @@ import lombok.*;
 
 import java.time.Instant;
 
+/**
+ * Baggage allowance metadata linked 1:1 to a Fare row.
+ * airlineId is denormalized for airline-wide policy queries.
+ * Retrieved during booking when displaying included bags per fare tier.
+ */
 @Entity
 @Table(name = "baggage_policies")
 @Getter

@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Airline meal catalog management (master meals, not flight-specific pricing).
+ * Gateway: /api/meals/** (JWT). Scoped to airline owner via X-User-Id header.
+ */
 @RestController
 @RequestMapping("/api/meals")
 @RequiredArgsConstructor

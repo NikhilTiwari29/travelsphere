@@ -1,3 +1,5 @@
+# Registers airline-core-service with Eureka and allows Feign/Gateway callers
+# to resolve it by service name.
 eureka:
   instance:
     prefer-ip-address: true
@@ -9,9 +11,12 @@ eureka:
 spring:
   application:
     name: airline-core-service
+
+  # Pulls database and shared infrastructure settings from Config Server when available.
   config:
     import: optional:configserver:http://localhost:8888
 
+  # Redis backs Spring Cache for frequently read airline and aircraft master data.
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -25,6 +30,7 @@ spring:
   cache:
     type: redis
 
+# Metadata exposed through Actuator for runtime identification.
 info:
   app:
     name: ${spring.application.name}
@@ -32,6 +38,7 @@ info:
     version: 1.0.0
     environment: development
 
+# Health/info endpoints help verify service readiness and environment details.
 management:
   endpoints:
     web:
@@ -49,4 +56,3 @@ management:
       enabled: true
     os:
       enabled: true
-

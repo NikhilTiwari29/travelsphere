@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/*
+ * Kafka publisher for post-payment fan-out to Seat and Notification services.
+ * Builds a rich BookingConfirmedEvent from local booking + Feign-enriched data.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,6 +33,16 @@ public class BookingEventProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    /*
+     * Publishes the final booking confirmation event after payment succeeds.
+     *
+     * Event Flow:
+     * Payment Service → payment.completed → Booking Service
+     *      ↓
+     * BookingEventProducer → booking.confirmed
+     *      ↓
+     * Seat Service updates inventory, Notification Service sends email/SMS.
+     */
     public void sendBookingConfirmed(Booking booking,
                                      PaymentCompletedEvent payment,
                                      FlightInstanceResponse flight,

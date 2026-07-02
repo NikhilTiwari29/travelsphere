@@ -10,6 +10,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
+/*
+ * Cabin-class metadata for an aircraft type (Economy, Business, First).
+ *
+ * Root of seat hierarchy: CabinClass → SeatMap → Seat → SeatInstance.
+ * flight-ops-service SeatClient resolves cabinClassId during flight search.
+ * Exposed via Gateway /api/cabin-classes/**.
+ */
 @Entity
 @Table(name = "cabin_classes")
 @Getter

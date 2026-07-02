@@ -6,6 +6,13 @@ import com.nikhil.common_lib.payload.response.CabinClassResponse;
 
 import java.util.List;
 
+/*
+ * Service contract for cabin-class CRUD on an aircraft layout.
+ *
+ * Backed by CabinClassController (/api/cabin-classes/**).
+ * flight-ops-service SeatClient calls getByAircraftIdAndName during search.
+ * Each CabinClass owns one SeatMap in the entity hierarchy.
+ */
 public interface CabinClassService {
 
     CabinClassResponse createCabinClass(CabinClassRequest request);

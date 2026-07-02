@@ -12,6 +12,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/*
+ * REST API for per-flight seat inventory and pricing.
+ *
+ * Gateway route: /api/seat-instances/** → seat-service (JWT required).
+ * Feign caller: booking-service SeatClient (price/total, batch by ids).
+ *
+ * SeatInstance links a template Seat to a flight; status updated on
+ * booking.confirmed Kafka event from booking-service.
+ */
 @RestController
 @RequestMapping("/api/seat-instances")
 @RequiredArgsConstructor
@@ -31,6 +40,9 @@ public class SeatInstanceController {
         return ResponseEntity.ok(seatInstanceService.getSeatInstanceById(id));
     }
 
+    /*
+     * Sums premium surcharges; booking-service SeatClient POST during checkout.
+     */
     @PostMapping("/price/total")
     public ResponseEntity<Double> calculateSeatPrice(@RequestBody List<Long> seatInstanceIds) {
         return ResponseEntity.ok(seatInstanceService.calculateSeatPrice(seatInstanceIds));
@@ -42,12 +54,18 @@ public class SeatInstanceController {
         return ResponseEntity.ok(seatInstanceService.getSeatInstancesByFlightId(flightId));
     }
 
+    /*
+     * Batch lookup by ids; booking-service SeatClient enriches booking details.
+     */
     @GetMapping("/all")
     public ResponseEntity<List<SeatInstanceResponse>> getAllByIds(
             @RequestParam List<Long> Ids) {
         return ResponseEntity.ok(seatInstanceService.getAllByIds(Ids));
     }
 
+    /*
+     * Lists bookable seats for seat-selection UI during booking flow.
+     */
     @GetMapping("/flight/{flightId}/available")
     public ResponseEntity<List<SeatInstanceResponse>> getAvailableSeatsByFlightId(
             @PathVariable Long flightId) {
@@ -59,6 +77,9 @@ public class SeatInstanceController {
         return ResponseEntity.ok(seatInstanceService.countAvailableByFlightId(flightId));
     }
 
+    /*
+     * Updates availability; also invoked indirectly via booking.confirmed listener.
+     */
     @PatchMapping("/{id}/status")
     public ResponseEntity<SeatInstanceResponse> updateSeatInstanceStatus(
             @PathVariable Long id,

@@ -6,6 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Persistence for FareRules linked to fares and filterable by airlineId.
+ */
 public interface FareRulesRepository extends JpaRepository<FareRules, Long> {
 
     Optional<FareRules> findByFareId(Long fareId);

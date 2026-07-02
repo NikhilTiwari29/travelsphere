@@ -19,6 +19,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/*
+ * Payment REST API invoked by Booking Service (Feign) and the frontend.
+ *
+ * Cross-service flow:
+ *   POST /initiate ← BookingClient → Razorpay link + PENDING payment row
+ *   POST /verify   → Razorpay fetch → payment.completed|failed (Kafka)
+ *   Booking Service consumes events and confirms/cancels the booking.
+ */
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
@@ -27,6 +35,10 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    /*
+     * Entry point for booking checkout. Called synchronously from Booking Service
+     * after fare/seat/ancillary totals are computed.
+     */
     @PostMapping("/initiate")
     public ResponseEntity<?> initiatePayment(
             @Valid @RequestBody PaymentInitiateRequest request,
@@ -40,6 +52,10 @@ public class PaymentController {
 
     }
 
+    /*
+     * Frontend callback after Razorpay checkout. On success publishes
+     * payment.completed so Booking Service can confirm and fan out.
+     */
     @PostMapping("/verify")
     public ResponseEntity<?> verifyPayment(
             @Valid @RequestBody PaymentVerifyRequest request)

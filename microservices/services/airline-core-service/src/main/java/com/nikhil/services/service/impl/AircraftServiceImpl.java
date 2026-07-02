@@ -19,6 +19,11 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Aircraft fleet management scoped to airline owner.
+ * Called by AircraftController and Feign clients needing seat counts and models.
+ * Validates seat breakdown vs capacity; caches individual aircraft by ID.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional

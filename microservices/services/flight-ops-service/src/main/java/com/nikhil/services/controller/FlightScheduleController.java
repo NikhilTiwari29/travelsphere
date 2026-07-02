@@ -10,6 +10,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Recurring schedule templates that auto-generate flight instances on create.
+ * Gateway route: /api/flight-schedules/** → flight-ops-service (JWT required).
+ * Create flow: save schedule → iterate operating days → FlightInstanceService → Kafka → seat-service.
+ * Feign: location-service for airport names in responses; airline-core for aircraft capacity.
+ */
 @RestController
 @RequestMapping("/api/flight-schedules")
 @RequiredArgsConstructor
@@ -17,8 +23,11 @@ public class FlightScheduleController {
 
     private final FlightScheduleService flightScheduleService;
 
+    /**
+     * Creates a recurring schedule and materializes FlightInstance rows for each operating day.
+     * Each generated instance triggers seat-service via Kafka event.
+     */
     @PostMapping
-    public ResponseEntity<FlightScheduleResponse> createFlightSchedule(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FlightScheduleRequest request) throws Exception {
         return ResponseEntity.status(HttpStatus.CREATED)

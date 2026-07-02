@@ -9,6 +9,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/*
+ * User read/query operations backed by UserRepository.
+ *
+ * Called by UserController after the Gateway has authenticated the
+ * client and attached identity headers to the forwarded request.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {

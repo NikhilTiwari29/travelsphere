@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/*
+ * Kafka bridge from Payment Service to Booking Service.
+ * Topics payment.completed and payment.failed trigger booking DB updates.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -17,6 +21,16 @@ public class PaymentEventProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    /*
+     * Publishes successful payment details for Booking Service.
+     *
+     * Event Flow:
+     * Payment verification
+     *      ↓
+     * payment.completed topic
+     *      ↓
+     * Booking Service confirms the booking.
+     */
     public void sendPaymentCompleted(Payment payment) {
         PaymentCompletedEvent event = PaymentCompletedEvent.builder()
                 .paymentId(payment.getId())
@@ -33,6 +47,16 @@ public class PaymentEventProducer {
                 payment.getId(), payment.getBookingId());
     }
 
+    /*
+     * Publishes failed payment details for Booking Service.
+     *
+     * Event Flow:
+     * Payment failure
+     *      ↓
+     * payment.failed topic
+     *      ↓
+     * Booking Service cancels the pending booking.
+     */
     public void sendPaymentFailed(Payment payment) {
         PaymentFailedEvent event = PaymentFailedEvent.builder()
                 .paymentId(payment.getId())

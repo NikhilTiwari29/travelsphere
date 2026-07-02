@@ -11,6 +11,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
+/**
+ * Root aggregate for an airline carrier in airline-core-service.
+ * ownerId → user-service; headquartersCityId → location-service (stored as IDs).
+ * Referenced by flight-ops (airlineId), pricing (airlineId on rules), ancillary catalogs.
+ */
 @Entity
 @Getter
 @Setter

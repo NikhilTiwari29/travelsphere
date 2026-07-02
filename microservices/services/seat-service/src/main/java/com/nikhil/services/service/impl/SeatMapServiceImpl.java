@@ -20,6 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/*
+ * Seat-map CRUD with airline ownership validation via AirlineClient Feign.
+ *
+ * Request Flow
+ * ------------
+ * SeatMapController → this service → SeatMapRepository + SeatService.generateSeats
+ *
+ * On create, materializes Seat rows from layout dimensions (SeatMap → Seat).
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,6 +40,9 @@ SeatMapServiceImpl implements SeatMapService {
     private final AirlineClient airlineClient;
     private final SeatService seatService;
 
+    /*
+     * Persists map then generates Seat rows; uses AirlineClient for ownership.
+     */
     @Override
     public SeatMapResponse createSeatMap(Long userId, SeatMapRequest request) throws Exception {
         Long airlineId= getAirlineForUser(userId);
@@ -140,6 +152,10 @@ SeatMapServiceImpl implements SeatMapService {
     }
 
 
+    /*
+     * Resolves airline id from user via Feign; AirlineClientFallback returns null
+     * on circuit open, surfaced as EntityNotFoundException here.
+     */
     private Long getAirlineForUser(Long userId) {
         try {
             AirlineResponse airline = airlineClient.getAirlineByOwner(userId);

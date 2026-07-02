@@ -20,6 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Airline CRUD and admin status transitions with Redis caching.
+ * Serves Gateway /api/airlines/** and internal Feign GET /api/airlines/admin.
+ * Data flow: ownerId (from X-User-Id) → AirlineRepository → cached AirlineResponse.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional

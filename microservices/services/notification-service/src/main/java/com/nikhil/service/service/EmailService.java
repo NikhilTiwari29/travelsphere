@@ -16,6 +16,10 @@ import java.io.UnsupportedEncodingException;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
+/*
+ * Sends HTML booking confirmation emails from BookingConfirmedEvent payload.
+ * Data is fully enriched upstream by Booking Service before Kafka publish.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -34,6 +38,10 @@ public class EmailService {
     private static final DateTimeFormatter TIME_FMT   = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH);
     private static final DateTimeFormatter DT_FMT     = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.ENGLISH);
 
+    /*
+     * Renders Thymeleaf template and sends via SMTP. Invoked from
+     * BookingNotificationListener after booking.confirmed is consumed.
+     */
     public void sendBookingConfirmation(BookingConfirmedEvent event) throws MessagingException, UnsupportedEncodingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

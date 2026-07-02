@@ -6,6 +6,13 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Shared user representation exchanged between microservices via Feign clients.
+ *
+ * Produced by user-service; consumed by booking-service and payment-service for
+ * ownership checks and notification personalization. Password is omitted in the
+ * safe constructor used for inter-service calls.
+ */
 @Data
 @NoArgsConstructor
 public class UserDTO {
@@ -15,7 +22,6 @@ public class UserDTO {
     private String phone;
     private String fullName;
     private UserRole role;
-    private String username;
     private LocalDateTime lastLogin;
 
     public UserDTO(Long id, String email, String fullName,
@@ -26,7 +32,6 @@ public class UserDTO {
         this.role = role;
         this.password = null;
         this.phone = null;
-        this.username = null;
         this.lastLogin = lastLogin;
     }
 }

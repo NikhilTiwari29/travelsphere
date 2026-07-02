@@ -16,6 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Public flight-search entry point for TravelSphere clients.
+ * Gateway route: GET /api/flights/search → flight-ops-service (JWT required).
+ * No direct Feign calls here; delegates to {@link FlightSearchService} which
+ * orchestrates pricing, airline, location, and seat services internally.
+ * Data flow: query params → FlightSearchRequest → DB filter → fare enrichment → paged results.
+ */
 @RestController
 @RequiredArgsConstructor
 public class FlightSearchController {
@@ -24,6 +31,10 @@ public class FlightSearchController {
 
 
 
+    /**
+     * Searches bookable flight instances by route, date, cabin, and optional filters.
+     * Called by frontend via API Gateway; response includes enriched airline/airport/fare data.
+     */
     @GetMapping("/api/flights/search")
     public ResponseEntity<Page<FlightInstanceResponse>> searchFlights(
             @RequestParam Long departureAirportId,

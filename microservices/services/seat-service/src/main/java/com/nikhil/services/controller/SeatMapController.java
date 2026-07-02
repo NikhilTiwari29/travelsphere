@@ -11,6 +11,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/*
+ * REST API for aircraft seat-map layouts tied to a cabin class.
+ *
+ * Gateway route: /api/seat-maps/** → seat-service (JWT required).
+ * Create/update uses X-User-Id to resolve airline via AirlineClient (Feign).
+ *
+ * SeatMap holds layout dimensions; SeatServiceImpl.generateSeats() materializes
+ * Seat rows from the map. One SeatMap per CabinClass.
+ */
 @RestController
 @RequestMapping("/api/seat-maps")
 @RequiredArgsConstructor
@@ -18,6 +27,10 @@ public class SeatMapController {
 
     private final SeatMapService seatMapService;
 
+    /*
+     * Creates layout and auto-generates Seat rows for the map.
+     * Requires X-User-Id header from Gateway JWT filter.
+     */
     @PostMapping
     public ResponseEntity<SeatMapResponse> createSeatMap(
             @RequestHeader("X-User-Id") Long userId,
