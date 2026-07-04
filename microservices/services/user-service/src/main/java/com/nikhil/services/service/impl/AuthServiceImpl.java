@@ -69,21 +69,22 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Create and populate the User entity
-        User createdUser = new User();
-        createdUser.setEmail(req.getEmail());
-        createdUser.setPassword(passwordEncoder.encode(req.getPassword()));
-        createdUser.setPhone(req.getPhone());
-        createdUser.setFullName(req.getFullName());
-        createdUser.setRole(req.getRole());
-        createdUser.setLastLogin(LocalDateTime.now());
+        User newUserCreation = new User();
+        newUserCreation.setEmail(req.getEmail());
+        newUserCreation.setPassword(passwordEncoder.encode(req.getPassword()));
+        newUserCreation.setPhone(req.getPhone());
+        newUserCreation.setFullName(req.getFullName());
+        newUserCreation.setRole(req.getRole());
+        newUserCreation.setLastLogin(LocalDateTime.now());
 
         // Persist the user
-        User savedUser = userRepository.save(createdUser);
+        User savedUser = userRepository.save(newUserCreation);
 
         /*
-         * Create an Authentication object representing the logged-in user.
-         * Since the user has just been registered successfully, password
-         * verification is not required here.
+         * Create a UsernamePasswordAuthenticationToken because Spring Security
+         * represents username/password-based authentication using this Authentication
+         * implementation. It stores the user's identity and authentication details
+         * in a format understood by Spring Security.
          */
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(

@@ -15,7 +15,9 @@ spring:
   config:
     import: optional:configserver:http://localhost:8888
 
-  # Redis backs Spring Cache for airport and city lookup data.
+  # Redis backs Spring Cache for frequently accessed city and airport data.
+  # Defaults to localhost for local development; Docker overrides the host
+  # through SPRING_DATA_REDIS_HOST to use the Redis container service name.
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -26,6 +28,8 @@ spring:
           max-active: 8
           max-idle: 4
           min-idle: 1
+
+  # Enables Redis as the backend for @Cacheable and @CacheEvict.
   cache:
     type: redis
 

@@ -112,6 +112,7 @@ public class FareController {
      * Internal search endpoint consumed by flight-ops-service PricingClient Feign.
      */
     @PostMapping("/search")
+    public ResponseEntity<Map<Long, FareResponse>> getLowestFarePerFlight(
             @RequestBody List<Long> flightIds,
             @RequestParam Long cabinClassId) {
         Map<Long, FareResponse> res= fareService.getLowestFarePerFlight(flightIds, cabinClassId);
@@ -123,6 +124,7 @@ public class FareController {
      * Per-flight lowest fare; flight-ops calls once per search result when cabin IDs differ.
      */
     @GetMapping("/lowest/flight/{flightId}/cabin-class/{cabinClassId}")
+    public ResponseEntity<FareResponse> getLowestFareForFlightAndCabinClass(
             @PathVariable Long flightId,
             @PathVariable Long cabinClassId) {
         return ResponseEntity.ok(

@@ -34,6 +34,7 @@ public class FlightInstanceController {
      * Resolves airline from X-User-Id via airline-core-service Feign.
      */
     @PostMapping
+    public ResponseEntity<FlightInstanceResponse> createFlightInstance(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FlightInstanceRequest request) throws Exception {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -45,6 +46,7 @@ public class FlightInstanceController {
      * Bulk fetch by IDs; booking-service FlightClient uses this for booking detail screens.
      */
     @PostMapping("/batch")
+    public ResponseEntity<Map<Long, FlightInstanceResponse>> getFlightInstancesByIds(@RequestBody List<Long> ids) {
         return ResponseEntity.ok(flightInstanceService.getFlightInstancesByIds(ids));
     }
 

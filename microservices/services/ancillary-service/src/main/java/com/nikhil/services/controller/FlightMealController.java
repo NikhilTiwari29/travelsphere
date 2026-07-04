@@ -42,6 +42,7 @@ public class FlightMealController {
      * Aggregates meal line-item prices; booking-service calls during checkout total.
      */
     @PostMapping("/price/total")
+    public ResponseEntity<Double> calculateMealPrice(
             @RequestBody List<Long> requests) {
         double responses = flightMealService.calculateMealPrice(requests);
         return ResponseEntity.status(HttpStatus.OK).body(responses);

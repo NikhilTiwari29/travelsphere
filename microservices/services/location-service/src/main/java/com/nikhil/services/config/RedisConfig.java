@@ -1,9 +1,5 @@
 package com.nikhil.services.config;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.annotation.CachingConfigurer;
@@ -13,84 +9,187 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 import java.util.Map;
 
-/*
- * Redis-backed Spring Cache for location-service airport and city endpoints.
+
+/**
+ * Configures Redis as the Spring Cache backend for city and airport data.
  *
- * Long TTLs (2–6 h) suit rarely changing reference data exposed at /api/airports/** and /api/cities/**.
- * errorHandler logs cache failures and lets @Cacheable methods fall through to JPA when Redis is down.
+ * Redis improves read performance, while MySQL remains the source of truth.
+ * If Redis is unavailable, cache errors are logged and requests fall back
+ * to the normal service/database flow.
  */
 @Slf4j
 @Configuration
 public class RedisConfig implements CachingConfigurer {
 
-    /** Registers airports*, cities*, and allAirports cache regions with JSON serialization. */
+
+    /**
+     * Configures Redis serialization, cache regions, and TTL values.
+     */
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.activateDefaultTyping(
-                LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
-        );
+    public RedisCacheManager cacheManager(
+            RedisConnectionFactory factory) {
 
-        GenericJackson2JsonRedisSerializer jsonSerializer =
-                new GenericJackson2JsonRedisSerializer(mapper);
 
-        RedisCacheConfiguration defaults = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(jsonSerializer))
-                .disableCachingNullValues();
+        /*
+         * Stores cache values as JSON with Java type information.
+         *
+         * Type information allows cached JSON to be deserialized back into
+         * CityResponse, AirportResponse, List<AirportResponse>, etc.,
+         * instead of a generic LinkedHashMap.
+         */
+        GenericJacksonJsonRedisSerializer jsonSerializer =
+                GenericJacksonJsonRedisSerializer
+                        .builder()
+                        .enableUnsafeDefaultTyping()
+                        .build();
 
-        Map<String, RedisCacheConfiguration> cacheConfigs = Map.of(
-                // Airports change extremely rarely — long TTL
-                "airports", defaults.entryTtl(Duration.ofHours(6)),
-                "airportsByIata", defaults.entryTtl(Duration.ofHours(6)),
-                "airportsByCity", defaults.entryTtl(Duration.ofHours(6)),
-                "allAirports", defaults.entryTtl(Duration.ofHours(2)),
-                // Cities also static reference data
-                "cities", defaults.entryTtl(Duration.ofHours(6)),
-                "citiesByCode", defaults.entryTtl(Duration.ofHours(6))
-        );
 
-        return RedisCacheManager.builder(factory)
-                .cacheDefaults(defaults.entryTtl(Duration.ofHours(6)))
+        /*
+         * Common cache configuration:
+         * - Keys are stored as strings.
+         * - Values are stored as JSON.
+         * - Null values are not cached.
+         */
+        RedisCacheConfiguration defaults =
+                RedisCacheConfiguration
+                        .defaultCacheConfig()
+
+                        .serializeKeysWith(
+                                RedisSerializationContext
+                                        .SerializationPair
+                                        .fromSerializer(
+                                                new StringRedisSerializer()
+                                        )
+                        )
+
+                        .serializeValuesWith(
+                                RedisSerializationContext
+                                        .SerializationPair
+                                        .fromSerializer(jsonSerializer)
+                        )
+
+                        .disableCachingNullValues();
+
+
+        /*
+         * Reference data changes rarely, so most entries use a 6-hour TTL.
+         * The complete airport list uses a shorter 2-hour TTL.
+         */
+        Map<String, RedisCacheConfiguration> cacheConfigs =
+                Map.of(
+                        "airports",
+                        defaults.entryTtl(Duration.ofHours(6)),
+
+                        "airportsByIata",
+                        defaults.entryTtl(Duration.ofHours(6)),
+
+                        "airportsByCity",
+                        defaults.entryTtl(Duration.ofHours(6)),
+
+                        "allAirports",
+                        defaults.entryTtl(Duration.ofHours(2)),
+
+                        "cities",
+                        defaults.entryTtl(Duration.ofHours(6)),
+
+                        "citiesByCode",
+                        defaults.entryTtl(Duration.ofHours(6))
+                );
+
+
+        // Builds the cache manager with a default TTL of 6 hours.
+        return RedisCacheManager
+                .builder(factory)
+
+                .cacheDefaults(
+                        defaults.entryTtl(Duration.ofHours(6))
+                )
+
                 .withInitialCacheConfigurations(cacheConfigs)
+
                 .build();
     }
 
+
     /**
-     * Silently log Redis cache errors instead of rethrowing them.
-     * This allows the service to function normally when Redis is unavailable —
-     * @Cacheable methods simply fall through to the real implementation.
+     * Logs Redis failures without failing the application request.
+     *
+     * Redis is treated as a performance layer, so cache failures allow
+     * the service to continue using the database.
      */
     @Override
     public CacheErrorHandler errorHandler() {
+
         return new CacheErrorHandler() {
+
+
+            // Cache read failed; @Cacheable method continues to the database.
             @Override
-            public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
-                log.warn("Cache GET failed [{}] key={}: {}", cache.getName(), key, e.getMessage());
+            public void handleCacheGetError(
+                    RuntimeException e,
+                    Cache cache,
+                    Object key) {
+
+                log.warn(
+                        "Cache GET failed [{}] key={}: {}",
+                        cache.getName(),
+                        key,
+                        e.getMessage()
+                );
             }
+
+
+            // Cache write failed; response still succeeds but is not cached.
             @Override
-            public void handleCachePutError(RuntimeException e, Cache cache, Object key, Object value) {
-                log.warn("Cache PUT failed [{}] key={}: {}", cache.getName(), key, e.getMessage());
+            public void handleCachePutError(
+                    RuntimeException e,
+                    Cache cache,
+                    Object key,
+                    Object value) {
+
+                log.warn(
+                        "Cache PUT failed [{}] key={}: {}",
+                        cache.getName(),
+                        key,
+                        e.getMessage()
+                );
             }
+
+
+            // Cache eviction failed; stale data may remain until TTL expiry.
             @Override
-            public void handleCacheEvictError(RuntimeException e, Cache cache, Object key) {
-                log.warn("Cache EVICT failed [{}] key={}: {}", cache.getName(), key, e.getMessage());
+            public void handleCacheEvictError(
+                    RuntimeException e,
+                    Cache cache,
+                    Object key) {
+
+                log.warn(
+                        "Cache EVICT failed [{}] key={}: {}",
+                        cache.getName(),
+                        key,
+                        e.getMessage()
+                );
             }
+
+
+            // Cache-region clear failed; log the failure and continue.
             @Override
-            public void handleCacheClearError(RuntimeException e, Cache cache) {
-                log.warn("Cache CLEAR failed [{}]: {}", cache.getName(), e.getMessage());
+            public void handleCacheClearError(
+                    RuntimeException e,
+                    Cache cache) {
+
+                log.warn(
+                        "Cache CLEAR failed [{}]: {}",
+                        cache.getName(),
+                        e.getMessage()
+                );
             }
         };
     }

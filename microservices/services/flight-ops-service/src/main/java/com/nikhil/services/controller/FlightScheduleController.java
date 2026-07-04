@@ -28,6 +28,7 @@ public class FlightScheduleController {
      * Each generated instance triggers seat-service via Kafka event.
      */
     @PostMapping
+    public ResponseEntity<FlightScheduleResponse> createFlightSchedule(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FlightScheduleRequest request) throws Exception {
         return ResponseEntity.status(HttpStatus.CREATED)

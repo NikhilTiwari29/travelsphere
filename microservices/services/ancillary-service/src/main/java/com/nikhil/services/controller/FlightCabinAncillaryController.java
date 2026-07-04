@@ -95,8 +95,9 @@ public class FlightCabinAncillaryController {
      * Sums selected flight-cabin ancillary prices for booking-service checkout.
      */
     @PostMapping("/price/total")
+    public ResponseEntity<?> calculateAncillariesPrice(
             @RequestBody List<Long> flightCabinAncillaryIds)
-             {
+    {
         return ResponseEntity.ok(service.calculateAncillaryPrice(flightCabinAncillaryIds));
     }
 
