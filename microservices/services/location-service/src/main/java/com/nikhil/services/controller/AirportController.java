@@ -8,6 +8,7 @@ import com.nikhil.common_lib.payload.response.AirportResponse;
 import com.nikhil.services.service.AirportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/airports")
 @RequiredArgsConstructor
+@Slf4j
 public class AirportController {
 
     private final AirportService airportService;
@@ -45,9 +47,22 @@ public class AirportController {
             @Valid @RequestBody AirportRequest request)
             throws AirportException, CityException {
 
+        log.info(
+                "Received request to create airport with IATA code={}",
+                request.getIataCode()
+        );
+
+        AirportResponse response =
+                airportService.createAirport(request);
+
+        log.info(
+                "Airport created successfully with IATA code={}",
+                request.getIataCode()
+        );
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(airportService.createAirport(request));
+                .body(response);
     }
 
 
@@ -63,9 +78,23 @@ public class AirportController {
             @Valid @RequestBody List<AirportRequest> requests)
             throws AirportException, CityException {
 
+        log.info(
+                "Received bulk airport creation request with {} records",
+                requests.size()
+        );
+
+        List<AirportResponse> responses =
+                airportService.createBulkAirports(requests);
+
+        log.info(
+                "Bulk airport creation completed: {} of {} records created",
+                responses.size(),
+                requests.size()
+        );
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(airportService.createBulkAirports(requests));
+                .body(responses);
     }
 
 
@@ -82,6 +111,11 @@ public class AirportController {
             @PathVariable Long id)
             throws AirportException {
 
+        log.debug(
+                "Received request to fetch airport with id={}",
+                id
+        );
+
         return ResponseEntity.ok(
                 airportService.getAirportById(id)
         );
@@ -93,6 +127,8 @@ public class AirportController {
      */
     @GetMapping
     public ResponseEntity<List<AirportResponse>> getAllAirports() {
+
+        log.debug("Received request to fetch all airports");
 
         return ResponseEntity.ok(
                 airportService.getAllAirports()
@@ -108,6 +144,11 @@ public class AirportController {
     @GetMapping("/city/{cityId}")
     public ResponseEntity<List<AirportResponse>> getAirportsByCityId(
             @PathVariable Long cityId) {
+
+        log.debug(
+                "Received request to fetch airports for cityId={}",
+                cityId
+        );
 
         return ResponseEntity.ok(
                 airportService.getAirportsByCityId(cityId)
@@ -129,9 +170,21 @@ public class AirportController {
             @Valid @RequestBody AirportRequest request)
             throws AirportException, CityException {
 
-        return ResponseEntity.ok(
-                airportService.updateAirport(id, request)
+        log.info(
+                "Received request to update airport id={}, IATA code={}",
+                id,
+                request.getIataCode()
         );
+
+        AirportResponse response =
+                airportService.updateAirport(id, request);
+
+        log.info(
+                "Airport updated successfully: id={}",
+                id
+        );
+
+        return ResponseEntity.ok(response);
     }
 
 
@@ -147,7 +200,17 @@ public class AirportController {
             @PathVariable Long id)
             throws AirportException {
 
+        log.info(
+                "Received request to delete airport id={}",
+                id
+        );
+
         airportService.deleteAirport(id);
+
+        log.info(
+                "Airport deleted successfully: id={}",
+                id
+        );
 
         return ResponseEntity.ok(
                 new ApiResponse("Airport deleted successfully")

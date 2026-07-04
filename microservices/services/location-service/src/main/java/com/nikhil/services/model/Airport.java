@@ -107,10 +107,13 @@ public class Airport {
 
 
     /*
-     * Converts the stored String timeZoneId into a ZoneId object.
+     * The database stores the timezone as a String, e.g. "Asia/Kolkata".
+     * This helper converts that stored value into a Java ZoneId object.
      *
-     * @Transient prevents JPA from treating this derived property
-     * as a separate database column.
+     * @Transient tells JPA that getTimeZone() is only a derived/helper property
+     * and should not be mapped to a separate database column.
+     *
+     * @JsonIgnore prevents this derived value from being included in JSON responses.
      */
     @Transient
     @JsonIgnore

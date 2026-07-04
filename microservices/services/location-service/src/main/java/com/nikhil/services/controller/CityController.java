@@ -19,45 +19,102 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 /**
- * REST API for city master data used by airport and search UIs.
- * Gateway: /api/cities/** (JWT); POST requires ROLE_SYSTEM_ADMIN via admin route.
- * No Feign deps; consumed by location UI and indirectly by flight search airport pickers.
+ * REST API for managing city reference data.
+ *
+ * Provides city CRUD, bulk creation, search, country-based filtering,
+ * pagination, sorting, and city-code existence checks.
  */
 @RestController
 @RequestMapping("/api/cities")
 @RequiredArgsConstructor
 @Slf4j
-public class    CityController {
+public class CityController {
 
     private final CityService cityService;
 
-    // ---------- CREATE ----------
 
+    // ==================== CREATE ====================
+
+    /**
+     * Creates a new city after request validation
+     * and duplicate city-code checks.
+     */
     @PostMapping
     public ResponseEntity<CityResponse> createCity(
             @Valid @RequestBody CityRequest request)
             throws OperationNotPermittedException {
-        CityResponse response = cityService.createCity(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        log.info(
+                "Received request to create city with code={}",
+                request.getCityCode()
+        );
+
+        CityResponse response =
+                cityService.createCity(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
+
+    /**
+     * Creates multiple cities in one request.
+     *
+     * Invalid requests and existing city codes are skipped
+     * by the service layer.
+     */
     @PostMapping("/bulk")
     public ResponseEntity<List<CityResponse>> createBulkCities(
             @Valid @RequestBody List<CityRequest> requests)
             throws OperationNotPermittedException {
-        List<CityResponse> responses = cityService.createBulkCities(requests);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+
+        log.info(
+                "Received bulk city creation request with {} records",
+                requests.size()
+        );
+
+        List<CityResponse> responses =
+                cityService.createBulkCities(requests);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(responses);
     }
 
-    // ---------- READ ----------
 
+    // ==================== READ ====================
+
+    /**
+     * Returns a city by its database ID.
+     *
+     * The service may return the response from Redis cache
+     * or fetch it from the database on a cache miss.
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<CityResponse> getCityById(@PathVariable Long id)
+    public ResponseEntity<CityResponse> getCityById(
+            @PathVariable Long id)
             throws ResourceNotFoundException {
-        return ResponseEntity.ok(cityService.getCityById(id));
+
+        log.debug(
+                "Received request to fetch city with id={}",
+                id
+        );
+
+        return ResponseEntity.ok(
+                cityService.getCityById(id)
+        );
     }
 
+
+    /**
+     * Returns cities with pagination and dynamic sorting.
+     *
+     * Example:
+     * GET /api/cities?page=0&size=20&sortBy=name&sortDirection=asc
+     */
     @GetMapping
     public ResponseEntity<Page<CityResponse>> getAllCities(
             @RequestParam(defaultValue = "0") int page,
@@ -65,56 +122,168 @@ public class    CityController {
             @RequestParam(defaultValue = "name") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection) {
 
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(cityService.getAllCities(pageable));
+        log.debug(
+                "Fetching cities: page={}, size={}, sortBy={}, direction={}",
+                page,
+                size,
+                sortBy,
+                sortDirection
+        );
+
+        // Build sorting configuration from request parameters.
+        Sort sort = Sort.by(
+                Sort.Direction.fromString(sortDirection),
+                sortBy
+        );
+
+        // Create pagination configuration with sorting.
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                sort
+        );
+
+        return ResponseEntity.ok(
+                cityService.getAllCities(pageable)
+        );
     }
 
-    // ---------- UPDATE ----------
 
+    // ==================== UPDATE ====================
+
+    /**
+     * Updates an existing city.
+     *
+     * The service ensures that the requested city code is not
+     * already assigned to another city.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<CityResponse> updateCity(
             @PathVariable Long id,
             @Valid @RequestBody CityRequest request)
-            throws ResourceNotFoundException, OperationNotPermittedException {
-        return ResponseEntity.ok(cityService.updateCity(id, request));
+            throws ResourceNotFoundException,
+            OperationNotPermittedException {
+
+        log.info(
+                "Received request to update city id={}, code={}",
+                id,
+                request.getCityCode()
+        );
+
+        return ResponseEntity.ok(
+                cityService.updateCity(id, request)
+        );
     }
 
-    // ---------- DELETE ----------
 
+    // ==================== DELETE ====================
+
+    /**
+     * Deletes a city by its database ID.
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> deleteCity(@PathVariable Long id)
+    public ResponseEntity<ApiResponse> deleteCity(
+            @PathVariable Long id)
             throws ResourceNotFoundException {
+
+        log.info(
+                "Received request to delete city id={}",
+                id
+        );
+
         cityService.deleteCity(id);
-        return ResponseEntity.ok(new ApiResponse("City deleted successfully"));
+
+        return ResponseEntity.ok(
+                new ApiResponse("City deleted successfully")
+        );
     }
 
-    // ---------- SEARCH & QUERY ----------
 
+    // ==================== SEARCH & QUERY ====================
+
+    /**
+     * Searches cities by keyword with pagination.
+     *
+     * The keyword can match city name, city code, country code,
+     * country name, or region code.
+     */
     @GetMapping("/search")
     public ResponseEntity<Page<CityResponse>> searchCities(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(cityService.searchCities(keyword, pageable));
+        log.debug(
+                "Searching cities: keyword={}, page={}, size={}",
+                keyword,
+                page,
+                size
+        );
+
+        Pageable pageable =
+                PageRequest.of(page, size);
+
+        return ResponseEntity.ok(
+                cityService.searchCities(
+                        keyword,
+                        pageable
+                )
+        );
     }
 
+
+    /**
+     * Returns cities belonging to the given country code.
+     *
+     * Example:
+     * GET /api/cities/country/IN
+     */
     @GetMapping("/country/{countryCode}")
     public ResponseEntity<Page<CityResponse>> getCitiesByCountryCode(
             @PathVariable String countryCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(cityService.getCitiesByCountryCode(countryCode.toUpperCase(), pageable));
+        log.debug(
+                "Fetching cities by countryCode={}, page={}, size={}",
+                countryCode,
+                page,
+                size
+        );
+
+        Pageable pageable =
+                PageRequest.of(page, size);
+
+        return ResponseEntity.ok(
+                cityService.getCitiesByCountryCode(
+                        countryCode.toUpperCase(),
+                        pageable
+                )
+        );
     }
 
-    // ---------- VALIDATION ----------
 
+    // ==================== VALIDATION ====================
+
+    /**
+     * Checks whether a city with the given city code already exists.
+     *
+     * Example:
+     * GET /api/cities/exists/BOM
+     */
     @GetMapping("/exists/{cityCode}")
-    public ResponseEntity<Boolean> checkCityExists(@PathVariable String cityCode) {
-        return ResponseEntity.ok(cityService.cityExists(cityCode.toUpperCase()));
+    public ResponseEntity<Boolean> checkCityExists(
+            @PathVariable String cityCode) {
+
+        log.debug(
+                "Checking city existence for code={}",
+                cityCode
+        );
+
+        return ResponseEntity.ok(
+                cityService.cityExists(
+                        cityCode.toUpperCase()
+                )
+        );
     }
 }
