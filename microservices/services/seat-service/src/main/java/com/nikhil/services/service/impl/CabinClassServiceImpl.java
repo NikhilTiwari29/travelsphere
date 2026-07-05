@@ -9,103 +9,403 @@ import com.nikhil.services.repository.CabinClassRepository;
 import com.nikhil.services.service.CabinClassService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-/*
- * Cabin-class persistence and mapping layer.
+/**
+ * Service implementation for aircraft cabin-class configuration.
  *
- * Request Flow
- * ------------
- * CabinClassController → this service → CabinClassRepository
+ * Manages cabin-class creation, bulk creation, retrieval, update, and deletion.
+ * Cabin classes are scoped to an aircraft and represent travel classes such as
+ * ECONOMY, PREMIUM_ECONOMY, BUSINESS, and FIRST_CLASS.
  *
- * flight-ops-service SeatClient reads by aircraft + name during search.
+ * Flight Operations Service resolves cabin classes by aircraft ID and
+ * cabin-class type during flight search and downstream pricing operations.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class CabinClassServiceImpl implements CabinClassService {
 
     private final CabinClassRepository cabinClassRepository;
 
-    @Override
-    public CabinClassResponse createCabinClass(CabinClassRequest request) {
-        if (cabinClassRepository.existsByCodeAndAircraftId(
-                request.getCode().toUpperCase(),
-                        request.getAircraftId())) {
-            throw new IllegalArgumentException(
-                    "Cabin class with code '" + request.getCode() + "' already exists for this aircraft");
-        }
-        CabinClass cabinClass = CabinClassMapper.toEntity(request);
-        cabinClass.setAircraftId(request.getAircraftId());
-        CabinClass saved = cabinClassRepository.save(cabinClass);
-        return CabinClassMapper.toResponse(saved, null);
-    }
 
-    @Override
-    public List<CabinClassResponse> createCabinClasses(List<CabinClassRequest> requests) {
-        List<CabinClass> toSave = requests.stream()
-                .filter(req -> !cabinClassRepository.existsByCodeAndAircraftId(
-                        req.getCode().toUpperCase(), req.getAircraftId()))
-                .map(req -> {
-                    CabinClass cc = CabinClassMapper.toEntity(req);
-                    cc.setAircraftId(req.getAircraftId());
-                    return cc;
-                })
-                .collect(Collectors.toList());
-        return cabinClassRepository.saveAll(toSave).stream()
-                .map(cc -> CabinClassMapper.toResponse(cc, null))
-                .collect(Collectors.toList());
-    }
+    // ==================== Create Operations ====================
 
-    @Override
-    @Transactional(readOnly = true)
-    public CabinClassResponse getCabinClassById(Long id) {
-        CabinClass cabinClass = cabinClassRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cabin class not found with id: " + id));
-        return CabinClassMapper.toResponse(cabinClass, cabinClass.getSeatMap());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<CabinClassResponse> getCabinClassesByAircraftId(Long aircraftId) {
-        return cabinClassRepository.findByAircraftId(aircraftId).stream()
-                .map(cc -> CabinClassMapper.toResponse(cc, cc.getSeatMap()))
-                .collect(Collectors.toList());
-    }
-
-    /*
-     * Resolves cabin by aircraft and enum; primary lookup for flight-ops SeatClient.
+    /**
+     * Creates a cabin-class definition for an aircraft.
+     *
+     * Cabin-class codes must be unique within the same aircraft configuration.
      */
     @Override
-    public CabinClassResponse getByAircraftIdAndName(Long aircraftId, CabinClassType name) {
-        CabinClass cabinClass= cabinClassRepository.findByAircraftIdAndName(aircraftId,name);
-        return CabinClassMapper.toResponse(cabinClass,null);
-    }
+    @Transactional
+    public CabinClassResponse createCabinClass(
+            CabinClassRequest request
+    ) {
 
-    @Override
-    public CabinClassResponse updateCabinClass(Long id, CabinClassRequest request) {
-        CabinClass existing = cabinClassRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cabin class not found with id: " + id));
+        String cabinClassCode =
+                request.getCode().toUpperCase();
 
-        if (cabinClassRepository.existsByCodeAndAircraftIdAndIdNot(
-                request.getCode().toUpperCase(), existing.getAircraftId(), id)) {
+        log.info(
+                "Creating cabin class aircraftId={} cabinClassName={} cabinClassCode={}",
+                request.getAircraftId(),
+                request.getName(),
+                cabinClassCode
+        );
+
+        if (cabinClassRepository.existsByCodeAndAircraftId(
+                cabinClassCode,
+                request.getAircraftId()
+        )) {
+
+            log.warn(
+                    "Cabin class creation rejected: duplicate cabinClassCode={} aircraftId={}",
+                    cabinClassCode,
+                    request.getAircraftId()
+            );
+
             throw new IllegalArgumentException(
-                    "Cabin class with code '" + request.getCode() + "' already exists for this aircraft");
+                    "Cabin class with code '"
+                            + request.getCode()
+                            + "' already exists for this aircraft"
+            );
         }
 
-        CabinClassMapper.updateEntity(request, existing);
-        CabinClass saved = cabinClassRepository.save(existing);
-        return CabinClassMapper.toResponse(saved, saved.getSeatMap());
+        CabinClass cabinClass =
+                CabinClassMapper.toEntity(request);
+
+        cabinClass.setAircraftId(
+                request.getAircraftId()
+        );
+
+        CabinClass saved =
+                cabinClassRepository.save(cabinClass);
+
+        log.info(
+                "Cabin class created successfully cabinClassId={} aircraftId={} cabinClassName={} cabinClassCode={}",
+                saved.getId(),
+                saved.getAircraftId(),
+                saved.getName(),
+                saved.getCode()
+        );
+
+        return CabinClassMapper.toResponse(
+                saved,
+                null
+        );
     }
 
+
+    /**
+     * Creates multiple cabin classes in a single transaction.
+     *
+     * Cabin classes whose codes already exist for the target aircraft
+     * are skipped.
+     */
     @Override
+    @Transactional
+    public List<CabinClassResponse> createCabinClasses(
+            List<CabinClassRequest> requests
+    ) {
+
+        log.info(
+                "Bulk cabin class creation started requestedCount={}",
+                requests.size()
+        );
+
+        List<CabinClass> toSave = requests.stream()
+                .filter(request -> {
+
+                    String cabinClassCode =
+                            request.getCode().toUpperCase();
+
+                    boolean exists =
+                            cabinClassRepository.existsByCodeAndAircraftId(
+                                    cabinClassCode,
+                                    request.getAircraftId()
+                            );
+
+                    if (exists) {
+                        log.warn(
+                                "Skipping duplicate cabin class code={} aircraftId={}",
+                                cabinClassCode,
+                                request.getAircraftId()
+                        );
+                    }
+
+                    return !exists;
+                })
+                .map(request -> {
+
+                    CabinClass cabinClass =
+                            CabinClassMapper.toEntity(request);
+
+                    cabinClass.setAircraftId(
+                            request.getAircraftId()
+                    );
+
+                    return cabinClass;
+                })
+                .toList();
+
+        List<CabinClassResponse> responses =
+                cabinClassRepository.saveAll(toSave)
+                        .stream()
+                        .map(cabinClass ->
+                                CabinClassMapper.toResponse(
+                                        cabinClass,
+                                        null
+                                )
+                        )
+                        .toList();
+
+        log.info(
+                "Bulk cabin class creation completed requestedCount={} createdCount={} skippedCount={}",
+                requests.size(),
+                responses.size(),
+                requests.size() - responses.size()
+        );
+
+        return responses;
+    }
+
+
+    // ==================== Read Operations ====================
+
+    /**
+     * Returns a cabin class by its unique database ID.
+     */
+    @Override
+    public CabinClassResponse getCabinClassById(Long id) {
+
+        log.debug(
+                "Fetching cabin class cabinClassId={}",
+                id
+        );
+
+        CabinClass cabinClass =
+                cabinClassRepository.findById(id)
+                        .orElseThrow(() -> {
+
+                            log.warn(
+                                    "Cabin class lookup failed: cabinClassId={} not found",
+                                    id
+                            );
+
+                            return new EntityNotFoundException(
+                                    "Cabin class not found with id: " + id
+                            );
+                        });
+
+        return CabinClassMapper.toResponse(
+                cabinClass,
+                cabinClass.getSeatMap()
+        );
+    }
+
+
+    /**
+     * Returns all cabin classes configured for an aircraft.
+     */
+    @Override
+    public List<CabinClassResponse> getCabinClassesByAircraftId(
+            Long aircraftId
+    ) {
+
+        log.debug(
+                "Fetching cabin classes for aircraftId={}",
+                aircraftId
+        );
+
+        List<CabinClassResponse> responses =
+                cabinClassRepository.findByAircraftId(aircraftId)
+                        .stream()
+                        .map(cabinClass ->
+                                CabinClassMapper.toResponse(
+                                        cabinClass,
+                                        cabinClass.getSeatMap()
+                                )
+                        )
+                        .toList();
+
+        log.debug(
+                "Cabin classes retrieved aircraftId={} count={}",
+                aircraftId,
+                responses.size()
+        );
+
+        return responses;
+    }
+
+
+    /**
+     * Resolves a cabin class using aircraft ID and cabin-class type.
+     *
+     * This is the primary lookup used by Flight Operations Service
+     * during flight search processing.
+     */
+    @Override
+    public CabinClassResponse getByAircraftIdAndName(
+            Long aircraftId,
+            CabinClassType name
+    ) {
+
+        log.debug(
+                "Resolving cabin class aircraftId={} cabinClass={}",
+                aircraftId,
+                name
+        );
+
+        CabinClass cabinClass =
+                cabinClassRepository.findByAircraftIdAndName(
+                        aircraftId,
+                        name
+                );
+
+        if (cabinClass == null) {
+
+            log.warn(
+                    "Cabin class lookup failed aircraftId={} cabinClass={}",
+                    aircraftId,
+                    name
+            );
+
+            throw new EntityNotFoundException(
+                    "Cabin class not found for aircraftId="
+                            + aircraftId
+                            + " and cabinClass="
+                            + name
+            );
+        }
+
+        return CabinClassMapper.toResponse(
+                cabinClass,
+                null
+        );
+    }
+
+
+    // ==================== Update Operations ====================
+
+    /**
+     * Updates an existing cabin-class configuration.
+     *
+     * The cabin-class code must remain unique within the aircraft.
+     */
+    @Override
+    @Transactional
+    public CabinClassResponse updateCabinClass(
+            Long id,
+            CabinClassRequest request
+    ) {
+
+        log.info(
+                "Updating cabin class cabinClassId={}",
+                id
+        );
+
+        CabinClass existing =
+                cabinClassRepository.findById(id)
+                        .orElseThrow(() -> {
+
+                            log.warn(
+                                    "Cabin class update failed: cabinClassId={} not found",
+                                    id
+                            );
+
+                            return new EntityNotFoundException(
+                                    "Cabin class not found with id: " + id
+                            );
+                        });
+
+        String cabinClassCode =
+                request.getCode().toUpperCase();
+
+        /*
+         * Exclude the current cabin-class record from the uniqueness check
+         * so an unchanged code does not conflict with itself.
+         */
+        if (cabinClassRepository.existsByCodeAndAircraftIdAndIdNot(
+                cabinClassCode,
+                existing.getAircraftId(),
+                id
+        )) {
+
+            log.warn(
+                    "Cabin class update rejected: duplicate code={} aircraftId={} cabinClassId={}",
+                    cabinClassCode,
+                    existing.getAircraftId(),
+                    id
+            );
+
+            throw new IllegalArgumentException(
+                    "Cabin class with code '"
+                            + request.getCode()
+                            + "' already exists for this aircraft"
+            );
+        }
+
+        CabinClassMapper.updateEntity(
+                request,
+                existing
+        );
+
+        CabinClass saved =
+                cabinClassRepository.save(existing);
+
+        log.info(
+                "Cabin class updated successfully cabinClassId={} aircraftId={} code={}",
+                saved.getId(),
+                saved.getAircraftId(),
+                saved.getCode()
+        );
+
+        return CabinClassMapper.toResponse(
+                saved,
+                saved.getSeatMap()
+        );
+    }
+
+
+    // ==================== Delete Operations ====================
+
+    /**
+     * Deletes a cabin-class definition by its unique ID.
+     */
+    @Override
+    @Transactional
     public void deleteCabinClass(Long id) {
-        CabinClass cabinClass = cabinClassRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Cabin class not found with id: " + id));
+
+        log.info(
+                "Deleting cabin class cabinClassId={}",
+                id
+        );
+
+        CabinClass cabinClass =
+                cabinClassRepository.findById(id)
+                        .orElseThrow(() -> {
+
+                            log.warn(
+                                    "Cabin class deletion failed: cabinClassId={} not found",
+                                    id
+                            );
+
+                            return new EntityNotFoundException(
+                                    "Cabin class not found with id: " + id
+                            );
+                        });
+
         cabinClassRepository.delete(cabinClass);
+
+        log.info(
+                "Cabin class deleted successfully cabinClassId={} aircraftId={} code={}",
+                id,
+                cabinClass.getAircraftId(),
+                cabinClass.getCode()
+        );
     }
 }
