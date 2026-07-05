@@ -10,109 +10,422 @@ import com.nikhil.services.repository.AircraftRepository;
 import com.nikhil.services.repository.AirlineRepository;
 import com.nikhil.services.service.AircraftService;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Aircraft fleet management scoped to airline owner.
- * Called by AircraftController and Feign clients needing seat counts and models.
- * Validates seat breakdown vs capacity; caches individual aircraft by ID.
+ * Service implementation for aircraft fleet management.
+ *
+ * Aircraft operations are scoped to the airline associated with the
+ * authenticated owner. The service manages aircraft creation, retrieval,
+ * updates, deletion, and domain-level aircraft data validation.
+ *
+ * Individual aircraft lookups are cached in Redis by aircraft ID.
+ * Write operations evict the corresponding cache entry to prevent stale reads.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class AircraftServiceImpl implements AircraftService {
 
     private final AircraftRepository aircraftRepository;
     private final AirlineRepository airlineRepository;
 
+
+    // ==================== Create Operations ====================
+
+    /**
+     * Creates a new aircraft for the airline owned by the authenticated user.
+     *
+     * Validates aircraft code uniqueness and aircraft capacity constraints
+     * before persistence.
+     */
     @Override
-    public AircraftResponse createAircraft(AircraftRequest request, Long ownerId)
-            throws ResourceNotFoundException {
+    @Transactional
+    public AircraftResponse createAircraft(
+            AircraftRequest request,
+            Long ownerId
+    ) throws ResourceNotFoundException {
+
+        log.info(
+                "Creating aircraft for ownerId={} code={}",
+                ownerId,
+                request.getCode()
+        );
+
         Airline airline = airlineRepository.findByOwnerId(ownerId)
-                .orElseThrow(() -> new EntityNotFoundException("Airline not found for owner: " + ownerId));
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Aircraft creation failed: airline not found for ownerId={}",
+                            ownerId
+                    );
 
-        Aircraft aircraft = AircraftMapper.toEntity(request, airline);
+                    return new EntityNotFoundException(
+                            "Airline not found for owner: " + ownerId
+                    );
+                });
 
+        Aircraft aircraft =
+                AircraftMapper.toEntity(request, airline);
+
+        /*
+         * Aircraft code is globally unique across the fleet registry.
+         * Reject duplicates before attempting persistence.
+         */
         if (aircraftRepository.existsByCode(aircraft.getCode())) {
-            throw new IllegalArgumentException("Aircraft with code " + aircraft.getCode() + " already exists");
+
+            log.warn(
+                    "Aircraft creation rejected: duplicate code={}",
+                    aircraft.getCode()
+            );
+
+            throw new IllegalArgumentException(
+                    "Aircraft with code "
+                            + aircraft.getCode()
+                            + " already exists"
+            );
         }
 
         validateAircraftData(aircraft);
-        return AircraftMapper.toResponse(aircraftRepository.save(aircraft));
+
+        Aircraft saved =
+                aircraftRepository.save(aircraft);
+
+        log.info(
+                "Aircraft created successfully aircraftId={} code={} airlineId={}",
+                saved.getId(),
+                saved.getCode(),
+                airline.getId()
+        );
+
+        return AircraftMapper.toResponse(saved);
     }
 
+
+    // ==================== Read Operations ====================
+
+    /**
+     * Returns an aircraft by its unique database ID.
+     *
+     * Results are cached by aircraft ID to reduce repeated database reads
+     * from internal consumers such as flight, seat, and ancillary services.
+     */
     @Override
-    @Cacheable(cacheNames = "aircrafts", key = "#id")
-    public AircraftResponse getAircraftById(Long id) throws ResourceNotFoundException {
+    @Cacheable(
+            cacheNames = "aircrafts",
+            key = "#id"
+    )
+    public AircraftResponse getAircraftById(Long id)
+            throws ResourceNotFoundException {
+
+        log.debug(
+                "Fetching aircraft by aircraftId={}",
+                id
+        );
+
         Aircraft aircraft = aircraftRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Aircraft not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Aircraft not found aircraftId={}",
+                            id
+                    );
+
+                    return new ResourceNotFoundException(
+                            "Aircraft not found with id: " + id
+                    );
+                });
+
         return AircraftMapper.toResponse(aircraft);
     }
 
+
+    /**
+     * Returns all aircraft belonging to the airline associated with
+     * the authenticated owner.
+     */
     @Override
-    public List<AircraftResponse> listAllAircraftsByOwner(Long ownerId) {
+    public List<AircraftResponse> listAllAircraftsByOwner(
+            Long ownerId
+    ) {
+
+        log.debug(
+                "Fetching aircraft fleet for ownerId={}",
+                ownerId
+        );
+
         Airline airline = airlineRepository.findByOwnerId(ownerId)
-                .orElseThrow(() -> new EntityNotFoundException("Airline not found for owner: " + ownerId));
-        return aircraftRepository.findByAirline(airline)
-                .stream()
-                .map(AircraftMapper::toResponse)
-                .toList();
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Aircraft fleet lookup failed: airline not found for ownerId={}",
+                            ownerId
+                    );
+
+                    return new EntityNotFoundException(
+                            "Airline not found for owner: " + ownerId
+                    );
+                });
+
+        List<AircraftResponse> aircrafts =
+                aircraftRepository.findByAirline(airline)
+                        .stream()
+                        .map(AircraftMapper::toResponse)
+                        .toList();
+
+        log.debug(
+                "Aircraft fleet retrieved ownerId={} airlineId={} count={}",
+                ownerId,
+                airline.getId(),
+                aircrafts.size()
+        );
+
+        return aircrafts;
     }
 
+
+    // ==================== Update Operations ====================
+
+    /**
+     * Updates an existing aircraft belonging to the authenticated
+     * airline owner.
+     *
+     * The cached aircraft entry is evicted after successful method execution
+     * so subsequent reads retrieve the latest database state.
+     */
     @Override
-    @CacheEvict(cacheNames = "aircrafts", key = "#id")
-    public AircraftResponse updateAircraft(Long id, AircraftRequest request, Long ownerId)
-            throws ResourceNotFoundException {
+    @Transactional
+    @CacheEvict(
+            cacheNames = "aircrafts",
+            key = "#id"
+    )
+    public AircraftResponse updateAircraft(
+            Long id,
+            AircraftRequest request,
+            Long ownerId
+    ) throws ResourceNotFoundException {
+
+        log.info(
+                "Updating aircraft aircraftId={} ownerId={}",
+                id,
+                ownerId
+        );
+
         Airline airline = airlineRepository.findByOwnerId(ownerId)
-                .orElseThrow(() -> new EntityNotFoundException("Airline not found for owner: " + ownerId));
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Aircraft update failed: airline not found for ownerId={}",
+                            ownerId
+                    );
+
+                    return new EntityNotFoundException(
+                            "Airline not found for owner: " + ownerId
+                    );
+                });
 
         Aircraft aircraft = aircraftRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Aircraft not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Aircraft update failed: aircraft not found aircraftId={}",
+                            id
+                    );
+
+                    return new ResourceNotFoundException(
+                            "Aircraft not found with id: " + id
+                    );
+                });
+
+        /*
+         * Prevent one airline owner from modifying an aircraft
+         * belonging to another airline.
+         */
+        if (!aircraft.getAirline().getId().equals(airline.getId())) {
+
+            log.warn(
+                    "Unauthorized aircraft update attempt aircraftId={} ownerId={} airlineId={}",
+                    id,
+                    ownerId,
+                    airline.getId()
+            );
+
+            throw new IllegalArgumentException(
+                    "Aircraft does not belong to the owner's airline"
+            );
+        }
 
         String oldCode = aircraft.getCode();
-        AircraftMapper.updateEntity(aircraft, request, airline);
+        String newCode = request.getCode();
 
-        if (!oldCode.equals(request.getCode()) && aircraftRepository.existsByCode(request.getCode())) {
-            throw new IllegalArgumentException("Aircraft with code " + request.getCode() + " already exists");
+        /*
+         * Check code uniqueness before modifying the managed entity.
+         *
+         * Updating the managed entity first may cause Hibernate to auto-flush
+         * the changed aircraft code before executing the existsByCode query,
+         * resulting in a database unique-constraint violation.
+         */
+        if (!oldCode.equals(newCode)
+                && aircraftRepository.existsByCode(newCode)) {
+
+            log.warn(
+                    "Aircraft update rejected: duplicate code={} aircraftId={}",
+                    newCode,
+                    id
+            );
+
+            throw new IllegalArgumentException(
+                    "Aircraft with code "
+                            + newCode
+                            + " already exists"
+            );
         }
+
+        // Apply changes only after ownership and uniqueness validation succeeds.
+        AircraftMapper.updateEntity(
+                aircraft,
+                request,
+                airline
+        );
 
         validateAircraftData(aircraft);
-        return AircraftMapper.toResponse(aircraftRepository.save(aircraft));
+
+        Aircraft saved =
+                aircraftRepository.save(aircraft);
+
+        log.info(
+                "Aircraft updated successfully aircraftId={} code={}",
+                saved.getId(),
+                saved.getCode()
+        );
+
+        return AircraftMapper.toResponse(saved);
     }
 
+
+    // ==================== Delete Operations ====================
+
+    /**
+     * Deletes an aircraft by its unique ID.
+     *
+     * The corresponding Redis cache entry is evicted after successful
+     * method execution.
+     *
+     * Ownership validation should be added when ownerId is propagated
+     * through the controller and service interface.
+     */
     @Override
-    @CacheEvict(cacheNames = "aircrafts", key = "#id")
-    public void deleteAircraft(Long id) throws ResourceNotFoundException {
+    @Transactional
+    @CacheEvict(
+            cacheNames = "aircrafts",
+            key = "#id"
+    )
+    public void deleteAircraft(Long id)
+            throws ResourceNotFoundException {
+
+        log.info(
+                "Deleting aircraft aircraftId={}",
+                id
+        );
+
         Aircraft aircraft = aircraftRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Aircraft not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Aircraft deletion failed: aircraft not found aircraftId={}",
+                            id
+                    );
+
+                    return new ResourceNotFoundException(
+                            "Aircraft not found with id: " + id
+                    );
+                });
+
         aircraftRepository.delete(aircraft);
+
+        log.info(
+                "Aircraft deleted successfully aircraftId={} code={}",
+                id,
+                aircraft.getCode()
+        );
     }
 
+
+    // ==================== Validation ====================
+
+    /**
+     * Validates aircraft domain constraints before persistence.
+     *
+     * Ensures:
+     * - seating capacity is positive,
+     * - configured cabin seats do not exceed total aircraft capacity,
+     * - manufacture year falls within a valid historical range.
+     */
     private void validateAircraftData(Aircraft aircraft) {
-        if (aircraft.getSeatingCapacity() != null && aircraft.getSeatingCapacity() <= 0) {
-            throw new IllegalArgumentException("Seating capacity must be positive");
+
+        if (aircraft.getSeatingCapacity() != null
+                && aircraft.getSeatingCapacity() <= 0) {
+
+            log.warn(
+                    "Aircraft validation failed: invalid seating capacity code={} capacity={}",
+                    aircraft.getCode(),
+                    aircraft.getSeatingCapacity()
+            );
+
+            throw new IllegalArgumentException(
+                    "Seating capacity must be positive"
+            );
         }
 
-        int totalSpecifiedSeats = (aircraft.getEconomySeats() != null ? aircraft.getEconomySeats() : 0) +
-                (aircraft.getPremiumEconomySeats() != null ? aircraft.getPremiumEconomySeats() : 0) +
-                (aircraft.getBusinessSeats() != null ? aircraft.getBusinessSeats() : 0) +
-                (aircraft.getFirstClassSeats() != null ? aircraft.getFirstClassSeats() : 0);
+        int totalSpecifiedSeats =
+                (aircraft.getEconomySeats() != null
+                        ? aircraft.getEconomySeats()
+                        : 0)
+                        +
+                        (aircraft.getPremiumEconomySeats() != null
+                                ? aircraft.getPremiumEconomySeats()
+                                : 0)
+                        +
+                        (aircraft.getBusinessSeats() != null
+                                ? aircraft.getBusinessSeats()
+                                : 0)
+                        +
+                        (aircraft.getFirstClassSeats() != null
+                                ? aircraft.getFirstClassSeats()
+                                : 0);
 
-        if (totalSpecifiedSeats > aircraft.getSeatingCapacity()) {
-            throw new IllegalArgumentException("Total specified seats exceed aircraft seating capacity");
+        if (aircraft.getSeatingCapacity() != null
+                && totalSpecifiedSeats > aircraft.getSeatingCapacity()) {
+
+            log.warn(
+                    "Aircraft validation failed: seat breakdown exceeds capacity code={} specifiedSeats={} capacity={}",
+                    aircraft.getCode(),
+                    totalSpecifiedSeats,
+                    aircraft.getSeatingCapacity()
+            );
+
+            throw new IllegalArgumentException(
+                    "Total specified seats exceed aircraft seating capacity"
+            );
         }
 
-        if (aircraft.getYearOfManufacture() != null &&
-                (aircraft.getYearOfManufacture() < 1900
-                        || aircraft.getYearOfManufacture() > LocalDate.now().getYear())) {
-            throw new IllegalArgumentException("Invalid year of manufacture");
+        if (aircraft.getYearOfManufacture() != null
+                && (aircraft.getYearOfManufacture() < 1900
+                || aircraft.getYearOfManufacture()
+                > LocalDate.now().getYear())) {
+
+            log.warn(
+                    "Aircraft validation failed: invalid manufacture year code={} year={}",
+                    aircraft.getCode(),
+                    aircraft.getYearOfManufacture()
+            );
+
+            throw new IllegalArgumentException(
+                    "Invalid year of manufacture"
+            );
         }
     }
 }
