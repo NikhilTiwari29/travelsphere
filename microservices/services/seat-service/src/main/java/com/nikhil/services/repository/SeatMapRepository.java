@@ -15,6 +15,8 @@ public interface SeatMapRepository extends JpaRepository<SeatMap, Long> {
     SeatMap findByCabinClassId(Long cabinClassId);
     boolean existsByAirlineIdAndCabinClassIdAndName(Long airlineId, Long cabinClassId, String name);
     boolean existsByAirlineIdAndNameAndIdNot(Long airlineId, String name, Long id);
+    boolean existsByCabinClassId(Long cabinClassId);
+    boolean existsByCabinClassIdAndIdNot(Long cabinClassId,Long id);
 
 
     @Query("SELECT sm FROM SeatMap sm LEFT JOIN FETCH sm.cabinClass WHERE sm.id = :id")

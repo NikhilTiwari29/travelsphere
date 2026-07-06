@@ -57,6 +57,7 @@ public class SeatMapMapper {
                 .totalRows(seatMap.getTotalRows())
                 .leftSeatsPerRow(seatMap.getLeftSeatsPerRow())
                 .rightSeatsPerRow(seatMap.getRightSeatsPerRow())
+                .airCraftId(seatMap.getAircraftId())
                 .airlineId(seatMap.getAirlineId())
                 .cabinClassId(seatMap.getCabinClass() != null ? seatMap.getCabinClass().getId() : null)
                 .cabinClassName(seatMap.getCabinClass() != null ? seatMap.getCabinClass().getName().toString() : null)

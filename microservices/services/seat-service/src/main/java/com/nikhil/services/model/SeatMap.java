@@ -36,6 +36,9 @@ public class SeatMap {
     @Column(nullable = false)
     private int leftSeatsPerRow;
 
+    @Column(name = "aircraft_id", nullable = false)
+    private Long aircraftId;
+
     // Cross-service ref: Airline is in airline-core-service
     @Column(name = "airline_id", nullable = false)
     private Long airlineId;
