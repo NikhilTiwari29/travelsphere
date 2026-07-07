@@ -29,7 +29,7 @@ public interface AirlineClient {
 
     /** Fetches seat capacity and model when creating instances from schedules. */
     @GetMapping("/api/aircrafts/{id}")
-    AircraftResponse getAircraftById(@PathVariable("id") Long id);
+    AircraftResponse getAircraftById(@PathVariable Long id);
 
     /**
      * Bulk IATA → airline lookup for optional search filter (Phase 1 resolution).
