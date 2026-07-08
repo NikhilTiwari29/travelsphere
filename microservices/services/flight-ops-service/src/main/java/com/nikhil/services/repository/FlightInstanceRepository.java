@@ -16,26 +16,30 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * JPA access for FlightInstance rows owned by flight-ops-service.
- * Used by search (Specification), airline dashboards, and booking batch lookups.
- * Custom queries filter by airline/airports/date; pessimistic lock supports seat holds.
+/*
+ * Repository for FlightInstance persistence and search operations.
+ *
+ * Supports filtered airline queries, route/date searches,
+ * status filtering, row locking, and optimized batch loading.
  */
-public interface FlightInstanceRepository extends JpaRepository<
-        FlightInstance, Long>,
+public interface FlightInstanceRepository
+        extends JpaRepository<FlightInstance, Long>,
         JpaSpecificationExecutor<FlightInstance> {
 
 
-
     /**
-     * Paginated airline dashboard query with optional airport/flight/date filters.
+     * Returns paginated flight instances for an airline with optional
+     * route, flight, and departure-date filters.
      */
-    @Query("SELECT fi FROM FlightInstance fi WHERE fi.airlineId = :airlineId" +
-            " AND (:departureAirportId IS NULL OR fi.departureAirportId = :departureAirportId)" +
-            " AND (:arrivalAirportId IS NULL OR fi.arrivalAirportId = :arrivalAirportId)" +
-            " AND (:flightId IS NULL OR fi.flight.id = :flightId)" +
-            " AND (:dayStart IS NULL OR fi.departureDateTime >= :dayStart)" +
-            " AND (:dayEnd IS NULL OR fi.departureDateTime < :dayEnd)")
+    @Query("""
+            SELECT fi FROM FlightInstance fi
+            WHERE fi.airlineId = :airlineId
+              AND (:departureAirportId IS NULL OR fi.departureAirportId = :departureAirportId)
+              AND (:arrivalAirportId IS NULL OR fi.arrivalAirportId = :arrivalAirportId)
+              AND (:flightId IS NULL OR fi.flight.id = :flightId)
+              AND (:dayStart IS NULL OR fi.departureDateTime >= :dayStart)
+              AND (:dayEnd IS NULL OR fi.departureDateTime < :dayEnd)
+            """)
     Page<FlightInstance> findByAirlineIdWithFilters(
             @Param("airlineId") Long airlineId,
             @Param("departureAirportId") Long departureAirportId,
@@ -43,43 +47,92 @@ public interface FlightInstanceRepository extends JpaRepository<
             @Param("flightId") Long flightId,
             @Param("dayStart") LocalDateTime dayStart,
             @Param("dayEnd") LocalDateTime dayEnd,
-            Pageable pageable);
+            Pageable pageable
+    );
 
-    Page<FlightInstance> findByStatus(FlightStatus status, Pageable pageable);
 
     /**
-     * Legacy non-paged search by route and departure window (SCHEDULED only).
+     * Returns paginated flight instances having the specified status.
      */
-    @Query("SELECT fi FROM FlightInstance fi WHERE fi.departureAirportId = :depId AND fi.arrivalAirportId = :arrId AND fi.departureDateTime >= :fromDate AND fi.departureDateTime <= :toDate AND fi.status = 'SCHEDULED'")
+    Page<FlightInstance> findByStatus(
+            FlightStatus status,
+            Pageable pageable
+    );
+
+
+    /**
+     * Returns scheduled flight instances for a route within the
+     * requested departure date-time range.
+     */
+    @Query("""
+            SELECT fi FROM FlightInstance fi
+            WHERE fi.departureAirportId = :depId
+              AND fi.arrivalAirportId = :arrId
+              AND fi.departureDateTime >= :fromDate
+              AND fi.departureDateTime <= :toDate
+              AND fi.status = 'SCHEDULED'
+            """)
     List<FlightInstance> searchFlights(
             @Param("depId") Long departureAirportId,
             @Param("arrId") Long arrivalAirportId,
             @Param("fromDate") LocalDateTime fromDate,
-            @Param("toDate") LocalDateTime toDate);
+            @Param("toDate") LocalDateTime toDate
+    );
+
 
     /**
-     * Paginated variant of route/date search for older search endpoints.
+     * Returns paginated flight instances for a route within the
+     * requested departure date-time range.
      */
-    @Query("SELECT fi FROM FlightInstance fi WHERE fi.departureAirportId = :depId AND fi.arrivalAirportId = :arrId AND fi.departureDateTime >= :fromDate AND fi.departureDateTime <= :toDate")
+    @Query("""
+            SELECT fi FROM FlightInstance fi
+            WHERE fi.departureAirportId = :depId
+              AND fi.arrivalAirportId = :arrId
+              AND fi.departureDateTime >= :fromDate
+              AND fi.departureDateTime <= :toDate
+            """)
     Page<FlightInstance> searchFlightsPaged(
             @Param("depId") Long departureAirportId,
             @Param("arrId") Long arrivalAirportId,
             @Param("fromDate") LocalDateTime fromDate,
             @Param("toDate") LocalDateTime toDate,
-            Pageable pageable);
+            Pageable pageable
+    );
+
 
     /**
-     * Pessimistic write lock for concurrent seat-inventory updates during booking.
+     * Loads a flight instance with a pessimistic write lock for
+     * concurrency-sensitive updates.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT fi FROM FlightInstance fi WHERE fi.id = :id")
-    Optional<FlightInstance> findByIdForUpdate(@Param("id") Long id);
+    @Query("""
+            SELECT fi FROM FlightInstance fi
+            WHERE fi.id = :id
+            """)
+    Optional<FlightInstance> findByIdForUpdate(
+            @Param("id") Long id
+    );
 
-    Long countByFlightIdAndStatus(Long flightId, FlightStatus status);
 
     /**
-     * JOIN FETCH flight for batch API; avoids N+1 when booking-service loads many instances.
+     * Counts flight instances of a flight having the specified status.
      */
-    @Query("SELECT fi FROM FlightInstance fi JOIN FETCH fi.flight WHERE fi.id IN :ids")
-    List<FlightInstance> findAllByIdInWithFlight(@Param("ids") Collection<Long> ids);
+    Long countByFlightIdAndStatus(
+            Long flightId,
+            FlightStatus status
+    );
+
+
+    /**
+     * Loads multiple flight instances with their associated Flight
+     * entities in one query to avoid additional lazy-loading queries.
+     */
+    @Query("""
+            SELECT fi FROM FlightInstance fi
+            JOIN FETCH fi.flight
+            WHERE fi.id IN :ids
+            """)
+    List<FlightInstance> findAllByIdInWithFlight(
+            @Param("ids") Collection<Long> ids
+    );
 }

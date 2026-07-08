@@ -1,20 +1,10 @@
-# =============================================================================
-# DEV INFRASTRUCTURE ONLY
-# Starts Redis + Kafka with ports exposed to localhost.
-# Use this when running services locally (not in Docker).
-#
-# Usage:
-#   docker compose -f docker-compose/docker-compose.dev.yml up -d
-#   docker compose -f docker-compose/docker-compose.dev.yml down
-# =============================================================================
-
 services:
 
   redis:
     image: redis:7.2-alpine
     container_name: gds-redis-dev
     ports:
-      - "6379:6379"          # accessible at localhost:6379
+      - "6379:6379"
     command: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru --save ""
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -22,21 +12,70 @@ services:
       timeout: 3s
       retries: 5
 
+
   kafka:
     image: apache/kafka:4.1.1
     container_name: gds-kafka-dev
+
     ports:
-      - "9092:9092"          # accessible at localhost:9092
+      # Used by Spring Boot services running from IntelliJ.
+      - "9092:9092"
+
     environment:
       KAFKA_NODE_ID: 1
+
+      # Single-node KRaft setup: this node acts as both broker and controller.
       KAFKA_PROCESS_ROLES: broker,controller
+
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092   # <-- localhost for local services
+
+      # HOST listener:
+      # Used by applications running outside Docker.
+      #
+      # DOCKER listener:
+      # Used by containers on the Docker Compose network.
+      #
+      # CONTROLLER listener:
+      # Used internally by Kafka KRaft controller communication.
+      KAFKA_LISTENERS: HOST://0.0.0.0:9092,DOCKER://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:29092
+
+      # Maps listener names to their transport protocols.
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: HOST:PLAINTEXT,DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      # Broker-to-broker communication uses the internal Docker listener.
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+      # Single-broker development environment requires replication factor 1.
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
       KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
+
+
+  # Browser-based Kafka management and inspection UI.
+  #
+  # Connects through Kafka's internal Docker listener because both
+  # containers run on the same Docker Compose network.
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest
+    container_name: gds-kafka-ui-dev
+
+    ports:
+      # Kafka UI is available from the host browser on port 8080.
+      - "8080:8080"
+
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+    depends_on:
+      - kafka

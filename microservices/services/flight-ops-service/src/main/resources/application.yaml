@@ -1,16 +1,20 @@
-# Flight Ops owns flight schedules and generated flight instances.
+# Flight Ops Service owns flight definitions, recurring schedules,
+# and concrete dated flight instances.
 server:
   port: 5002
 
 spring:
   application:
+    # Service name used by Config Server and Eureka service discovery.
     name: flight-ops-service
 
-  # Imports shared configuration from Config Server when available.
+  # Loads centralized configuration from Config Server.
+  # "optional" allows local startup when Config Server is unavailable.
   config:
     import: optional:configserver:http://localhost:8888
 
-  # Redis backs Spring Cache for read-heavy flight and search data.
+  # Redis provides a shared distributed cache across multiple service instances.
+  # Used by Spring Cache annotations such as @Cacheable and @CacheEvict.
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -21,77 +25,135 @@ spring:
           max-active: 8
           max-idle: 4
           min-idle: 1
+
   cache:
     type: redis
 
-  # Local datasource is used when Config Server does not override these values.
+  # Flight Ops owns its database following the database-per-service pattern.
+  # Other services access this data through APIs or events, not direct DB queries.
   datasource:
     url: jdbc:mysql://localhost:3306/airline_flight_db
     username: root
     password: NikTiwari@1234
+
   jpa:
     hibernate:
+      # Suitable for development. Use Flyway/Liquibase migrations in production.
       ddl-auto: update
 
-  # Publishes flight-instance-created events consumed by Seat Service.
+  # Publishes FlightInstanceCreatedEvent after a dated flight instance is created.
+  # Seat Service consumes the event to provision runtime cabin and seat inventory.
   kafka:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+
   cloud:
-    # Feign circuit breakers protect calls to airline, location, pricing, and seat services.
     openfeign:
       circuitbreaker:
+        # Protects Feign calls from cascading failures when downstream services fail.
         enabled: true
+
+        # Groups circuit breakers by Feign client configuration.
         group:
           enabled: true
 
-# Resilience4j defines failure thresholds for downstream Feign dependencies.
+
+# Keep framework logs at INFO while enabling detailed application diagnostics.
+# Package-level DEBUG avoids the excessive output produced by root DEBUG.
+logging:
+  level:
+    root: INFO
+    com.nikhil.services: DEBUG
+
+
+# Circuit breakers protect synchronous Feign calls to downstream services.
+#
+# State flow:
+# CLOSED → failure threshold reached → OPEN
+# OPEN   → wait duration elapsed    → HALF_OPEN
+# HALF_OPEN → trial calls determine whether to return to CLOSED or OPEN.
 resilience4j:
   circuitbreaker:
     configs:
       default:
+
+        # Evaluates the latest 20 calls instead of using a time-based window.
         sliding-window-type: COUNT_BASED
         sliding-window-size: 20
+
+        # Failure rate is evaluated only after at least 10 calls.
+        # Prevents the circuit from opening because of a small initial sample.
         minimum-number-of-calls: 10
+
+        # Opens the circuit when 50% of measured calls fail.
         failure-rate-threshold: 50
+
+        # Opens the circuit when 80% of measured calls exceed the slow-call limit.
         slow-call-rate-threshold: 80
         slow-call-duration-threshold: 3000ms
+
+        # Keep the circuit OPEN for 30 seconds before testing recovery.
         wait-duration-in-open-state: 30s
+
+        # Allow five test requests while the circuit is HALF_OPEN.
         permitted-number-of-calls-in-half-open-state: 5
+
+        # Automatically transitions OPEN → HALF_OPEN after the wait period.
         automatic-transition-from-open-to-half-open-enabled: true
+
+        # Exposes circuit-breaker state through Actuator health information.
         register-health-indicator: true
+
+        # Infrastructure and remote-call failures contribute to failure rate.
         record-exceptions:
           - java.io.IOException
           - java.util.concurrent.TimeoutException
           - feign.FeignException
+
+        # Business exceptions do not indicate an unhealthy downstream service
+        # and therefore should not contribute to circuit-breaker failure rate.
         ignore-exceptions:
           - com.nikhil.common_lib.exception.UserException
           - com.nikhil.common_lib.exception.AirportException
+
+    # Each downstream Feign client inherits the default configuration
+    # and overrides only dependency-specific thresholds where required.
     instances:
       AirlineClient:
         base-config: default
         failure-rate-threshold: 60
         wait-duration-in-open-state: 20s
+
       LocationClient:
         base-config: default
         wait-duration-in-open-state: 20s
+
       PricingClient:
         base-config: default
+
       SeatClient:
         base-config: default
 
-# Registers flight-ops-service with Eureka and discovers dependent services.
+
+# Eureka provides service discovery so clients use logical service names
+# instead of hardcoded IP addresses and ports.
 eureka:
   instance:
     prefer-ip-address: true
+
+    # Unique instance ID supports multiple horizontally scaled service instances.
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
   client:
+    # Registers this service instance and downloads the registry
+    # for discovery of other microservices.
     register-with-eureka: true
     fetch-registry: true
 
-# Metadata exposed through Actuator info.
+
+# Application metadata exposed through the Actuator /info endpoint.
 info:
   app:
     name: ${spring.application.name}
@@ -99,17 +161,24 @@ info:
     version: 1.0.0
     environment: development
 
-# Exposes service health and circuit-breaker status for operations.
+
+# Actuator exposes operational endpoints for health monitoring,
+# service metadata, and circuit-breaker diagnostics.
 management:
   endpoints:
     web:
       exposure:
+        # Expose only required operational endpoints instead of all Actuator endpoints.
         include: health, info, circuitbreakers, circuitbreakerevents
+
   endpoint:
     health:
+      # Useful for development; detailed health output should be secured in production.
       show-details: always
+
     info:
       enabled: true
+
   info:
     env:
       enabled: true
@@ -117,6 +186,8 @@ management:
       enabled: true
     os:
       enabled: true
+
   health:
+    # Includes Resilience4j circuit-breaker states in Actuator health information.
     circuitbreakers:
       enabled: true
