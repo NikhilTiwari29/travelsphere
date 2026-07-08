@@ -56,7 +56,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
     @Override
     @Transactional
     @CacheEvict(cacheNames = "flightInstances", allEntries = true)
-    public FlightInstanceResponse createFlightInstanceWithCabins(
+    public FlightInstanceResponse  createFlightInstanceWithCabins(
             Long userId, FlightInstanceRequest request) throws Exception {
 
         Long airlineId = getAirlineForUser(userId);
