@@ -27,7 +27,7 @@ public interface FlightCabinAncillaryService {
 
     FlightCabinAncillaryResponse update(Long id, FlightCabinAncillaryRequest request) throws ResourceNotFoundException;
 
-    void delete(Long id);
+    void delete(Long id) throws ResourceNotFoundException;
 
     Double calculateAncillaryPrice(List<Long> ancillaryIds);
 }
