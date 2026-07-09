@@ -9,10 +9,8 @@ import com.nikhil.services.model.Meal;
 import com.nikhil.services.repository.FlightMealRepository;
 import com.nikhil.services.repository.MealRepository;
 import com.nikhil.services.service.FlightMealService;
-import com.nikhil.services.specification.FlightMealSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,8 +80,8 @@ public class FlightMealServiceImpl implements FlightMealService {
         );
 
         /*
-         * Validate the local Meal reference before creating the
-         * flight-specific meal offering.
+         * Validate that the requested catalog Meal exists before creating
+         * the flight-specific offering.
          */
         Meal meal = mealRepository.findById(request.getMealId())
                 .orElseThrow(() -> {
@@ -100,16 +98,22 @@ public class FlightMealServiceImpl implements FlightMealService {
                 });
 
         /*
-         * Prevent duplicate assignment of the same catalog Meal
-         * to the same Flight.
+         * Enforce uniqueness of the Flight-Meal assignment.
+         *
+         * A catalog Meal may be offered on multiple flights, and a Flight may
+         * offer multiple meals. However, the same Meal must not be assigned
+         * more than once to the same Flight.
+         *
+         * Examples:
+         *   Flight 1 + Meal 1 -> allowed
+         *   Flight 1 + Meal 2 -> allowed
+         *   Flight 2 + Meal 1 -> allowed
+         *   Flight 1 + Meal 1 -> duplicate, rejected
          */
-        Specification<FlightMeal> specification =
-                FlightMealSpecification.hasFlightIdAndMealId(
-                        request.getFlightId(),
-                        request.getMealId()
-                );
-
-        if (flightMealRepository.exists(specification)) {
+        if (flightMealRepository.existsByFlightIdAndMeal_Id(
+                request.getFlightId(),
+                request.getMealId()
+        )) {
 
             log.warn(
                     "Cannot create flight meal because assignment already exists flightId={} mealId={}",
@@ -151,9 +155,9 @@ public class FlightMealServiceImpl implements FlightMealService {
     /**
      * Assigns multiple catalog meals to flights in one transaction.
      *
-     * Existing flight-meal assignments are skipped while eligible records
-     * are created. Any exception raised during validation or persistence
-     * rolls back the complete transaction.
+     * Existing Flight-Meal assignments are skipped while eligible records
+     * are created. Any validation or persistence failure rolls back the
+     * complete bulk operation.
      */
     @Override
     @Transactional
@@ -192,17 +196,14 @@ public class FlightMealServiceImpl implements FlightMealService {
                         );
                     });
 
-            Specification<FlightMeal> specification =
-                    FlightMealSpecification.hasFlightIdAndMealId(
-                            request.getFlightId(),
-                            request.getMealId()
-                    );
-
             /*
-             * Existing assignments are intentionally skipped so the bulk
-             * endpoint can process the remaining eligible records.
+             * Skip an existing Flight-Meal assignment so the remaining valid
+             * records in the bulk request can still be processed.
              */
-            if (flightMealRepository.exists(specification)) {
+            if (flightMealRepository.existsByFlightIdAndMeal_Id(
+                    request.getFlightId(),
+                    request.getMealId()
+            )) {
 
                 skippedCount++;
 
@@ -287,7 +288,7 @@ public class FlightMealServiceImpl implements FlightMealService {
     /**
      * Retrieves all meal offerings configured for a flight.
      *
-     * Used by booking flows to present meal products available for
+     * Used by booking flows to present the meal products available for
      * the selected flight.
      */
     @Override
@@ -300,11 +301,8 @@ public class FlightMealServiceImpl implements FlightMealService {
                 flightId
         );
 
-        Specification<FlightMeal> specification =
-                FlightMealSpecification.hasFlightId(flightId);
-
         List<FlightMealResponse> responses =
-                flightMealRepository.findAll(specification)
+                flightMealRepository.findByFlightId(flightId)
                         .stream()
                         .map(FlightMealMapper::toResponse)
                         .toList();
@@ -389,6 +387,32 @@ public class FlightMealServiceImpl implements FlightMealService {
                         });
 
         /*
+         * Before changing the Flight or Meal association, verify that the
+         * requested combination is not already assigned to another record.
+         */
+        boolean assignmentChanged =
+                !flightMeal.getFlightId().equals(request.getFlightId())
+                        || !flightMeal.getMeal().getId().equals(request.getMealId());
+
+        if (assignmentChanged
+                && flightMealRepository.existsByFlightIdAndMeal_Id(
+                request.getFlightId(),
+                request.getMealId()
+        )) {
+
+            log.warn(
+                    "Cannot update flight meal because target assignment already exists flightMealId={} flightId={} mealId={}",
+                    id,
+                    request.getFlightId(),
+                    request.getMealId()
+            );
+
+            throw new IllegalArgumentException(
+                    "Meal is already assigned to this flight"
+            );
+        }
+
+        /*
          * Update the external Flight reference only when its value changes.
          */
         if (!flightMeal.getFlightId().equals(request.getFlightId())) {
@@ -431,13 +455,12 @@ public class FlightMealServiceImpl implements FlightMealService {
 
         flightMeal.setAvailable(request.getAvailable());
         flightMeal.setPrice(request.getPrice());
-        flightMeal.setDisplayOrder(request.getDisplayOrder());
+        flightMeal.setDisplayOrder(
+                request.getDisplayOrder() != null
+                        ? request.getDisplayOrder()
+                        : 0
+        );
 
-        /*
-         * Explicit save is retained for clarity. Because FlightMeal is a
-         * managed entity in a writable transaction, Hibernate dirty checking
-         * would also persist the changes at transaction commit.
-         */
         FlightMeal updated =
                 flightMealRepository.save(flightMeal);
 
@@ -529,10 +552,6 @@ public class FlightMealServiceImpl implements FlightMealService {
 
         flightMeal.setAvailable(available);
 
-        /*
-         * Explicit save is retained for consistency with the service's
-         * command operations. Dirty checking would also persist this change.
-         */
         FlightMeal updated =
                 flightMealRepository.save(flightMeal);
 
