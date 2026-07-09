@@ -1,13 +1,12 @@
 package com.nikhil.services.controller;
 
-import com.nikhil.common_lib.enums.CabinClassType;
 import com.nikhil.common_lib.payload.request.FareRequest;
 import com.nikhil.common_lib.payload.response.FareResponse;
+import com.nikhil.services.model.Fare;
 import com.nikhil.services.service.FareService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,12 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * REST API for fare products tied to flights and cabin classes.
- * Gateway route: /api/fares/** → pricing-service (JWT required).
- * Internal callers: flight-ops-service (search), booking-service (price validation).
- * Data flow: request DTO → FareServiceImpl → FareRepository → FareResponse.
+/*
+ * REST API for managing and querying flight fares.
+ *
+ * Gateway route: /api/fares/** → pricing-service.
+ * Provides CRUD operations and batch fare lookups used by
+ * Flight Ops and Booking services.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/fares")
 @RequiredArgsConstructor
@@ -28,109 +29,304 @@ public class FareController {
 
     private final FareService fareService;
 
+
+    // ==================== Create Operations ====================
+
+    /**
+     * Creates a fare configuration for a flight and cabin class.
+     */
     @PostMapping
     public ResponseEntity<FareResponse> createFare(
-            @Valid @RequestBody FareRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(fareService.createFare(request));
+            @Valid @RequestBody FareRequest request
+    ) {
+
+        log.info(
+                "Fare creation request received flightId={} cabinClassId={}",
+                request.getFlightId(),
+                request.getCabinClassId()
+        );
+
+        FareResponse response =
+                fareService.createFare(request);
+
+        log.info(
+                "Fare created successfully fareId={} flightId={} cabinClassId={}",
+                response.getId(),
+                request.getFlightId(),
+                request.getCabinClassId()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
+
+    /**
+     * Creates multiple fare configurations in a single request.
+     */
     @PostMapping("/bulk")
     public ResponseEntity<List<FareResponse>> createFares(
-            @Valid @RequestBody List<FareRequest> requests) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(fareService.createFares(requests));
+            @Valid @RequestBody List<FareRequest> requests
+    ) {
+
+        log.info(
+                "Bulk fare creation request received requestedCount={}",
+                requests.size()
+        );
+
+        List<FareResponse> responses =
+                fareService.createFares(requests);
+
+        log.info(
+                "Bulk fare creation completed requestedCount={} createdCount={}",
+                requests.size(),
+                responses.size()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(responses);
     }
 
+
+    // ==================== Read Operations ====================
+
+    /**
+     * Returns all configured fares.
+     */
     @GetMapping
     public ResponseEntity<?> getFares() {
+
+        log.debug(
+                "Request received to fetch all fares"
+        );
+
+        List<Fare> fares = fareService.getFares();
+
+        log.debug(
+                "Fare retrieval completed returnedCount={}",
+                fares.size()
+        );
+
         return ResponseEntity.status(HttpStatus.OK)
-                .body(fareService.getFares());
+                .body(fares);
     }
 
+
+    /**
+     * Returns a fare by its database identifier.
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<FareResponse> getFareById(@PathVariable Long id) {
-        return ResponseEntity.ok(fareService.getFareById(id));
+    public ResponseEntity<FareResponse> getFareById(
+            @PathVariable Long id
+    ) {
+
+        log.debug(
+                "Fare lookup request received fareId={}",
+                id
+        );
+
+        FareResponse response =
+                fareService.getFareById(id);
+
+        log.debug(
+                "Fare lookup completed fareId={}",
+                id
+        );
+
+        return ResponseEntity.ok(response);
     }
 
-//    @GetMapping("/{id}/details")
-//    public ResponseEntity<FareResponse> getFareByIdWithDetails(@PathVariable Long id) {
-//        return ResponseEntity.ok(fareService.getFareByIdWithDetails(id));
-//    }
-//
-//    @GetMapping("/flight/{flightId}")
-//    public ResponseEntity<List<FareResponse>> getFaresByFlightId(
-//            @PathVariable Long flightId) {
-//        return ResponseEntity.ok(fareService.getFaresByFlightId(flightId));
-//    }
 
-
-
-//    @GetMapping("/flight/{flightId}/details")
-//    public ResponseEntity<List<FareResponse>> getFaresByFlightIdWithDetails(
-//            @PathVariable Long flightId) {
-//        return ResponseEntity.ok(fareService.getFaresByFlightIdWithDetails(flightId));
-//    }
-
+    /**
+     * Returns all fares configured for a specific flight
+     * and cabin class combination.
+     */
     @GetMapping("/flight/{flightId}/cabin-class/{cabinClassId}")
-    public ResponseEntity<List<FareResponse>> getFaresByFlightAndCabinClass(
+    public ResponseEntity<List<FareResponse>>
+    getFaresByFlightAndCabinClass(
             @PathVariable Long flightId,
-            @PathVariable Long cabinClassId) {
-        return ResponseEntity.ok(fareService.getFaresByFlightIdAndCabinClassId(flightId, cabinClassId));
+            @PathVariable Long cabinClassId
+    ) {
+
+        log.debug(
+                "Fare lookup request received flightId={} cabinClassId={}",
+                flightId,
+                cabinClassId
+        );
+
+        List<FareResponse> responses =
+                fareService.getFaresByFlightIdAndCabinClassId(
+                        flightId,
+                        cabinClassId
+                );
+
+        log.debug(
+                "Fare lookup completed flightId={} cabinClassId={} returnedCount={}",
+                flightId,
+                cabinClassId,
+                responses.size()
+        );
+
+        return ResponseEntity.ok(responses);
     }
 
+
+    // ==================== Update Operations ====================
+
+    /**
+     * Updates an existing fare configuration.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<FareResponse> updateFare(
             @PathVariable Long id,
-            @Valid @RequestBody FareRequest request) {
-        return ResponseEntity.ok(fareService.updateFare(id, request));
+            @Valid @RequestBody FareRequest request
+    ) {
+
+        log.info(
+                "Fare update request received fareId={}",
+                id
+        );
+
+        FareResponse response =
+                fareService.updateFare(
+                        id,
+                        request
+                );
+
+        log.info(
+                "Fare updated successfully fareId={}",
+                id
+        );
+
+        return ResponseEntity.ok(response);
     }
 
+
+    // ==================== Delete Operations ====================
+
+    /**
+     * Deletes a fare configuration by its identifier.
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFare(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteFare(
+            @PathVariable Long id
+    ) {
+
+        log.info(
+                "Fare deletion request received fareId={}",
+                id
+        );
+
         fareService.deleteFare(id);
+
+        log.info(
+                "Fare deleted successfully fareId={}",
+                id
+        );
+
         return ResponseEntity.noContent().build();
     }
 
+
+    // ==================== Batch Operations ====================
+
     /**
-     * Returns the cheapest fare per flight for the requested cabin class.
-     * Called internally by flight-ops-service during flight search to support
-     * price range filtering across a page of results in a single batch call.
+     * Returns multiple fares using their identifiers in a single request.
      *
-     * <p>Request body: list of flight IDs (e.g. {@code [1, 2, 3]})<br>
-     * Query param: {@code cabinClass=ECONOMY}
-     *
-     * @return map of {@code flightId → cheapest FareResponse} for that cabin class;
-     *         flights with no matching fare are absent from the map
+     * Internal services use this endpoint to avoid making one network
+     * request for each required fare.
      */
     @PostMapping("/batch-by-ids")
-    public ResponseEntity<Map<Long, FareResponse>> getFaresByIds(@RequestBody List<Long> ids) {
-        return ResponseEntity.ok(fareService.getFaresByIds(ids));
+    public ResponseEntity<Map<Long, FareResponse>> getFaresByIds(
+            @RequestBody List<Long> ids
+    ) {
+
+        log.debug(
+                "Batch fare lookup request received requestedCount={}",
+                ids.size()
+        );
+
+        Map<Long, FareResponse> responses =
+                fareService.getFaresByIds(ids);
+
+        log.debug(
+                "Batch fare lookup completed requestedCount={} returnedCount={}",
+                ids.size(),
+                responses.size()
+        );
+
+        return ResponseEntity.ok(responses);
     }
 
+
     /**
-     * Internal search endpoint consumed by flight-ops-service PricingClient Feign.
+     * Returns the lowest fare for each requested flight within
+     * the specified cabin class.
+     *
+     * Flight Ops uses this batch endpoint during flight search
+     * to enrich multiple results with pricing information.
      */
     @PostMapping("/search")
-    public ResponseEntity<Map<Long, FareResponse>> getLowestFarePerFlight(
+    public ResponseEntity<Map<Long, FareResponse>>
+    getLowestFarePerFlight(
             @RequestBody List<Long> flightIds,
-            @RequestParam Long cabinClassId) {
-        Map<Long, FareResponse> res= fareService.getLowestFarePerFlight(flightIds, cabinClassId);
-        System.out.println("search fare response ------ "+res.toString());
-        return ResponseEntity.ok(res);
+            @RequestParam Long cabinClassId
+    ) {
+
+        log.debug(
+                "Lowest fare batch search request received flightCount={} cabinClassId={}",
+                flightIds.size(),
+                cabinClassId
+        );
+
+        Map<Long, FareResponse> responses =
+                fareService.getLowestFarePerFlight(
+                        flightIds,
+                        cabinClassId
+                );
+
+        log.debug(
+                "Lowest fare batch search completed requestedFlightCount={} matchedFlightCount={} cabinClassId={}",
+                flightIds.size(),
+                responses.size(),
+                cabinClassId
+        );
+
+        return ResponseEntity.ok(responses);
     }
+
 
     /**
-     * Per-flight lowest fare; flight-ops calls once per search result when cabin IDs differ.
+     * Returns the lowest fare available for a specific
+     * flight and cabin class combination.
      */
     @GetMapping("/lowest/flight/{flightId}/cabin-class/{cabinClassId}")
-    public ResponseEntity<FareResponse> getLowestFareForFlightAndCabinClass(
+    public ResponseEntity<FareResponse>
+    getLowestFareForFlightAndCabinClass(
             @PathVariable Long flightId,
-            @PathVariable Long cabinClassId) {
-        return ResponseEntity.ok(
-                fareService.getLowestFareForFlightAndCabin(flightId, cabinClassId)
+            @PathVariable Long cabinClassId
+    ) {
+
+        log.debug(
+                "Lowest fare lookup request received flightId={} cabinClassId={}",
+                flightId,
+                cabinClassId
         );
+
+        FareResponse response =
+                fareService.getLowestFareForFlightAndCabin(
+                        flightId,
+                        cabinClassId
+                );
+
+        log.debug(
+                "Lowest fare lookup completed flightId={} cabinClassId={}",
+                flightId,
+                cabinClassId
+        );
+
+        return ResponseEntity.ok(response);
     }
-
-
 }
