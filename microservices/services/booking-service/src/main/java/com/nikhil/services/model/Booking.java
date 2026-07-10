@@ -34,7 +34,18 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    /**
+     * Public identifier used by customers and external booking flows.
+     *
+     * Example:
+     *
+     *     BK7A3F91C285AD4EA1
+     *
+     * This value is different from the internal database primary key.
+     * The UNIQUE constraint prevents two bookings from having the same
+     * customer-facing booking reference.
+     */
+    @Column(unique = true, nullable = false, length = 18)
     private String bookingReference;
 
     // Cross-service ref: User (user-service)
