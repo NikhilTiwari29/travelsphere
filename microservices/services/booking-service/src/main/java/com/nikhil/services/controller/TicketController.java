@@ -65,7 +65,7 @@ public class TicketController {
             @PathVariable String ticketNumber
     ) throws ResourceNotFoundException {
 
-        log.info(
+        log.debug(
                 "Received request to retrieve ticket by ticket number"
         );
 
