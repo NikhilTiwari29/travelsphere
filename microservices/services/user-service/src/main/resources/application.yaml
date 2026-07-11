@@ -2,46 +2,48 @@
 # USER SERVICE — Local Configuration
 # =============================================================================
 #
-# HOW CONFIG LOADING WORKS:
-# -------------------------
-# 1. This file (application.yaml) is read FIRST at startup
-# 2. spring.config.import tells Spring to fetch MORE config from Config Server
-# 3. Config Server returns:
-#      - config-repo/application.yml    → shared defaults (eureka, jpa settings)
-#      - config-repo/user-service.yml   → this service's config (port, datasource)
-# 4. Remote config OVERRIDES local config for the same keys
+# Local configuration should contain configuration required to identify the
+# application and connect to the Config Server.
 #
-# So you only need TWO things in this local file:
-#   a) spring.application.name → tells Config Server WHICH config file to return
-#   b) spring.config.import    → tells Spring WHERE Config Server is
-#
-# Everything else (port, DB, eureka, jpa) comes from Config Server.
+# Config Server provides shared and service-specific operational configuration.
+# Avoid defining the same operational property in multiple configuration
+# sources unless the intended precedence has been deliberately verified.
 # =============================================================================
-
-# Registers user-service so Gateway can forward /auth/** and /api/users/**
-# requests through Eureka + LoadBalancer.
-eureka:
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-  client:
-    register-with-eureka: true
-    fetch-registry: true
 
 spring:
   application:
-    # MUST match the config file name in config-repo (user-service.yml)
-    # Previously this was "User Service" (with space) which would NOT match.
-    # Config Server looks for: {spring.application.name}.yml in the config repo.
+    # Unique service name used by Config Server, Eureka, and observability tools.
     name: user-service
 
   config:
-    # Tells Spring Boot to fetch config from Config Server before starting.
-    # "optional:" prefix means: if Config Server is down, start anyway with local config.
-    # Without "optional:", the service REFUSES to start if Config Server is unreachable.
+    # Loads externalized configuration from the Spring Cloud Config Server.
     import: optional:configserver:http://localhost:8888
 
-# Metadata exposed through Actuator info.
+
+# =============================================================================
+# EUREKA CLIENT
+# =============================================================================
+
+eureka:
+  instance:
+    # Registers the service using its IP address instead of hostname.
+    prefer-ip-address: true
+
+    # Generates a unique instance ID for each running service instance.
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+  client:
+    # Registers this service with Eureka for service discovery.
+    register-with-eureka: true
+
+    # Downloads the service registry to discover other microservices.
+    fetch-registry: true
+
+
+# =============================================================================
+# ACTUATOR INFO
+# =============================================================================
+
 info:
   app:
     name: ${spring.application.name}
@@ -49,21 +51,80 @@ info:
     version: 1.0.0
     environment: development
 
-# Health/info endpoints confirm authentication service readiness.
+
+# =============================================================================
+# ACTUATOR, METRICS, OBSERVABILITY, AND TRACING
+# =============================================================================
+
 management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        # Exposes health, application info, metrics, and Prometheus endpoints.
+        include: health,info,metrics,prometheus
+
   endpoint:
     health:
+      # Displays detailed health information for monitoring.
       show-details: always
+
     info:
       enabled: true
+
   info:
     env:
       enabled: true
+
     java:
       enabled: true
+
     os:
       enabled: true
+
+  metrics:
+    tags:
+      # Adds the application name as a common tag to all metrics.
+      application: ${spring.application.name}
+
+    distribution:
+      percentiles-histogram:
+        # Enables latency histograms for HTTP request metrics.
+        http.server.requests: true
+
+  observations:
+    key-values:
+      # Adds the application name to all observations (metrics and traces).
+      application: ${spring.application.name}
+
+    annotations:
+      # Enables Micrometer observation annotations (@Observed).
+      enabled: true
+
+  tracing:
+    sampling:
+      # Samples 100% of requests for distributed tracing.
+      probability: 1.0
+
+    export:
+      zipkin:
+        # Exports tracing spans to Grafana Tempo using the Zipkin protocol.
+        endpoint: http://localhost:9411/api/v2/spans
+
+
+# =============================================================================
+# LOGGING
+# =============================================================================
+
+logging:
+  pattern:
+    # Includes Trace ID and Span ID in every log entry for log-trace correlation.
+    correlation: "[%X{traceId:-},%X{spanId:-}] "
+
+
+# =============================================================================
+# LOKI
+# =============================================================================
+
+loki:
+  # Loki endpoint used by the Logback appender for centralized log aggregation.
+  url: http://localhost:3100/loki/api/v1/push

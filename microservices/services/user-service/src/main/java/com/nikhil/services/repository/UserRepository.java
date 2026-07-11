@@ -2,10 +2,14 @@ package com.nikhil.services.repository;
 
 import com.nikhil.common_lib.enums.UserRole;
 import com.nikhil.services.model.User;
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Set;
 
+@Repository
+@Observed
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /*

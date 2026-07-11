@@ -1,6 +1,7 @@
 package com.nikhil.cloud.config;
 
 import com.nikhil.cloud.service.TokenBlacklistService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.server.mvc.filter.CircuitBreakerFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.filter.LoadBalancerFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
@@ -18,117 +19,43 @@ import org.springframework.web.servlet.function.ServerResponse;
 import java.net.URI;
 
 /**
- * Central routing and gateway-security configuration.
+ * Central API Gateway routing and security configuration.
  *
- * This class defines how incoming client requests are:
+ * Responsibilities:
  *
- * 1. Matched to a route.
- * 2. Authenticated using JWT.
- * 3. Authorized based on roles where required.
- * 4. Protected using a circuit breaker.
- * 5. Load-balanced to a service instance discovered through Eureka.
+ * 1. Defines public and protected routes.
+ * 2. Routes requests to downstream microservices.
+ * 3. Applies circuit-breaker protection.
+ * 4. Performs client-side load balancing.
+ * 5. Validates JWTs for protected routes.
+ * 6. Checks revoked tokens using Redis.
+ * 7. Propagates trusted user identity headers.
+ * 8. Performs route-level role authorization where required.
  *
+ * Important:
  *
- * HIGH-LEVEL REQUEST FLOW
- * -----------------------
- *
- * Client Request
- *      ↓
- * API Gateway
- *      ↓
- * Match RouterFunction
- *      ↓
- * JWT Authentication (protected routes)
- *      ↓
- * Role Authorization (admin routes only)
- *      ↓
- * Circuit Breaker
- *      ↓
- * Load Balancer
- *      ↓
- * Eureka Service Discovery
- *      ↓
- * Target Microservice
- *
- *
- * AUTHENTICATION VS AUTHORIZATION
- * -------------------------------
- *
- * Authentication:
- *
- *      "Who is the user?"
- *
- *      Handled by:
- *      jwtAuthFilter()
- *
- *
- * Authorization:
- *
- *      "Is this authenticated user allowed to perform this operation?"
- *
- *      Handled by:
- *      requireRole()
- *
- *
- * ROUTING TABLE
- * -------------
- *
- * /auth/**                     → user-service
- * /api/users/**                → user-service
- *
- * /api/cities/**               → location-service
- * /api/airports/**             → location-service
- *
- * /api/airlines/**             → airline-core-service
- * /api/aircrafts/**            → airline-core-service
- *
- * /api/flights/**              → flight-ops-service
- * /api/flight-instances/**     → flight-ops-service
- * /api/flight-schedules/**     → flight-ops-service
- *
- * /api/cabin-classes/**        → seat-service
- * /api/seat-maps/**            → seat-service
- * /api/seats/**                → seat-service
- *
- * /api/fares/**                → pricing-service
- * /api/fare-rules/**           → pricing-service
- * /api/baggage-policies/**     → pricing-service
- *
- * /api/bookings/**             → booking-service
- * /api/payments/**             → payment-service
- *
- *
- * IMPORTANT:
- *
- * The @Bean methods execute during application startup.
- *
- * They BUILD and REGISTER route definitions.
- *
- * They are NOT executed every time an HTTP request arrives.
+ * This configuration class does not require @Transactional because it does
+ * not perform relational database persistence operations. Redis blacklist
+ * lookups are independent remote operations and should not be wrapped in a
+ * relational database transaction.
  */
+@Slf4j
 @Configuration
 public class RouteConfig {
 
+    private static final String USER_ID_HEADER = "X-User-Id";
+    private static final String USER_EMAIL_HEADER = "X-User-Email";
+    private static final String USER_ROLES_HEADER = "X-User-Roles";
+
     /**
-     * Utility responsible for:
-     *
-     * - JWT signature validation
-     * - expiration validation
-     * - email extraction
-     * - authority extraction
-     * - user ID extraction
+     * Utility responsible for JWT validation and claim extraction.
      */
     private final JwtUtil jwtUtil;
 
-
     /**
-     * Redis-backed JWT revocation service.
-     *
-     * Used to reject JWTs that are still technically valid but were
-     * explicitly revoked because the user logged out.
+     * Redis-backed service used to determine whether a JWT has been revoked.
      */
     private final TokenBlacklistService blacklistService;
-
 
     public RouteConfig(
             JwtUtil jwtUtil,
@@ -144,58 +71,23 @@ public class RouteConfig {
     // ============================================================
 
     /**
-     * Routes authentication-related requests to user-service.
+     * Routes authentication requests to user-service.
      *
-     * Examples:
-     *
-     * POST /auth/login
-     * POST /auth/register
-     *
-     *
-     * REQUEST FLOW
-     * ------------
-     *
-     * Client
-     *      ↓
-     * /auth/**
-     *      ↓
-     * Circuit Breaker
-     *      ↓
-     * Load Balancer
-     *      ↓
-     * user-service
-     *
-     *
-     * No jwtAuthFilter() is applied because users must be able to
-     * log in without already having a JWT.
-     *
-     * Note:
-     *
-     * If /auth/logout is handled locally by a Gateway controller,
-     * Spring MVC can resolve that local controller endpoint instead
-     * of forwarding it to user-service.
+     * This route is intentionally public because login and registration
+     * operations must be accessible without an existing JWT.
      */
     @Bean
     public RouterFunction<ServerResponse> authRoutes() {
 
+        log.info("Registering public authentication routes: /auth/** -> user-service");
+
         return GatewayRouterFunctions.route("auth-routes")
 
-                /*
-                 * Match every request beginning with /auth/.
-                 */
                 .route(
                         RequestPredicates.path("/auth/**"),
                         HandlerFunctions.http()
                 )
 
-                /*
-                 * Circuit Breaker wraps downstream communication.
-                 *
-                 * If user-service is unavailable, times out, or the
-                 * downstream call fails according to the configured
-                 * circuit-breaker policy, the request is forwarded
-                 * to the local /fallback endpoint.
-                 */
                 .filter(
                         CircuitBreakerFilterFunctions.circuitBreaker(
                                 "user-service-cb",
@@ -203,10 +95,6 @@ public class RouteConfig {
                         )
                 )
 
-                /*
-                 * Resolve an available user-service instance through
-                 * Spring Cloud LoadBalancer and service discovery.
-                 */
                 .filter(
                         LoadBalancerFilterFunctions.lb("user-service")
                 )
@@ -220,64 +108,34 @@ public class RouteConfig {
     // ============================================================
 
     /**
-     * Handles location-management operations restricted to system admins.
+     * Routes privileged city and airport write operations.
      *
-     * Protected operations:
+     * Only authenticated users having ROLE_SYSTEM_ADMIN are allowed.
      *
-     * POST /api/cities/**
-     * POST /api/airports/**
-     *
-     *
-     * SECURITY FLOW
-     * -------------
-     *
-     * Request
-     *      ↓
-     * jwtAuthFilter()
-     *      ↓
-     * Validate JWT
-     *      ↓
-     * Extract authorities from JWT
-     *      ↓
-     * Add X-User-Roles to internal request
-     *      ↓
-     * requireRole("ROLE_SYSTEM_ADMIN")
-     *      ↓
-     * Allowed → location-service
-     * Denied  → 403 Forbidden
-     *
-     *
-     * @Order(1):
-     *
-     * These POST routes overlap with the broader location routes below.
-     * The admin-specific route must have higher precedence so that privileged
-     * write operations are not handled by the general authenticated route.
+     * @Order(1) ensures these specific POST routes are evaluated before
+     * the broader authenticated location routes.
      */
     @Bean
     @Order(1)
     public RouterFunction<ServerResponse> adminLocationServiceRoutes() {
 
+        log.info(
+                "Registering admin location routes: POST /api/cities/**, " +
+                        "POST /api/airports/** -> location-service"
+        );
+
         return GatewayRouterFunctions.route("admin-location-routes")
 
-                /*
-                 * Match city creation endpoints.
-                 */
                 .route(
                         RequestPredicates.POST("/api/cities/**"),
                         HandlerFunctions.http()
                 )
 
-                /*
-                 * Match airport creation endpoints.
-                 */
                 .route(
                         RequestPredicates.POST("/api/airports/**"),
                         HandlerFunctions.http()
                 )
 
-                /*
-                 * Protect communication with location-service.
-                 */
                 .filter(
                         CircuitBreakerFilterFunctions.circuitBreaker(
                                 "location-service-cb",
@@ -285,31 +143,22 @@ public class RouteConfig {
                         )
                 )
 
-                /*
-                 * Resolve location-service through service discovery.
-                 */
                 .filter(
                         LoadBalancerFilterFunctions.lb("location-service")
                 )
 
                 /*
-                 * Authenticate the caller.
-                 *
-                 * Validates JWT and creates trusted internal identity headers.
+                 * Authentication must run before authorization because
+                 * requireRole() reads the trusted role header created by
+                 * jwtAuthFilter().
                  */
                 .before(this::jwtAuthFilter)
 
-                /*
-                 * Authorize the authenticated caller.
-                 *
-                 * Only ROLE_SYSTEM_ADMIN is allowed.
-                 */
                 .before(
-                        request ->
-                                requireRole(
-                                        request,
-                                        "ROLE_SYSTEM_ADMIN"
-                                )
+                        request -> requireRole(
+                                request,
+                                "ROLE_SYSTEM_ADMIN"
+                        )
                 )
 
                 .build();
@@ -317,20 +166,18 @@ public class RouteConfig {
 
 
     /**
-     * Handles airline administration operations.
+     * Routes privileged airline administration operations.
      *
-     * Current protected endpoint:
-     *
-     * GET /api/airlines
-     *
-     * Only ROLE_SYSTEM_ADMIN is allowed through this route.
-     *
-     * @Order(1) gives this specific admin route priority over the broader
-     * /api/airlines/** route.
+     * GET /api/airlines requires ROLE_SYSTEM_ADMIN.
      */
     @Bean
     @Order(1)
     public RouterFunction<ServerResponse> adminAirlineCoreServiceRoutes() {
+
+        log.info(
+                "Registering admin airline route: GET /api/airlines " +
+                        "-> airline-core-service"
+        );
 
         return GatewayRouterFunctions.route(
                         "admin-airline-core-routes"
@@ -354,20 +201,13 @@ public class RouteConfig {
                         )
                 )
 
-                /*
-                 * Step 1: Authentication
-                 */
                 .before(this::jwtAuthFilter)
 
-                /*
-                 * Step 2: Authorization
-                 */
                 .before(
-                        request ->
-                                requireRole(
-                                        request,
-                                        "ROLE_SYSTEM_ADMIN"
-                                )
+                        request -> requireRole(
+                                request,
+                                "ROLE_SYSTEM_ADMIN"
+                        )
                 )
 
                 .build();
@@ -379,14 +219,12 @@ public class RouteConfig {
     // ============================================================
 
     /**
-     * Routes authenticated user-management requests to user-service.
-     *
-     * Any caller with a valid, non-revoked JWT can reach these routes.
-     *
-     * No specific role is checked here.
+     * Routes authenticated user-management requests.
      */
     @Bean
     public RouterFunction<ServerResponse> userServiceRoutes() {
+
+        log.info("Registering protected user routes: /api/users/** -> user-service");
 
         return GatewayRouterFunctions.route("user-service-routes")
 
@@ -406,9 +244,6 @@ public class RouteConfig {
                         LoadBalancerFilterFunctions.lb("user-service")
                 )
 
-                /*
-                 * Require a valid JWT before forwarding.
-                 */
                 .before(this::jwtAuthFilter)
 
                 .build();
@@ -418,12 +253,17 @@ public class RouteConfig {
     /**
      * Routes authenticated airline and aircraft requests.
      *
-     * @Order(2) ensures that more specific admin airline routes are evaluated
-     * before this broader authenticated route.
+     * @Order(2) ensures the more specific admin airline route has
+     * precedence over this general route.
      */
     @Bean
     @Order(2)
     public RouterFunction<ServerResponse> airlineCoreServiceRoutes() {
+
+        log.info(
+                "Registering airline-core routes: /api/airlines/**, " +
+                        "/api/aircrafts/** -> airline-core-service"
+        );
 
         return GatewayRouterFunctions.route("airline-core-routes")
 
@@ -457,18 +297,12 @@ public class RouteConfig {
 
 
     /**
-     * Routes authenticated seat-inventory requests to seat-service.
-     *
-     * Handles:
-     *
-     * - Cabin classes
-     * - Seat maps
-     * - Seats
-     * - Seat instances
-     * - Flight-instance cabin configuration
+     * Routes authenticated seat inventory requests.
      */
     @Bean
     public RouterFunction<ServerResponse> seatServiceRoutes() {
+
+        log.info("Registering protected seat-service routes");
 
         return GatewayRouterFunctions.route("seat-service-routes")
 
@@ -517,16 +351,12 @@ public class RouteConfig {
 
 
     /**
-     * Routes flight-operation requests.
-     *
-     * Handles:
-     *
-     * - Flight templates
-     * - Flight instances
-     * - Flight schedules
+     * Routes authenticated flight operation requests.
      */
     @Bean
     public RouterFunction<ServerResponse> flightOpsServiceRoutes() {
+
+        log.info("Registering protected flight-ops-service routes");
 
         return GatewayRouterFunctions.route("flight-ops-routes")
 
@@ -565,16 +395,12 @@ public class RouteConfig {
 
 
     /**
-     * Routes pricing-related requests.
-     *
-     * Handles:
-     *
-     * - Fares
-     * - Fare rules
-     * - Baggage policies
+     * Routes authenticated pricing requests.
      */
     @Bean
     public RouterFunction<ServerResponse> pricingServiceRoutes() {
+
+        log.info("Registering protected pricing-service routes");
 
         return GatewayRouterFunctions.route("pricing-service-routes")
 
@@ -611,18 +437,12 @@ public class RouteConfig {
 
 
     /**
-     * Routes ancillary-product requests.
-     *
-     * Handles optional travel products such as:
-     *
-     * - Meals
-     * - Ancillary services
-     * - Insurance coverage
-     * - Flight meals
-     * - Cabin-specific ancillaries
+     * Routes authenticated ancillary-product requests.
      */
     @Bean
-    public RouterFunction<ServerResponse> AncillaryServiceRoutes() {
+    public RouterFunction<ServerResponse> ancillaryServiceRoutes() {
+
+        log.info("Registering protected ancillary-service routes");
 
         return GatewayRouterFunctions.route("ancillary-service-routes")
 
@@ -677,21 +497,14 @@ public class RouteConfig {
     /**
      * Routes general authenticated location requests.
      *
-     * Handles:
-     *
-     * /api/cities/**
-     * /api/airports/**
-     *
-     * This route requires authentication but does not perform a role check.
-     *
-     * Admin-specific POST routes are handled by
-     * adminLocationServiceRoutes(), which has @Order(1).
-     *
-     * This general route has @Order(2).
+     * Specific admin POST routes are handled by the higher-priority
+     * adminLocationServiceRoutes() function.
      */
     @Bean
     @Order(2)
     public RouterFunction<ServerResponse> locationServiceRoutes() {
+
+        log.info("Registering general protected location-service routes");
 
         return GatewayRouterFunctions.route(
                         "location-service-routes"
@@ -727,10 +540,15 @@ public class RouteConfig {
 
 
     /**
-     * Routes authenticated booking requests to booking-service.
+     * Routes authenticated booking requests.
      */
     @Bean
     public RouterFunction<ServerResponse> bookingServiceRoutes() {
+
+        log.info(
+                "Registering protected booking routes: " +
+                        "/api/bookings/** -> booking-service"
+        );
 
         return GatewayRouterFunctions.route("booking-service-routes")
 
@@ -757,10 +575,15 @@ public class RouteConfig {
 
 
     /**
-     * Routes authenticated payment requests to payment-service.
+     * Routes authenticated payment requests.
      */
     @Bean
     public RouterFunction<ServerResponse> paymentServiceRoutes() {
+
+        log.info(
+                "Registering protected payment routes: " +
+                        "/api/payments/** -> payment-service"
+        );
 
         return GatewayRouterFunctions.route("payment-service-routes")
 
@@ -787,66 +610,63 @@ public class RouteConfig {
 
 
     // ============================================================
-    // GATEWAY AUTHENTICATION AND AUTHORIZATION
+    // AUTHENTICATION
     // ============================================================
 
     /**
-     * Authenticates protected requests using JWT.
+     * Authenticates a protected Gateway request.
      *
+     * Processing flow:
      *
-     * COMPLETE FLOW
-     * -------------
+     * 1. Read Authorization header.
+     * 2. Validate Bearer token format.
+     * 3. Extract raw JWT.
+     * 4. Validate JWT signature and expiration.
+     * 5. Check Redis token blacklist.
+     * 6. Extract trusted identity claims.
+     * 7. Add internal identity headers.
      *
-     * Protected Request
-     *      ↓
-     * Read Authorization header
-     *      ↓
-     * Verify "Bearer " prefix
-     *      ↓
-     * Extract raw JWT
-     *      ↓
-     * Validate signature and expiration
-     *      ↓
-     * Check Redis blacklist
-     *      ↓
-     * Extract user identity and authorities
-     *      ↓
-     * Add trusted internal identity headers
-     *      ↓
-     * Return modified request
+     * Security note:
      *
+     * The raw JWT is deliberately not written to application logs.
      *
-     * The downstream microservice receives:
-     *
-     * X-User-Id
-     * X-User-Email
-     * X-User-Roles
-     *
-     * These values are derived from the validated JWT.
-     *
-     * @param request incoming gateway request
-     * @return authenticated request containing internal user headers
+     * @param request incoming protected request
+     * @return request enriched with trusted identity headers
      */
     private ServerRequest jwtAuthFilter(ServerRequest request) {
 
+        String method = request.method().name();
+        String path = request.uri().getPath();
+
+        log.debug(
+                "Authenticating gateway request: method={}, path={}",
+                method,
+                path
+        );
+
         /*
-         * Read:
+         * Read the Authorization header.
          *
-         * Authorization: Bearer eyJ...
+         * Expected format:
+         *
+         * Authorization: Bearer <JWT>
          */
-        String authHeader =
-                request.headers()
-                        .firstHeader(JwtConstant.JWT_HEADER);
+        String authHeader = request.headers()
+                .firstHeader(JwtConstant.JWT_HEADER);
 
 
         /*
-         * Reject the request when:
-         *
-         * - Authorization header is missing
-         * - Header does not start with the expected Bearer prefix
+         * Reject requests without a correctly formatted Bearer token.
          */
         if (authHeader == null ||
                 !authHeader.startsWith(JwtConstant.TOKEN_PREFIX)) {
+
+            log.warn(
+                    "Authentication rejected: missing or invalid Authorization " +
+                            "header, method={}, path={}",
+                    method,
+                    path
+            );
 
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
@@ -856,15 +676,9 @@ public class RouteConfig {
 
 
         /*
-         * Remove the "Bearer " prefix.
+         * Remove the Bearer prefix and retain only the raw JWT.
          *
-         * Before:
-         *
-         * Bearer eyJhbGciOiJIUzUxMiJ9...
-         *
-         * After:
-         *
-         * eyJhbGciOiJIUzUxMiJ9...
+         * Never log this value.
          */
         String token = authHeader.substring(
                 JwtConstant.TOKEN_PREFIX.length()
@@ -872,11 +686,16 @@ public class RouteConfig {
 
 
         /*
-         * Validate JWT signature and expiration.
-         *
-         * Invalid signature or expired token → 401 Unauthorized.
+         * Validate token signature, structure and expiration.
          */
         if (!jwtUtil.isTokenValid(token)) {
+
+            log.warn(
+                    "Authentication rejected: invalid or expired JWT, " +
+                            "method={}, path={}",
+                    method,
+                    path
+            );
 
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
@@ -886,19 +705,17 @@ public class RouteConfig {
 
 
         /*
-         * Check whether this valid JWT has been explicitly revoked.
-         *
-         * Typical case:
-         *
-         * User logged out
-         *      ↓
-         * JWT stored in Redis blacklist
-         *      ↓
-         * Same JWT used again
-         *      ↓
-         * Reject with 401
+         * Reject a JWT that has been explicitly revoked, for example
+         * after logout.
          */
         if (blacklistService.isBlacklisted(token)) {
+
+            log.warn(
+                    "Authentication rejected: revoked JWT, " +
+                            "method={}, path={}",
+                    method,
+                    path
+            );
 
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
@@ -908,48 +725,41 @@ public class RouteConfig {
 
 
         /*
-         * Extract trusted identity information from the validated JWT.
+         * Extract identity information only after successful validation.
          */
-        String email =
-                jwtUtil.extractEmail(token);
+        String email = jwtUtil.extractEmail(token);
+        String authorities = jwtUtil.extractAuthorities(token);
+        Long userId = jwtUtil.extractUserId(token);
 
-        String authorities =
-                jwtUtil.extractAuthorities(token);
 
-        Long userId =
-                jwtUtil.extractUserId(token);
+        log.info(
+                "Gateway authentication successful: userId={}, roles={}, " +
+                        "method={}, path={}",
+                userId,
+                authorities,
+                method,
+                path
+        );
 
 
         /*
-         * Create a new ServerRequest containing internal identity headers.
-         *
-         * Example:
-         *
-         * X-User-Id: 11
-         * X-User-Email: nikhiltiwari@gmail.com
-         * X-User-Roles: ROLE_SYSTEM_ADMIN
-         *
-         * These headers can be consumed by:
-         *
-         * - requireRole() inside the Gateway
-         * - downstream microservices
-         * - audit logging
-         * - ownership validation
+         * Create a new immutable ServerRequest containing trusted internal
+         * identity headers for downstream authorization and ownership checks.
          */
         return ServerRequest.from(request)
 
                 .header(
-                        "X-User-Id",
+                        USER_ID_HEADER,
                         String.valueOf(userId)
                 )
 
                 .header(
-                        "X-User-Email",
+                        USER_EMAIL_HEADER,
                         email
                 )
 
                 .header(
-                        "X-User-Roles",
+                        USER_ROLES_HEADER,
                         authorities
                 )
 
@@ -957,91 +767,103 @@ public class RouteConfig {
     }
 
 
+    // ============================================================
+    // AUTHORIZATION
+    // ============================================================
+
     /**
-     * Performs role-based authorization.
+     * Performs Gateway-level role authorization.
      *
-     * Authentication must happen before this method.
-     *
-     * Example:
-     *
-     * JWT:
-     *
-     * authorities = ROLE_SYSTEM_ADMIN
-     *
-     * jwtAuthFilter() creates:
-     *
-     * X-User-Roles: ROLE_SYSTEM_ADMIN
-     *
-     * Then:
-     *
-     * requireRole(request, "ROLE_SYSTEM_ADMIN")
-     *
-     * Result:
-     *
-     * Role exists → request continues
-     * Role missing → 403 Forbidden
-     *
-     *
-     * 401 VS 403
-     * ----------
-     *
-     * 401 Unauthorized:
-     *
-     * The caller is not successfully authenticated.
-     *
-     * Examples:
-     * - missing JWT
-     * - expired JWT
-     * - invalid JWT
-     * - revoked JWT
-     *
-     *
-     * 403 Forbidden:
-     *
-     * The caller is authenticated but does not have permission
-     * to perform the requested operation.
-     *
-     * Example:
-     *
-     * ROLE_CUSTOMER attempting to create a city.
-     *
+     * This method must execute after jwtAuthFilter() because it relies on
+     * the trusted X-User-Roles header generated from the validated JWT.
      *
      * @param request authenticated request
-     * @param role required authority
-     * @return request when authorization succeeds
+     * @param requiredRole authority required by the route
+     * @return original request when authorization succeeds
      */
     private ServerRequest requireRole(
             ServerRequest request,
-            String role) {
+            String requiredRole) {
+
+        String path = request.uri().getPath();
 
         /*
-         * Read the internal role header created by jwtAuthFilter().
+         * Read the trusted role information added during authentication.
          */
-        String roles =
-                request.headers()
-                        .firstHeader("X-User-Roles");
+        String roles = request.headers()
+                .firstHeader(USER_ROLES_HEADER);
+
+
+        log.debug(
+                "Checking gateway authorization: path={}, requiredRole={}, roles={}",
+                path,
+                requiredRole,
+                roles
+        );
 
 
         /*
-         * Reject when:
-         *
-         * - no role information exists
-         * - required role is not present
+         * Reject an authenticated caller that does not have the required
+         * authority.
          */
-        if (roles == null || !roles.contains(role)) {
+        if (roles == null || !hasRole(roles, requiredRole)) {
+
+            log.warn(
+                    "Gateway authorization denied: path={}, requiredRole={}, roles={}",
+                    path,
+                    requiredRole,
+                    roles
+            );
 
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Access denied. Required role: " + role
+                    "Access denied. Required role: " + requiredRole
             );
         }
 
 
-        /*
-         * Authorization succeeded.
-         *
-         * Return the request unchanged so routing can continue.
-         */
+        log.info(
+                "Gateway authorization successful: path={}, requiredRole={}",
+                path,
+                requiredRole
+        );
+
         return request;
+    }
+
+
+    /**
+     * Performs an exact role match instead of using String.contains().
+     *
+     * This avoids accidental partial matches when multiple authorities
+     * are stored in a comma-separated string.
+     *
+     * Example:
+     *
+     * roles:
+     * ROLE_CUSTOMER,ROLE_SYSTEM_ADMIN
+     *
+     * requiredRole:
+     * ROLE_SYSTEM_ADMIN
+     *
+     * Result:
+     * true
+     */
+    private boolean hasRole(
+            String roles,
+            String requiredRole) {
+
+        if (roles == null || roles.isBlank()) {
+            return false;
+        }
+
+        for (String role : roles.split(",")) {
+
+            if (requiredRole.equals(role.trim())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

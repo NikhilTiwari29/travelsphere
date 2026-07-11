@@ -1,0 +1,47 @@
+# =============================================================================
+# TEMPO — Local Development Configuration
+# =============================================================================
+
+server:
+
+  # Tempo HTTP API port.
+  #
+  # Grafana uses this endpoint to query traces.
+  http_listen_port: 3200
+
+
+# =============================================================================
+# TRACE INGESTION
+# =============================================================================
+
+distributor:
+
+  receivers:
+
+    # Enables the Zipkin-compatible ingestion endpoint.
+    #
+    # Spring Boot / Micrometer Tracing can export Zipkin-format spans
+    # to Tempo through this receiver.
+    zipkin:
+
+
+# =============================================================================
+# TRACE STORAGE
+# =============================================================================
+
+storage:
+
+  trace:
+
+    # Stores trace blocks on the local filesystem.
+    #
+    # Appropriate for local development.
+    backend: local
+
+    # Write-ahead log for trace data before block persistence.
+    wal:
+      path: /tmp/tempo/wal
+
+    # Directory containing persisted trace blocks.
+    local:
+      path: /tmp/tempo/blocks

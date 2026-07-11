@@ -1,0 +1,251 @@
+# Grafana provisioning configuration version.
+# This tells Grafana which provisioning schema format this file uses.
+apiVersion: 1
+
+
+# ============================================================
+# DATASOURCES
+# ============================================================
+#
+# Defines all observability backends that Grafana can query.
+#
+# TravelSphere observability flow:
+#
+#   Metrics  -> Prometheus
+#   Traces   -> Tempo
+#   Logs     -> Loki
+#
+# Correlation:
+#
+#   Prometheus exemplar -> Tempo trace
+#   Tempo trace         -> Loki logs
+#   Loki log            -> Tempo trace
+#
+datasources:
+
+
+  # ==========================================================
+  # PROMETHEUS - METRICS DATASOURCE
+  # ==========================================================
+  - name: Prometheus
+
+    # Grafana datasource plugin type.
+    type: prometheus
+
+    # Stable internal identifier used when another datasource
+    # or dashboard needs to reference Prometheus.
+    uid: prometheus
+
+    # Grafana backend sends requests to Prometheus.
+    #
+    # Browser -> Grafana -> Prometheus
+    #
+    # This avoids the browser needing direct access to Prometheus.
+    access: proxy
+
+    # Internal Docker Compose URL.
+    #
+    # Grafana and Prometheus run on the same Compose network,
+    # therefore Grafana resolves "prometheus" using Docker DNS.
+    #
+    # Do NOT use localhost:9090 here because localhost from inside
+    # the Grafana container refers to Grafana itself.
+    url: http://prometheus:9090
+
+    # Makes Prometheus the default datasource for new dashboard panels.
+    #
+    # Only one datasource should be marked as default.
+    isDefault: true
+
+    # Prevents accidental modification through the Grafana UI.
+    # Changes should be made in this provisioning file instead.
+    editable: false
+
+    jsonData:
+
+      # HTTP method Grafana uses when sending PromQL queries.
+      #
+      # POST is useful for large or complex PromQL queries because
+      # the query is sent in the request body instead of the URL.
+      httpMethod: POST
+
+      # Configures links from Prometheus exemplars to Tempo traces.
+      #
+      # If a Prometheus metric contains an exemplar carrying:
+      #
+      #   trace_id="4bf92f3577b34da6a3ce929d0e0e4736"
+      #
+      # Grafana can open the corresponding distributed trace in Tempo.
+      exemplarTraceIdDestinations:
+
+        # Name of the exemplar label containing the trace identifier.
+        - name: trace_id
+
+          # UID of the target Tempo datasource defined below.
+          datasourceUid: tempo
+
+
+
+  # ==========================================================
+  # TEMPO - DISTRIBUTED TRACING DATASOURCE
+  # ==========================================================
+  - name: Tempo
+
+    # Grafana datasource type for distributed traces.
+    type: tempo
+
+    # Stable internal datasource identifier.
+    #
+    # Referenced by:
+    # - Prometheus exemplar navigation
+    # - Loki derived fields
+    uid: tempo
+
+    # Grafana backend sends requests to Tempo.
+    access: proxy
+
+    # Tempo HTTP query API.
+    #
+    # "tempo" is the Docker Compose service name.
+    # Port 3200 is Tempo's HTTP/query endpoint.
+    url: http://tempo:3200
+
+    # Prometheus remains the default datasource.
+    isDefault: false
+
+    # Prevents UI modifications to the provisioned datasource.
+    editable: false
+
+    jsonData:
+
+      # HTTP method used by Grafana for Tempo query requests.
+      httpMethod: GET
+
+
+      # --------------------------------------------------------
+      # TRACE -> LOG CORRELATION
+      # --------------------------------------------------------
+      #
+      # Allows navigation from a Tempo trace/span to Loki logs
+      # generated during approximately the same time window.
+      #
+      tracesToLogsV2:
+
+        # Loki datasource UID.
+        datasourceUid: loki
+
+        # Expand the Loki search window to begin two seconds
+        # before the selected span starts.
+        #
+        # This helps include logs emitted immediately before
+        # the span timestamp.
+        spanStartTimeShift: "-2s"
+
+        # Expand the Loki search window to end two seconds
+        # after the selected span finishes.
+        spanEndTimeShift: "2s"
+
+        # Include the trace ID when searching Loki.
+        #
+        # This requires application logs to contain the trace ID.
+        filterByTraceID: true
+
+        # Do not additionally restrict the Loki query using span ID.
+        #
+        # Trace-level filtering is generally a simpler starting point
+        # for microservice debugging.
+        filterBySpanID: false
+
+
+      # --------------------------------------------------------
+      # SERVICE GRAPH VISUALIZATION
+      # --------------------------------------------------------
+      nodeGraph:
+
+        # Enables Grafana's node graph visualization for traces.
+        #
+        # Useful for visualizing relationships such as:
+        #
+        # API Gateway
+        #      |
+        #      v
+        # Booking Service
+        #      |
+        #      +------> Seat Service
+        #      |
+        #      +------> Pricing Service
+        #      |
+        #      +------> Payment Service
+        enabled: true
+
+
+
+  # ==========================================================
+  # LOKI - LOG DATASOURCE
+  # ==========================================================
+  - name: Loki
+
+    # Grafana datasource type for Loki logs.
+    type: loki
+
+    # Stable internal datasource identifier.
+    #
+    # Referenced by Tempo's tracesToLogsV2 configuration.
+    uid: loki
+
+    # Grafana backend sends LogQL queries to Loki.
+    access: proxy
+
+    # Loki HTTP API endpoint.
+    #
+    # "loki" is the Docker Compose service name.
+    # Port 3100 is Loki's HTTP API port.
+    url: http://loki:3100
+
+    # Prometheus remains the default datasource.
+    isDefault: false
+
+    # Prevents accidental changes through the Grafana UI.
+    editable: false
+
+    jsonData:
+
+
+      # --------------------------------------------------------
+      # LOG -> TRACE CORRELATION
+      # --------------------------------------------------------
+      #
+      # Derived fields inspect each Loki log line and extract
+      # values such as a distributed trace ID.
+      #
+      # Grafana then creates a clickable link from the log line
+      # to the corresponding Tempo trace.
+      derivedFields:
+
+        # Display name of the generated link in Grafana.
+        - name: TraceID
+
+          # Target datasource when the link is clicked.
+          datasourceUid: tempo
+
+          # Regular expression used to extract the trace ID
+          # from the log message.
+          #
+          # This pattern supports formats such as:
+          #
+          #   trace_id=4bf92f3577b34da6a3ce929d0e0e4736
+          #
+          #   trace_id: 4bf92f3577b34da6a3ce929d0e0e4736
+          #
+          # The value inside (...) becomes __value.raw.
+          matcherRegex: 'trace_id[=: ]+([a-fA-F0-9]+)'
+
+          # Passes the extracted trace ID to the Tempo datasource.
+          #
+          # Double $$ is required so Grafana receives:
+          #
+          #   ${__value.raw}
+          #
+          # rather than Docker Compose attempting environment-variable
+          # substitution before Grafana reads the provisioning file.
+          url: '$${__value.raw}'

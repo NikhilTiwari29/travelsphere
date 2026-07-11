@@ -7,54 +7,218 @@ import com.nikhil.common_lib.payload.response.AuthResponse;
 import com.nikhil.services.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/*
- * Public authentication REST endpoints for user registration and login.
+
+/**
+ * Public REST controller responsible for user registration and authentication.
  *
- * Architecture Fit
- * ----------------
- * Part of user-service; clients reach these endpoints through the API Gateway.
- * RouteConfig.authRoutes() forwards /auth/** here with no JWT validation.
+ * <p>This controller belongs to {@code user-service}. Clients access these
+ * endpoints through the API Gateway using the {@code /auth/**} route.</p>
  *
- * Request Flow
- * ------------
- * Client → Gateway (/auth/**) → AuthController → AuthService → AuthResponse + JWT
+ * <p>Because signup and login are public authentication operations, the client
+ * does not need an existing JWT to call these endpoints.</p>
  *
- * Endpoints: POST /auth/signup, POST /auth/login
+ * <p>Request flow:</p>
+ *
+ * <pre>
+ * Client
+ *    |
+ *    v
+ * API Gateway
+ *    |
+ *    | /auth/**
+ *    v
+ * AuthController
+ *    |
+ *    v
+ * AuthService
+ *    |
+ *    +---- User registration / credential verification
+ *    |
+ *    +---- JWT generation
+ *    |
+ *    v
+ * AuthResponse
+ * </pre>
+ *
+ * <p>Security considerations:</p>
+ *
+ * <ul>
+ *     <li>Passwords must never be written to application logs.</li>
+ *     <li>JWT access tokens must never be written to application logs.</li>
+ *     <li>Authentication logic remains in the service layer.</li>
+ *     <li>The controller is responsible only for HTTP request handling,
+ *         validation, delegation, and response construction.</li>
+ * </ul>
  */
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
+    /**
+     * Authentication service containing signup and login business logic.
+     */
     private final AuthService authService;
 
-    /*
-     * Purpose: Register a new user and return a JWT.
-     * Called By: Client via Gateway POST /auth/signup
-     * Flow: Validate UserDTO → AuthService.signup → AuthResponse
+
+    /**
+     * Registers a new user account and returns an authentication response.
+     *
+     * <p>The request body is validated before the service method is invoked.
+     * The authentication service is responsible for creating the user,
+     * assigning the appropriate role, persisting the account, and generating
+     * the JWT.</p>
+     *
+     * <p>Request flow:</p>
+     *
+     * <pre>
+     * POST /auth/signup
+     *          |
+     *          v
+     * Bean Validation
+     *          |
+     *          v
+     * AuthService.signup()
+     *          |
+     *          +---- Validate account uniqueness
+     *          |
+     *          +---- Create user
+     *          |
+     *          +---- Generate JWT
+     *          |
+     *          v
+     * AuthResponse
+     * </pre>
+     *
+     * @param request validated user registration details
+     * @return authentication response containing the JWT and user information
+     * @throws UserException when the user cannot be registered
      */
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(
-            @RequestBody @Valid UserDTO req) throws UserException {
-        AuthResponse response = authService.signup(req);
+            @RequestBody @Valid UserDTO request
+    ) throws UserException {
+
+        /*
+         * Log the arrival of the registration request.
+         *
+         * The complete request object is intentionally not logged because
+         * registration DTOs can contain passwords and personal information.
+         */
+        log.info(
+                "Received user signup request"
+        );
+
+
+        /*
+         * Delegate registration business logic to the service layer.
+         *
+         * The controller does not perform password encoding, persistence,
+         * role assignment, or token generation.
+         */
+        AuthResponse response =
+                authService.signup(request);
+
+
+        /*
+         * This log confirms that the complete signup operation finished
+         * successfully. Failed operations are handled by the centralized
+         * exception handling layer.
+         */
+        log.info(
+                "User signup completed successfully"
+        );
+
+
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * Purpose: Authenticate existing user and return a JWT.
-     * Called By: Client via Gateway POST /auth/login
-     * Flow: Validate LoginRequest → AuthService.login → AuthResponse
+
+    /**
+     * Authenticates an existing user and returns an authentication response.
+     *
+     * <p>The request body is validated before authentication begins.
+     * Credential verification and JWT generation are delegated to the
+     * authentication service.</p>
+     *
+     * <p>Request flow:</p>
+     *
+     * <pre>
+     * POST /auth/login
+     *          |
+     *          v
+     * Bean Validation
+     *          |
+     *          v
+     * AuthService.login()
+     *          |
+     *          +---- Load user account
+     *          |
+     *          +---- Verify credentials
+     *          |
+     *          +---- Generate JWT
+     *          |
+     *          +---- Update last login
+     *          |
+     *          v
+     * AuthResponse
+     * </pre>
+     *
+     * @param request validated login credentials
+     * @return authentication response containing the JWT and authenticated
+     *         user information
+     * @throws UserException when authentication fails
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
-            @RequestBody @Valid LoginRequest req) throws UserException {
-        AuthResponse response = authService.login(req.getEmail(), req.getPassword());
+            @RequestBody @Valid LoginRequest request
+    ) throws UserException {
+
+        /*
+         * Log only the authentication event.
+         *
+         * Passwords and other credentials must never be included in logs.
+         *
+         * Since distributed tracing is being introduced, request correlation
+         * should eventually rely on traceId/spanId rather than logging
+         * credentials or other user-specific values.
+         */
+        log.info(
+                "Received user login request"
+        );
+
+
+        /*
+         * Delegate credential verification and JWT generation to the
+         * authentication service.
+         */
+        AuthResponse response =
+                authService.login(
+                        request.getEmail(),
+                        request.getPassword()
+                );
+
+
+        /*
+         * Reaching this point means authentication and response generation
+         * completed successfully.
+         *
+         * Authentication failures are propagated to the centralized exception
+         * handling layer and therefore do not produce this success message.
+         */
+        log.info(
+                "User authentication completed successfully"
+        );
+
+
         return ResponseEntity.ok(response);
     }
 }
