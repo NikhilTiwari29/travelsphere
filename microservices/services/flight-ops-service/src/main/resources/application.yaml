@@ -59,15 +59,6 @@ spring:
         group:
           enabled: true
 
-
-# Keep framework logs at INFO while enabling detailed application diagnostics.
-# Package-level DEBUG avoids the excessive output produced by root DEBUG.
-logging:
-  level:
-    root: INFO
-    com.nikhil.services: DEBUG
-
-
 # Circuit breakers protect synchronous Feign calls to downstream services.
 #
 # State flow:
@@ -162,18 +153,20 @@ info:
     environment: development
 
 
-# Actuator exposes operational endpoints for health monitoring,
-# service metadata, and circuit-breaker diagnostics.
+# =============================================================================
+# ACTUATOR, METRICS, OBSERVABILITY, AND TRACING
+# =============================================================================
+
 management:
   endpoints:
     web:
       exposure:
-        # Expose only required operational endpoints instead of all Actuator endpoints.
-        include: health, info, circuitbreakers, circuitbreakerevents
+        # Exposes health, application info, metrics, and Prometheus endpoints.
+        include: health,info,metrics,prometheus
 
   endpoint:
     health:
-      # Useful for development; detailed health output should be secured in production.
+      # Displays detailed health information for monitoring.
       show-details: always
 
     info:
@@ -182,12 +175,57 @@ management:
   info:
     env:
       enabled: true
+
     java:
       enabled: true
+
     os:
       enabled: true
 
-  health:
-    # Includes Resilience4j circuit-breaker states in Actuator health information.
-    circuitbreakers:
+  metrics:
+    tags:
+      # Adds the application name as a common tag to all metrics.
+      application: ${spring.application.name}
+
+    distribution:
+      percentiles-histogram:
+        # Enables latency histograms for HTTP request metrics.
+        http.server.requests: true
+
+  observations:
+    key-values:
+      # Adds the application name to all observations (metrics and traces).
+      application: ${spring.application.name}
+
+    annotations:
+      # Enables Micrometer observation annotations (@Observed).
       enabled: true
+
+  tracing:
+    sampling:
+      # Samples 100% of requests for distributed tracing.
+      probability: 1.0
+
+    export:
+      zipkin:
+        # Exports tracing spans to Grafana Tempo using the Zipkin protocol.
+        endpoint: http://localhost:9411/api/v2/spans
+
+
+# =============================================================================
+# LOGGING
+# =============================================================================
+
+logging:
+  pattern:
+    # Includes Trace ID and Span ID in every log entry for log-trace correlation.
+    correlation: "[%X{traceId:-},%X{spanId:-}] "
+
+
+# =============================================================================
+# LOKI
+# =============================================================================
+
+loki:
+  # Loki endpoint used by the Logback appender for centralized log aggregation.
+  url: http://localhost:3100/loki/api/v1/push

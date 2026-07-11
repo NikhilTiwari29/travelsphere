@@ -16,13 +16,13 @@
         <option value="$PROJECT_DIR$/microservices/services/subscription-service/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/services/notification-service/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/services/location-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/common-lib/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
       <set>
-        <option value="$PROJECT_DIR$/microservices/common-lib/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/pom.xml" />
       </set>
     </option>
   </component>

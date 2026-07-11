@@ -11,6 +11,7 @@
         <module name="flight-ops-service" />
         <module name="location-service" />
         <module name="user-service" />
+        <module name="common-lib" />
         <module name="notification-service" />
         <module name="config-server" />
         <module name="payment-service" />
@@ -36,7 +37,6 @@
       <module name="cloud (1)" target="1.5" />
       <module name="cloud (2)" target="1.5" />
       <module name="cloud (3)" target="1.5" />
-      <module name="common-lib" target="21" />
       <module name="flight-ops-service (1)" target="17" />
       <module name="flight-ops-service (2)" target="17" />
       <module name="payment-service (1)" target="17" />
@@ -45,7 +45,6 @@
       <module name="pricing-service (2)" target="17" />
       <module name="seat-service (1)" target="17" />
       <module name="seat-service (2)" target="17" />
-      <module name="services" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

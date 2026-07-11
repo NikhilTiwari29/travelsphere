@@ -9,8 +9,31 @@
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config-repo" beforeDir="false" afterPath="$PROJECT_DIR$/config-repo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/0000000004" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/0000000004" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/meta.json" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/meta.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/docker-compose.dev.yml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/docker-compose.dev.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/observability/grafana/dashboard.json" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/observability/grafana/dashboards/dashboard.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/observability/grafana/datasource.yml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/observability/grafana/provisioning/datasources/datasource.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/airline-core-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/airline-core-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/airline-core-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/airline-core-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/airline-core-service/target/classes/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/airline-core-service/target/classes/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/ancillary-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/ancillary-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/ancillary-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/ancillary-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/booking-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/booking-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/booking-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/booking-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/flight-ops-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/flight-ops-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/flight-ops-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/flight-ops-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/location-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/location-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/location-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/location-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/notification-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/notification-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/notification-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/notification-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/notification-service/target/classes/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/notification-service/target/classes/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/payment-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/payment-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/payment-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/payment-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/pricing-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/pricing-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/pricing-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/pricing-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/seat-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/seat-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/seat-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/seat-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/subscription-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/subscription-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/services/subscription-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/subscription-service/src/main/resources/application.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,61 +70,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.3560125539881644" />
-      <entry key="MS500" value="1.8357252667963526" />
-      <entry key="S2" value="2.5721414638715654" />
-      <entry key="S5" value="3.547856845735568" />
-      <entry key="S10" value="5.403937900394739" />
-      <entry key="S30" value="21.30549465539502" />
-      <entry key="S60" value="37.34221093700787" />
-      <entry key="M2" value="50.72106954239281" />
-      <entry key="M5" value="61.4930800986551" />
-      <entry key="M10" value="66.94034496236401" />
-      <entry key="M15" value="71.08490266305839" />
-      <entry key="M30" value="84.61255579941547" />
-      <entry key="H1" value="129.3219855665296" />
-      <entry key="H2" value="240.14569694513398" />
-      <entry key="H4" value="385.5224559344841" />
-      <entry key="D1" value="617.9196966388337" />
-      <entry key="W1" value="674.0534400579077" />
+      <entry key="MS100" value="1.2058977543168932" />
+      <entry key="MS500" value="1.7290046894082896" />
+      <entry key="S2" value="1.9240225724468232" />
+      <entry key="S5" value="1.9688867844468716" />
+      <entry key="S10" value="1.9843204683673257" />
+      <entry key="S30" value="1.9947460302967768" />
+      <entry key="S60" value="1.9980777897608204" />
+      <entry key="M2" value="2.0621207265644075" />
+      <entry key="M5" value="2.964469646107614" />
+      <entry key="M10" value="4.402761447477354" />
+      <entry key="M15" value="5.263567486581055" />
+      <entry key="M30" value="7.1734934288265855" />
+      <entry key="H1" value="19.776652831628518" />
+      <entry key="H2" value="83.07514039931505" />
+      <entry key="H4" value="226.2656940421437" />
+      <entry key="D1" value="584.0374094562136" />
+      <entry key="W1" value="692.842017775923" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="9.763725950889129E-293" />
-      <entry key="S5" value="1.5698068955588358E-117" />
-      <entry key="S10" value="3.9620788679162343E-59" />
-      <entry key="S30" value="3.4091101894013E-20" />
-      <entry key="S60" value="1.8463776050557048E-10" />
-      <entry key="M2" value="1.3590377935441462E-5" />
-      <entry key="M5" value="0.012266705217933691" />
-      <entry key="M10" value="0.2003268443752794" />
-      <entry key="M15" value="0.6841883862988196" />
-      <entry key="M30" value="2.824800222423054" />
-      <entry key="H1" value="6.14110066879044" />
-      <entry key="H2" value="9.21351101972954" />
-      <entry key="H4" value="11.338380917462768" />
-      <entry key="D1" value="13.513281498617127" />
-      <entry key="W1" value="13.929326298263947" />
+      <entry key="S2" value="1.740165161139212E-129" />
+      <entry key="S5" value="3.134990202135388E-52" />
+      <entry key="S10" value="1.770590354129206E-26" />
+      <entry key="S30" value="2.606389783609061E-9" />
+      <entry key="S60" value="5.105281366985624E-5" />
+      <entry key="M2" value="0.007145125168242768" />
+      <entry key="M5" value="0.13854917256677687" />
+      <entry key="M10" value="0.3722220060558972" />
+      <entry key="M15" value="0.5174821865311463" />
+      <entry key="M30" value="0.7388617727490612" />
+      <entry key="H1" value="1.3586627886499483" />
+      <entry key="H2" value="3.577446143893898" />
+      <entry key="H4" value="7.047922927296719" />
+      <entry key="D1" value="13.176076085383166" />
+      <entry key="W1" value="14.723635056901045" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.2716942075192739" />
-      <entry key="MS500" value="1.8118492274557754" />
-      <entry key="S2" value="2.563520500651154" />
-      <entry key="S5" value="3.542881951051424" />
-      <entry key="S10" value="5.3998923151207165" />
-      <entry key="S30" value="21.29804352777754" />
-      <entry key="S60" value="37.33461278126221" />
-      <entry key="M2" value="50.71541827128615" />
-      <entry key="M5" value="61.50236162806735" />
-      <entry key="M10" value="67.13800281971753" />
-      <entry key="M15" value="71.76493992472757" />
-      <entry key="M30" value="87.42964795535501" />
-      <entry key="H1" value="135.45480965480303" />
-      <entry key="H2" value="249.352991256705" />
-      <entry key="H4" value="396.85698887873065" />
-      <entry key="D1" value="631.4322057194978" />
-      <entry key="W1" value="687.9826523245589" />
+      <entry key="MS100" value="1.1343138941291366" />
+      <entry key="MS500" value="1.708565297175485" />
+      <entry key="S2" value="1.9183498834190797" />
+      <entry key="S5" value="1.96656596332912" />
+      <entry key="S10" value="1.98315115858825" />
+      <entry key="S30" value="1.9943542591509384" />
+      <entry key="S60" value="1.9979318537404172" />
+      <entry key="M2" value="2.069112786244674" />
+      <entry key="M5" value="3.1025667377910042" />
+      <entry key="M10" value="4.774413974170786" />
+      <entry key="M15" value="5.780528117592267" />
+      <entry key="M30" value="7.911941601324758" />
+      <entry key="H1" value="21.134408949610805" />
+      <entry key="H2" value="86.6506667321053" />
+      <entry key="H4" value="233.31147927548997" />
+      <entry key="D1" value="597.2127756040063" />
+      <entry key="W1" value="707.5655384883453" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -113,48 +136,59 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Spring Boot.AirlineCoreServiceApplication.executor": "Run",
-    "Spring Boot.ApiGatewayApplication.executor": "Run",
-    "Spring Boot.ConfigServerApplication.executor": "Run",
-    "Spring Boot.ServiceRegistryApplication.executor": "Run",
-    "Spring Boot.UserServiceApplication.executor": "Run",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/project/TravelSphere/microservices/docker-compose/observability/grafana",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2",
-    "run.configurations.included.in.services": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AirlineCoreServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.AncillaryServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ApiGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.BookingServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ConfigServerApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.FlightOpsServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.LocationServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.NotificationServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.PaymentServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.PricingServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.SeatServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ServiceRegistryApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.SubscriptionServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.UserServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/project/TravelSphere/microservices/services/airline-core-service/src/main/resources&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\project\TravelSphere\microservices\docker-compose\observability\grafana" />
-      <recent name="C:\project\TravelSphere\microservices\cloud\api-gateway\src\main\resources" />
-      <recent name="C:\project\TravelSphere" />
-      <recent name="C:\project\TravelSphere\microservices\cloud" />
-      <recent name="C:\project\TravelSphere\microservices\services" />
+      <recent name="C:\project\TravelSphere\microservices\services\airline-core-service\src\main\resources" />
+      <recent name="C:\project\TravelSphere\microservices\services\ancillary-service\src\main\resources" />
+      <recent name="C:\project\TravelSphere\microservices\services\booking-service\src\main\resources" />
+      <recent name="C:\project\TravelSphere\microservices\services\flight-ops-service\src\main\resources" />
+      <recent name="C:\project\TravelSphere\microservices\services\location-service\src\main\resources" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\project\TravelSphere\microservices\docker-compose\observability\grafana\provisioning\datasources" />
+      <recent name="C:\project\TravelSphere\microservices\docker-compose\observability\grafana\dashboards" />
       <recent name="C:\project\TravelSphere\microservices\docker-compose\observability\grafana" />
       <recent name="C:\project\TravelSphere" />
     </key>
@@ -174,11 +208,18 @@
           <value>
             <map>
               <entry key="AirlineCoreServiceApplication" value="STOPPED" />
+              <entry key="AncillaryServiceApplication" value="FAILED" />
               <entry key="ApiGatewayApplication" value="STOPPED" />
               <entry key="BookingServiceApplication" value="STOPPED" />
               <entry key="ConfigServerApplication" value="STOPPED" />
+              <entry key="FlightOpsServiceApplication" value="STOPPED" />
+              <entry key="LocationServiceApplication" value="STOPPED" />
+              <entry key="NotificationServiceApplication" value="STOPPED" />
               <entry key="PaymentServiceApplication" value="STOPPED" />
+              <entry key="PricingServiceApplication" value="STOPPED" />
+              <entry key="SeatServiceApplication" value="STOPPED" />
               <entry key="ServiceRegistryApplication" value="STOPPED" />
+              <entry key="SubscriptionServiceApplication" value="STOPPED" />
               <entry key="UserServiceApplication" value="STOPPED" />
             </map>
           </value>
@@ -322,7 +363,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1782651598637</updated>
-      <workItem from="1783751353732" duration="3901000" />
+      <workItem from="1783751353732" duration="7428000" />
     </task>
     <servers />
   </component>

@@ -109,10 +109,16 @@ services:
   grafana:
     image: grafana/grafana:10.1.0
     volumes:
-      - ./observability/grafana:/etc/grafana/provisioning/datasources:ro
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     ports:
       - '3000:3000'
+
+
+volumes:
+  grafana-data:
