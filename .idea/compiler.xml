@@ -7,46 +7,45 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="subscription-service" />
+        <module name="flight-ops-service" />
+        <module name="location-service" />
+        <module name="user-service" />
+        <module name="notification-service" />
+        <module name="config-server" />
+        <module name="payment-service" />
+        <module name="airline-core-service" />
+        <module name="booking-service" />
+        <module name="api-gateway" />
+        <module name="seat-service" />
+        <module name="ancillary-service" />
+        <module name="pricing-service" />
+        <module name="service-registry" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="airline-core-service" target="17" />
       <module name="airline-core-service (1)" target="17" />
       <module name="airline-core-service (2)" target="17" />
       <module name="airline-microservice" target="1.5" />
       <module name="airline-microservice (1)" target="1.5" />
       <module name="airline-microservice (2)" target="1.5" />
-      <module name="ancillary-service" target="17" />
       <module name="ancillary-service (1)" target="17" />
       <module name="ancillary-service (2)" target="17" />
-      <module name="api-gateway" target="17" />
-      <module name="booking-service" target="17" />
       <module name="booking-service (1)" target="17" />
       <module name="booking-service (2)" target="17" />
-      <module name="cloud" target="1.5" />
       <module name="cloud (1)" target="1.5" />
       <module name="cloud (2)" target="1.5" />
       <module name="cloud (3)" target="1.5" />
-      <module name="common-lib" target="17" />
-      <module name="config-server" target="17" />
-      <module name="flight-ops-service" target="17" />
+      <module name="common-lib" target="21" />
       <module name="flight-ops-service (1)" target="17" />
       <module name="flight-ops-service (2)" target="17" />
-      <module name="location-service" target="17" />
-      <module name="notification-service" target="17" />
-      <module name="payment-service" target="17" />
       <module name="payment-service (1)" target="17" />
       <module name="payment-service (2)" target="17" />
-      <module name="pricing-service" target="17" />
       <module name="pricing-service (1)" target="17" />
       <module name="pricing-service (2)" target="17" />
-      <module name="seat-service" target="17" />
       <module name="seat-service (1)" target="17" />
       <module name="seat-service (2)" target="17" />
-      <module name="service-registry" target="17" />
       <module name="services" target="1.5" />
-      <module name="subscription-service" target="17" />
-      <module name="user-service" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

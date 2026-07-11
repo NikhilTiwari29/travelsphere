@@ -5,47 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90656cbf-8f94-4640-bce9-fb5076017b6d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/cloud/api-gateway/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/cloud/api-gateway/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/cloud/api-gateway/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/cloud/api-gateway/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/cloud/config-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/cloud/config-server/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/cloud/config-server/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/cloud/config-server/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/cloud/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/cloud/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/cloud/service-registry/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/cloud/service-registry/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/.gitattributes" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/.mvn/wrapper/maven-wrapper.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/mvnw" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/mvnw.cmd" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/pom.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/src/main/java/com/nikhil/cloud/ServiceRegistryApplication.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/src/main/resources/application.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/common-lib/service-registry/src/test/java/com/nikhil/cloud/ServiceRegistryApplicationTests.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/docker11.yml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/docker11.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/docker12.yml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/docker12.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/airline-core-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/airline-core-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/ancillary-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/ancillary-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/booking-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/booking-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/flight-ops-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/flight-ops-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/flight-ops-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/flight-ops-service/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/location-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/location-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/notification-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/notification-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/notification-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/notification-service/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/payment-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/payment-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/payment-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/payment-service/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/pricing-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/pricing-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/seat-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/seat-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/seat-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/seat-service/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/user-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/user-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/microservices/services/user-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/services/user-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config-repo" beforeDir="false" afterPath="$PROJECT_DIR$/config-repo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/0000000004" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/0000000004" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/meta.json" beforeDir="false" afterPath="$PROJECT_DIR$/microservices/docker-compose/observability/tempo/tempo-data/wal/ee84e197-e805-482d-b398-5bd6e7e4de9b+single-tenant+vParquet2/meta.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,11 +18,22 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="442" />
+    <option name="cachedIndexableFilesCount" value="331" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -71,61 +47,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="4.866364323371969E-8" />
-      <entry key="MS500" value="0.059866853224534895" />
-      <entry key="S2" value="0.831798702187325" />
-      <entry key="S5" value="1.4080601983345558" />
-      <entry key="S10" value="1.6781274084121443" />
-      <entry key="S30" value="1.8903697777856663" />
-      <entry key="S60" value="2.3940382944961454" />
-      <entry key="M2" value="6.840875301478824" />
-      <entry key="M5" value="22.362374209272215" />
-      <entry key="M10" value="35.01802991798231" />
-      <entry key="M15" value="42.750486891775175" />
-      <entry key="M30" value="77.87771386833529" />
-      <entry key="H1" value="171.53333346628756" />
-      <entry key="H2" value="298.8206547402869" />
-      <entry key="H4" value="408.4760586964424" />
-      <entry key="D1" value="538.482101530704" />
-      <entry key="W1" value="565.3688477623361" />
+      <entry key="MS100" value="1.3560125539881644" />
+      <entry key="MS500" value="1.8357252667963526" />
+      <entry key="S2" value="2.5721414638715654" />
+      <entry key="S5" value="3.547856845735568" />
+      <entry key="S10" value="5.403937900394739" />
+      <entry key="S30" value="21.30549465539502" />
+      <entry key="S60" value="37.34221093700787" />
+      <entry key="M2" value="50.72106954239281" />
+      <entry key="M5" value="61.4930800986551" />
+      <entry key="M10" value="66.94034496236401" />
+      <entry key="M15" value="71.08490266305839" />
+      <entry key="M30" value="84.61255579941547" />
+      <entry key="H1" value="129.3219855665296" />
+      <entry key="H2" value="240.14569694513398" />
+      <entry key="H4" value="385.5224559344841" />
+      <entry key="D1" value="617.9196966388337" />
+      <entry key="W1" value="674.0534400579077" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0" />
-      <entry key="M15" value="1.0" />
-      <entry key="M30" value="1.0" />
-      <entry key="H1" value="1.0" />
-      <entry key="H2" value="1.0" />
-      <entry key="H4" value="1.0" />
-      <entry key="D1" value="1.0" />
-      <entry key="W1" value="1.0" />
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="9.763725950889129E-293" />
+      <entry key="S5" value="1.5698068955588358E-117" />
+      <entry key="S10" value="3.9620788679162343E-59" />
+      <entry key="S30" value="3.4091101894013E-20" />
+      <entry key="S60" value="1.8463776050557048E-10" />
+      <entry key="M2" value="1.3590377935441462E-5" />
+      <entry key="M5" value="0.012266705217933691" />
+      <entry key="M10" value="0.2003268443752794" />
+      <entry key="M15" value="0.6841883862988196" />
+      <entry key="M30" value="2.824800222423054" />
+      <entry key="H1" value="6.14110066879044" />
+      <entry key="H2" value="9.21351101972954" />
+      <entry key="H4" value="11.338380917462768" />
+      <entry key="D1" value="13.513281498617127" />
+      <entry key="W1" value="13.929326298263947" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="3.911207500213118E-7" />
-      <entry key="MS500" value="0.11035754177083888" />
-      <entry key="S2" value="1.3052437407419604" />
-      <entry key="S5" value="2.1494622313011402" />
-      <entry key="S10" value="2.539155624577222" />
-      <entry key="S30" value="2.8417108172328414" />
-      <entry key="S60" value="3.3693238335410847" />
-      <entry key="M2" value="7.82806413734919" />
-      <entry key="M5" value="23.35672083822488" />
-      <entry key="M10" value="36.01499665232041" />
-      <entry key="M15" value="43.74838962336642" />
-      <entry key="M30" value="78.87653331886308" />
-      <entry key="H1" value="172.53257861846677" />
-      <entry key="H2" value="299.8201654255758" />
-      <entry key="H4" value="409.475765582376" />
-      <entry key="D1" value="539.4820430584342" />
-      <entry key="W1" value="566.368839124184" />
+      <entry key="MS100" value="1.2716942075192739" />
+      <entry key="MS500" value="1.8118492274557754" />
+      <entry key="S2" value="2.563520500651154" />
+      <entry key="S5" value="3.542881951051424" />
+      <entry key="S10" value="5.3998923151207165" />
+      <entry key="S30" value="21.29804352777754" />
+      <entry key="S60" value="37.33461278126221" />
+      <entry key="M2" value="50.71541827128615" />
+      <entry key="M5" value="61.50236162806735" />
+      <entry key="M10" value="67.13800281971753" />
+      <entry key="M15" value="71.76493992472757" />
+      <entry key="M30" value="87.42964795535501" />
+      <entry key="H1" value="135.45480965480303" />
+      <entry key="H2" value="249.352991256705" />
+      <entry key="H4" value="396.85698887873065" />
+      <entry key="D1" value="631.4322057194978" />
+      <entry key="W1" value="687.9826523245589" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -140,15 +116,24 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.AirlineCoreServiceApplication.executor": "Run",
+    "Spring Boot.ApiGatewayApplication.executor": "Run",
+    "Spring Boot.ConfigServerApplication.executor": "Run",
+    "Spring Boot.ServiceRegistryApplication.executor": "Run",
+    "Spring Boot.UserServiceApplication.executor": "Run",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/project/TravelSphere",
+    "last_opened_file_path": "C:/project/TravelSphere/microservices/docker-compose/observability/grafana",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -156,21 +141,52 @@
     "nodejs_package_manager_path": "npm",
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2"
+    "project.structure.side.proportion": "0.2",
+    "run.configurations.included.in.services": "true",
+    "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\project\TravelSphere\microservices\docker-compose\observability\grafana" />
+      <recent name="C:\project\TravelSphere\microservices\cloud\api-gateway\src\main\resources" />
       <recent name="C:\project\TravelSphere" />
       <recent name="C:\project\TravelSphere\microservices\cloud" />
       <recent name="C:\project\TravelSphere\microservices\services" />
-      <recent name="C:\project\TravelSphere\microservices" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\project\TravelSphere\microservices\docker-compose\observability\grafana" />
       <recent name="C:\project\TravelSphere" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="KtorApplicationConfigurationType" />
+        <option value="MicronautRunConfigurationType" />
+        <option value="QuarkusRunConfigurationType" />
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+    <option name="configurationStatuses">
+      <map>
+        <entry key="SpringBootApplicationConfigurationType">
+          <value>
+            <map>
+              <entry key="AirlineCoreServiceApplication" value="STOPPED" />
+              <entry key="ApiGatewayApplication" value="STOPPED" />
+              <entry key="BookingServiceApplication" value="STOPPED" />
+              <entry key="ConfigServerApplication" value="STOPPED" />
+              <entry key="PaymentServiceApplication" value="STOPPED" />
+              <entry key="ServiceRegistryApplication" value="STOPPED" />
+              <entry key="UserServiceApplication" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="RunManager" selected="Spring Boot.ServiceRegistryApplication">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="services (1)" />
       <method v="2">
@@ -181,6 +197,114 @@
       <module name="services (1)" />
       <option name="filePath" />
       <method v="2" />
+    </configuration>
+    <configuration name="AirlineCoreServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="airline-core-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.AirlineCoreServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AncillaryServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="ancillary-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.AncillaryServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ApiGatewayApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="api-gateway" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.cloud.ApiGatewayApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BookingServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="booking-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.BookingServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ConfigServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="config-server" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.cloud.ConfigServerApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="FlightOpsServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="flight-ops-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.FlightOpsServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="LocationServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="location-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.LocationServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NotificationServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="notification-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.service.NotificationServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PaymentServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="payment-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.PaymentServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PricingServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="pricing-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.PricingServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SeatServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="seat-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.SeatServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ServiceRegistryApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="service-registry" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.cloud.ServiceRegistryApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SubscriptionServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="subscription-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.SubscriptionServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="UserServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="user-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.nikhil.services.UserServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
     </configuration>
   </component>
   <component name="SharedIndexes">
@@ -198,6 +322,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1782651598637</updated>
+      <workItem from="1783751353732" duration="3901000" />
     </task>
     <servers />
   </component>

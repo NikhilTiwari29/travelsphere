@@ -12,28 +12,17 @@
         <option value="$PROJECT_DIR$/microservices/services/booking-service/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/services/payment-service/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/cloud/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/user-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/subscription-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/notification-service/pom.xml" />
+        <option value="$PROJECT_DIR$/microservices/services/location-service/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
       <set>
-        <option value="$PROJECT_DIR$/microservices/cloud/api-gateway/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/cloud/config-server/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/cloud/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/cloud/service-registry/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/common-lib/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/airline-core-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/ancillary-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/booking-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/flight-ops-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/location-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/notification-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/payment-service/pom.xml" />
         <option value="$PROJECT_DIR$/microservices/services/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/pricing-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/seat-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/subscription-service/pom.xml" />
-        <option value="$PROJECT_DIR$/microservices/services/user-service/pom.xml" />
       </set>
     </option>
   </component>
