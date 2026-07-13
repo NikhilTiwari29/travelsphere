@@ -74,7 +74,7 @@ twilio:
 # ── Notification Settings ──────────────────────────────────────────────────────
 notification:
   from-email: ${MAIL_FROM:codewithnikhil@gmail.com}
-  from-name: "nikhilAir Notifications"
+  from-name: "TravelSphere Notifications"
   support-email: codewithnikhil@gmail.co
   support-phone: "1800-XXX-XXXX"
   checkin-url: localhost:5173

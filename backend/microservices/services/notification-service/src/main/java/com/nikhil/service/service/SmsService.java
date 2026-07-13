@@ -80,8 +80,8 @@ public class SmsService {
         String currency = event.getCurrency() != null ? event.getCurrency() : "INR";
 
         return String.format(
-                "nikhilAir: Booking CONFIRMED! Ref: %s | %s %s | %s | %d pax | %s %s paid. " +
-                "Check-in opens 48hrs before departure. Queries: support@nikhilair.com",
+                "TravelSphere: Booking CONFIRMED! Ref: %s | %s %s | %s | %d pax | %s %s paid. " +
+                "Check-in opens 48hrs before departure. Queries: support@TravelSphere.com",
                 event.getBookingReference(),
                 event.getFlightNumber() != null ? event.getFlightNumber() : "",
                 route,
