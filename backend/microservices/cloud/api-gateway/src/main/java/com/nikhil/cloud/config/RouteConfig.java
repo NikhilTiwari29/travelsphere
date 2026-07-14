@@ -671,8 +671,6 @@ public class RouteConfig {
 
         /*
          * Remove the Bearer prefix and retain only the raw JWT.
-         *
-         * Never log this value.
          */
         String token = authHeader.substring(
                 JwtConstant.TOKEN_PREFIX.length()
