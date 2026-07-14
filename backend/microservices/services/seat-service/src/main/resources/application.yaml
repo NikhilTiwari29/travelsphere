@@ -1,43 +1,59 @@
-# Seat Service owns cabin classes, seat maps, and per-flight seat inventory.
+# =============================================================================
+# SERVER
+# =============================================================================
+
 server:
+  # HTTP port on which this microservice listens.
   port: 5005
+
+
+# =============================================================================
+# SPRING
+# =============================================================================
 
 spring:
   application:
+    # Unique service name registered with Eureka and observability tools.
     name: seat-service
 
-  # Imports shared configuration from Config Server when available.
-  config:
-    import: optional:configserver:http://localhost:8888
-
-  # Local datasource is used when Config Server does not override these values.
+  # Database connection details supplied through environment variables.
   datasource:
-    url: jdbc:mysql://localhost:3306/airline_seat_db
-    username: root
-    password: NikTiwari@1234
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
   jpa:
     hibernate:
+      # Suitable for development. Use Flyway/Liquibase migrations in production.
       ddl-auto: update
 
-  # Consumes flight-instance-created and booking events to maintain seat inventory.
+  # Consumes flight and booking events to maintain seat inventory.
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
     consumer:
       group-id: seat-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+
       properties:
         spring.json.trusted.packages: com.nikhil.common_lib.event
+
+  # Enables Feign circuit breakers.
   cloud:
-    # Feign circuit breakers protect calls to airline-core-service.
     openfeign:
       circuitbreaker:
         enabled: true
+
         group:
           enabled: true
 
-# Resilience4j controls fallback behavior for Seat Service Feign dependencies.
+
+# =============================================================================
+# RESILIENCE4J
+# =============================================================================
+
 resilience4j:
   circuitbreaker:
     configs:
@@ -52,35 +68,54 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 5
         automatic-transition-from-open-to-half-open-enabled: true
         register-health-indicator: true
+
         record-exceptions:
           - java.io.IOException
           - java.util.concurrent.TimeoutException
           - feign.FeignException
+
         ignore-exceptions:
           - com.nikhil.common_lib.exception.UserException
           - com.nikhil.common_lib.exception.AirportException
+
     instances:
       AirlineClient:
         base-config: default
         failure-rate-threshold: 60
         wait-duration-in-open-state: 20s
 
-# Registers seat-service with Eureka and enables service-name based calls.
+
+# =============================================================================
+# EUREKA CLIENT
+# =============================================================================
+
 eureka:
   instance:
+    # Registers the service using its IP address.
     prefer-ip-address: true
+
+    # Generates a unique instance ID for each running service instance.
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
   client:
+    # Registers this service with Eureka.
     register-with-eureka: true
+
+    # Downloads the service registry to discover other microservices.
     fetch-registry: true
 
-# Metadata exposed through Actuator info.
+
+# =============================================================================
+# ACTUATOR INFO
+# =============================================================================
+
 info:
   app:
     name: ${spring.application.name}
     description: Manages seat inventory and cabin configuration for flight instances
     version: 1.0.0
     environment: development
+
 
 # =============================================================================
 # ACTUATOR, METRICS, OBSERVABILITY, AND TRACING
@@ -90,12 +125,10 @@ management:
   endpoints:
     web:
       exposure:
-        # Exposes health, application info, metrics, and Prometheus endpoints.
         include: health,info,metrics,prometheus
 
   endpoint:
     health:
-      # Displays detailed health information for monitoring.
       show-details: always
 
     info:
@@ -113,32 +146,26 @@ management:
 
   metrics:
     tags:
-      # Adds the application name as a common tag to all metrics.
       application: ${spring.application.name}
 
     distribution:
       percentiles-histogram:
-        # Enables latency histograms for HTTP request metrics.
         http.server.requests: true
 
   observations:
     key-values:
-      # Adds the application name to all observations (metrics and traces).
       application: ${spring.application.name}
 
     annotations:
-      # Enables Micrometer observation annotations (@Observed).
       enabled: true
 
   tracing:
     sampling:
-      # Samples 100% of requests for distributed tracing.
       probability: 1.0
 
     export:
       zipkin:
-        # Exports tracing spans to Grafana Tempo using the Zipkin protocol.
-        endpoint: http://localhost:9411/api/v2/spans
+        endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 
 # =============================================================================
@@ -146,8 +173,12 @@ management:
 # =============================================================================
 
 logging:
+  level:
+    root: INFO
+    com.nikhil.services: DEBUG
+
   pattern:
-    # Includes Trace ID and Span ID in every log entry for log-trace correlation.
+    # Includes Trace ID and Span ID in every log entry.
     correlation: "[%X{traceId:-},%X{spanId:-}] "
 
 
@@ -156,5 +187,5 @@ logging:
 # =============================================================================
 
 loki:
-  # Loki endpoint used by the Logback appender for centralized log aggregation.
-  url: http://localhost:3100/loki/api/v1/push
+  # Loki endpoint used by the Logback appender.
+  url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}

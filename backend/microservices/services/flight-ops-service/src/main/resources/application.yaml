@@ -1,116 +1,95 @@
-# Flight Ops Service owns flight definitions, recurring schedules,
-# and concrete dated flight instances.
+# =============================================================================
+# SERVER
+# =============================================================================
+
 server:
+  # HTTP port on which this microservice listens.
   port: 5002
+
+
+# =============================================================================
+# SPRING
+# =============================================================================
 
 spring:
   application:
-    # Service name used by Config Server and Eureka service discovery.
+    # Unique service name registered with Eureka and observability tools.
     name: flight-ops-service
 
-  # Loads centralized configuration from Config Server.
-  # "optional" allows local startup when Config Server is unavailable.
-  config:
-    import: optional:configserver:http://localhost:8888
-
-  # Redis provides a shared distributed cache across multiple service instances.
-  # Used by Spring Cache annotations such as @Cacheable and @CacheEvict.
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
-      timeout: 2000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 4
-          min-idle: 1
-
-  cache:
-    type: redis
-
-  # Flight Ops owns its database following the database-per-service pattern.
-  # Other services access this data through APIs or events, not direct DB queries.
+  # Database connection details supplied through environment variables.
   datasource:
-    url: jdbc:mysql://localhost:3306/airline_flight_db
-    username: root
-    password: NikTiwari@1234
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
       # Suitable for development. Use Flyway/Liquibase migrations in production.
       ddl-auto: update
 
-  # Publishes FlightInstanceCreatedEvent after a dated flight instance is created.
-  # Seat Service consumes the event to provision runtime cabin and seat inventory.
+  # Redis backs Spring Cache for frequently accessed flight data.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+          min-idle: 1
+
+  # Enables Redis as the backend for Spring Cache.
+  cache:
+    type: redis
+
+  # Publishes flight lifecycle events.
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
+  # Enables Feign circuit breakers.
   cloud:
     openfeign:
       circuitbreaker:
-        # Protects Feign calls from cascading failures when downstream services fail.
         enabled: true
 
-        # Groups circuit breakers by Feign client configuration.
         group:
           enabled: true
 
-# Circuit breakers protect synchronous Feign calls to downstream services.
-#
-# State flow:
-# CLOSED → failure threshold reached → OPEN
-# OPEN   → wait duration elapsed    → HALF_OPEN
-# HALF_OPEN → trial calls determine whether to return to CLOSED or OPEN.
+
+# =============================================================================
+# RESILIENCE4J
+# =============================================================================
+
 resilience4j:
   circuitbreaker:
     configs:
       default:
-
-        # Evaluates the latest 20 calls instead of using a time-based window.
         sliding-window-type: COUNT_BASED
         sliding-window-size: 20
-
-        # Failure rate is evaluated only after at least 10 calls.
-        # Prevents the circuit from opening because of a small initial sample.
         minimum-number-of-calls: 10
-
-        # Opens the circuit when 50% of measured calls fail.
         failure-rate-threshold: 50
-
-        # Opens the circuit when 80% of measured calls exceed the slow-call limit.
         slow-call-rate-threshold: 80
         slow-call-duration-threshold: 3000ms
-
-        # Keep the circuit OPEN for 30 seconds before testing recovery.
         wait-duration-in-open-state: 30s
-
-        # Allow five test requests while the circuit is HALF_OPEN.
         permitted-number-of-calls-in-half-open-state: 5
-
-        # Automatically transitions OPEN → HALF_OPEN after the wait period.
         automatic-transition-from-open-to-half-open-enabled: true
-
-        # Exposes circuit-breaker state through Actuator health information.
         register-health-indicator: true
 
-        # Infrastructure and remote-call failures contribute to failure rate.
         record-exceptions:
           - java.io.IOException
           - java.util.concurrent.TimeoutException
           - feign.FeignException
 
-        # Business exceptions do not indicate an unhealthy downstream service
-        # and therefore should not contribute to circuit-breaker failure rate.
         ignore-exceptions:
           - com.nikhil.common_lib.exception.UserException
           - com.nikhil.common_lib.exception.AirportException
 
-    # Each downstream Feign client inherits the default configuration
-    # and overrides only dependency-specific thresholds where required.
     instances:
       AirlineClient:
         base-config: default
@@ -128,23 +107,30 @@ resilience4j:
         base-config: default
 
 
-# Eureka provides service discovery so clients use logical service names
-# instead of hardcoded IP addresses and ports.
+# =============================================================================
+# EUREKA CLIENT
+# =============================================================================
+
 eureka:
   instance:
+    # Registers the service using its IP address.
     prefer-ip-address: true
 
-    # Unique instance ID supports multiple horizontally scaled service instances.
+    # Generates a unique instance ID for each running service instance.
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
   client:
-    # Registers this service instance and downloads the registry
-    # for discovery of other microservices.
+    # Registers this service with Eureka.
     register-with-eureka: true
+
+    # Downloads the service registry to discover other microservices.
     fetch-registry: true
 
 
-# Application metadata exposed through the Actuator /info endpoint.
+# =============================================================================
+# ACTUATOR INFO
+# =============================================================================
+
 info:
   app:
     name: ${spring.application.name}
@@ -161,12 +147,10 @@ management:
   endpoints:
     web:
       exposure:
-        # Exposes health, application info, metrics, and Prometheus endpoints.
         include: health,info,metrics,prometheus
 
   endpoint:
     health:
-      # Displays detailed health information for monitoring.
       show-details: always
 
     info:
@@ -184,32 +168,26 @@ management:
 
   metrics:
     tags:
-      # Adds the application name as a common tag to all metrics.
       application: ${spring.application.name}
 
     distribution:
       percentiles-histogram:
-        # Enables latency histograms for HTTP request metrics.
         http.server.requests: true
 
   observations:
     key-values:
-      # Adds the application name to all observations (metrics and traces).
       application: ${spring.application.name}
 
     annotations:
-      # Enables Micrometer observation annotations (@Observed).
       enabled: true
 
   tracing:
     sampling:
-      # Samples 100% of requests for distributed tracing.
       probability: 1.0
 
     export:
       zipkin:
-        # Exports tracing spans to Grafana Tempo using the Zipkin protocol.
-        endpoint: http://localhost:9411/api/v2/spans
+        endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 
 # =============================================================================
@@ -217,8 +195,12 @@ management:
 # =============================================================================
 
 logging:
+  level:
+    root: INFO
+    com.nikhil.services: DEBUG
+
   pattern:
-    # Includes Trace ID and Span ID in every log entry for log-trace correlation.
+    # Includes Trace ID and Span ID in every log entry.
     correlation: "[%X{traceId:-},%X{spanId:-}] "
 
 
@@ -227,5 +209,5 @@ logging:
 # =============================================================================
 
 loki:
-  # Loki endpoint used by the Logback appender for centralized log aggregation.
-  url: http://localhost:3100/loki/api/v1/push
+  # Loki endpoint used by the Logback appender.
+  url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}

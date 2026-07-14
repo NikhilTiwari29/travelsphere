@@ -1,16 +1,32 @@
+# =============================================================================
+# SERVER
+# =============================================================================
+
+server:
+  # HTTP port on which this microservice listens.
+  port: 5009
+
+
+# =============================================================================
+# SPRING
+# =============================================================================
+
 spring:
   application:
+    # Unique service name registered with Eureka and observability tools.
     name: payment-service
 
-  # Loads shared payment-service configuration from Config Server when available.
-  config:
-    import: optional:configserver:http://localhost:8888
+  datasource:
+    # Database connection details supplied through environment variables.
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
-  # Publishes payment.completed and payment.failed events consumed by Booking Service.
+  # Publishes payment events consumed by Booking Service.
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
-  # Feign circuit breakers protect calls back to User Service during payment flows.
+  # Enables Feign circuit breakers.
   cloud:
     openfeign:
       circuitbreaker:
@@ -18,20 +34,33 @@ spring:
         group:
           enabled: true
 
-# Razorpay settings are used when creating hosted payment links.
+
+# =============================================================================
+# RAZORPAY
+# =============================================================================
+
 razorpay:
   api:
-    key: your razorpay key
-    secret: your razorpay secret
-  callback:
-    base-url: http://localhost:5173
+    key: ${RAZORPAY_API_KEY}
+    secret: ${RAZORPAY_API_SECRET}
 
-# Stripe settings support alternate payment gateway integration.
+  callback:
+    base-url: ${RAZORPAY_CALLBACK_URL:http://localhost:5173}
+
+
+# =============================================================================
+# STRIPE
+# =============================================================================
+
 stripe:
   api:
-    key: your stripe api key
+    key: ${STRIPE_API_KEY}
 
-# Resilience4j protects Feign calls used during payment processing.
+
+# =============================================================================
+# RESILIENCE4J
+# =============================================================================
+
 resilience4j:
   circuitbreaker:
     configs:
@@ -46,34 +75,47 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 5
         automatic-transition-from-open-to-half-open-enabled: true
         register-health-indicator: true
+
         record-exceptions:
           - java.io.IOException
           - java.util.concurrent.TimeoutException
           - feign.FeignException
+
         ignore-exceptions:
           - com.nikhil.common_lib.exception.UserException
           - com.nikhil.common_lib.exception.AirportException
+
     instances:
       UserClient:
         base-config: default
         failure-rate-threshold: 40
 
-# Registers payment-service with Eureka and discovers other services.
+
+# =============================================================================
+# EUREKA CLIENT
+# =============================================================================
+
 eureka:
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
   client:
     register-with-eureka: true
     fetch-registry: true
 
-# Metadata exposed through Actuator info.
+
+# =============================================================================
+# ACTUATOR INFO
+# =============================================================================
+
 info:
   app:
     name: ${spring.application.name}
     description: Handles payment processing via Razorpay and Stripe gateways
     version: 1.0.0
     environment: development
+
 
 # =============================================================================
 # ACTUATOR, METRICS, OBSERVABILITY, AND TRACING
@@ -83,12 +125,10 @@ management:
   endpoints:
     web:
       exposure:
-        # Exposes health, application info, metrics, and Prometheus endpoints.
         include: health,info,metrics,prometheus
 
   endpoint:
     health:
-      # Displays detailed health information for monitoring.
       show-details: always
 
     info:
@@ -106,32 +146,26 @@ management:
 
   metrics:
     tags:
-      # Adds the application name as a common tag to all metrics.
       application: ${spring.application.name}
 
     distribution:
       percentiles-histogram:
-        # Enables latency histograms for HTTP request metrics.
         http.server.requests: true
 
   observations:
     key-values:
-      # Adds the application name to all observations (metrics and traces).
       application: ${spring.application.name}
 
     annotations:
-      # Enables Micrometer observation annotations (@Observed).
       enabled: true
 
   tracing:
     sampling:
-      # Samples 100% of requests for distributed tracing.
       probability: 1.0
 
     export:
       zipkin:
-        # Exports tracing spans to Grafana Tempo using the Zipkin protocol.
-        endpoint: http://localhost:9411/api/v2/spans
+        endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 
 # =============================================================================
@@ -139,8 +173,11 @@ management:
 # =============================================================================
 
 logging:
+  level:
+    root: INFO
+    com.nikhil.services: DEBUG
+
   pattern:
-    # Includes Trace ID and Span ID in every log entry for log-trace correlation.
     correlation: "[%X{traceId:-},%X{spanId:-}] "
 
 
@@ -149,5 +186,4 @@ logging:
 # =============================================================================
 
 loki:
-  # Loki endpoint used by the Logback appender for centralized log aggregation.
-  url: http://localhost:3100/loki/api/v1/push
+  url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}

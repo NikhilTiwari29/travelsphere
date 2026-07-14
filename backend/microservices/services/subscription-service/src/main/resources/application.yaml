@@ -1,27 +1,59 @@
-# Registers subscription-service with Eureka for future Gateway/Feign routing.
-eureka:
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-  client:
-    register-with-eureka: true
-    fetch-registry: true
+# =============================================================================
+# SERVER
+# =============================================================================
+
+server:
+  # HTTP port on which this microservice listens.
+  port: 5010
+
+
+# =============================================================================
+# SPRING
+# =============================================================================
 
 spring:
   application:
+    # Unique service name registered with Eureka and observability tools.
     name: subscription-service
 
-  # Loads service-specific settings from Config Server when available.
-  config:
-    import: optional:configserver:http://localhost:8888
+  datasource:
+    # Database connection details supplied through environment variables.
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
-# Metadata exposed through Actuator info.
+
+# =============================================================================
+# EUREKA CLIENT
+# =============================================================================
+
+eureka:
+  instance:
+    # Registers the service using its IP address.
+    prefer-ip-address: true
+
+    # Generates a unique instance ID for each running service instance.
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+  client:
+    # Registers this service with Eureka.
+    register-with-eureka: true
+
+    # Downloads the service registry to discover other microservices.
+    fetch-registry: true
+
+
+# =============================================================================
+# ACTUATOR INFO
+# =============================================================================
+
 info:
   app:
     name: ${spring.application.name}
     description: Manages user subscriptions and membership plans
     version: 1.0.0
     environment: development
+
 
 # =============================================================================
 # ACTUATOR, METRICS, OBSERVABILITY, AND TRACING
@@ -31,12 +63,10 @@ management:
   endpoints:
     web:
       exposure:
-        # Exposes health, application info, metrics, and Prometheus endpoints.
         include: health,info,metrics,prometheus
 
   endpoint:
     health:
-      # Displays detailed health information for monitoring.
       show-details: always
 
     info:
@@ -54,32 +84,26 @@ management:
 
   metrics:
     tags:
-      # Adds the application name as a common tag to all metrics.
       application: ${spring.application.name}
 
     distribution:
       percentiles-histogram:
-        # Enables latency histograms for HTTP request metrics.
         http.server.requests: true
 
   observations:
     key-values:
-      # Adds the application name to all observations (metrics and traces).
       application: ${spring.application.name}
 
     annotations:
-      # Enables Micrometer observation annotations (@Observed).
       enabled: true
 
   tracing:
     sampling:
-      # Samples 100% of requests for distributed tracing.
       probability: 1.0
 
     export:
       zipkin:
-        # Exports tracing spans to Grafana Tempo using the Zipkin protocol.
-        endpoint: http://localhost:9411/api/v2/spans
+        endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 
 # =============================================================================
@@ -87,8 +111,12 @@ management:
 # =============================================================================
 
 logging:
+  level:
+    root: INFO
+    com.nikhil.services: DEBUG
+
   pattern:
-    # Includes Trace ID and Span ID in every log entry for log-trace correlation.
+    # Includes Trace ID and Span ID in every log entry.
     correlation: "[%X{traceId:-},%X{spanId:-}] "
 
 
@@ -97,5 +125,5 @@ logging:
 # =============================================================================
 
 loki:
-  # Loki endpoint used by the Logback appender for centralized log aggregation.
-  url: http://localhost:3100/loki/api/v1/push
+  # Loki endpoint used by the Logback appender.
+  url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
