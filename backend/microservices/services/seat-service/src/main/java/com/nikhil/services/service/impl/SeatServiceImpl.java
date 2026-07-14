@@ -1,6 +1,7 @@
 package com.nikhil.services.service.impl;
 
 import com.nikhil.common_lib.enums.SeatType;
+import com.nikhil.common_lib.exception.ResourceNotFoundException;
 import com.nikhil.common_lib.payload.request.SeatRequest;
 import com.nikhil.common_lib.payload.response.SeatResponse;
 import com.nikhil.services.mapper.SeatMapper;
@@ -14,7 +15,6 @@ import com.nikhil.services.service.SeatService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

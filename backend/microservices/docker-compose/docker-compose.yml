@@ -250,31 +250,6 @@ services:
       - nikhil
 
   # ===========================================================================
-  # CONFIG SERVER
-  # ===========================================================================
-
-  config-server:
-    image: "nikhiltiwarip29/gds-config-server:1.0.0"
-    container_name: gds-config-server
-    mem_limit: 512m
-    mem_reservation: 256m
-    cpus: 0.5
-    # NO PORTS EXPOSED - Internal only
-    environment:
-      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: "https://github.com/NikhilTiwari29/nikhil-air-config"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
-      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-    restart: unless-stopped
-    networks:
-      - nikhil
-
-  # ===========================================================================
   # SERVICE REGISTRY (Eureka)
   # ===========================================================================
 
@@ -284,12 +259,8 @@ services:
     mem_limit: 512m
     mem_reservation: 256m
     cpus: 0.5
-    # NO PORTS EXPOSED - Internal only
-    depends_on:
-      config-server:
-        condition: service_healthy
+
     environment:
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseG1GC"
     healthcheck:
@@ -315,15 +286,12 @@ services:
     ports:
       - "5000:5000"  # ONLY PORT EXPOSED TO THE WORLD
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "api-gateway"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-registry:8761/eureka/"
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
@@ -344,15 +312,12 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       userdb:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "user-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://userdb:3306/airline_user?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -371,8 +336,6 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       airlinecoredb:
@@ -381,7 +344,6 @@ services:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "airline-core-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://airlinecoredb:3306/airline_core_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -402,8 +364,6 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       flightopsdb:
@@ -412,7 +372,6 @@ services:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "flight-ops-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://flightopsdb:3306/airline_flight_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -434,8 +393,6 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       locationdb:
@@ -444,7 +401,6 @@ services:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "location-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://locationdb:3306/airline_location_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -465,8 +421,6 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       seatdb:
@@ -475,7 +429,6 @@ services:
         condition: service_started
     environment:
       SPRING_APPLICATION_NAME: "seat-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://seatdb:3306/airline_seat_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -495,8 +448,6 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       pricingdb:
@@ -505,7 +456,6 @@ services:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "pricing-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://pricingdb:3306/airline_pricing_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -526,15 +476,12 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       ancillarydb:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "ancillary-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://ancillarydb:3306/airline_ancillary_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -553,15 +500,12 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       bookingdb:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "booking-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://bookingdb:3306/airline_booking_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
@@ -580,15 +524,12 @@ services:
     cpus: 0.5
     # NO PORTS EXPOSED - Internal only
     depends_on:
-      config-server:
-        condition: service_healthy
       service-registry:
         condition: service_healthy
       paymentdb:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "payment-service"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888/"
       SPRING_DATASOURCE_URL: "jdbc:mysql://paymentdb:3306/airline_payment_db?useSSL=false&allowPublicKeyRetrieval=true"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
