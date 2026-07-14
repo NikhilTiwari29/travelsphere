@@ -150,34 +150,42 @@ public class AuthServiceImpl implements AuthService {
 
 
     // ============================================================
-    // SIGNUP
-    // ============================================================
+// SIGNUP
+// ============================================================
 
     /**
-     * Registers a new user and generates a JWT access token.
+     * Registers a new user and immediately returns a JWT access token.
      *
      * Processing flow:
      *
-     * 1. Check whether the email is already registered.
+     * 1. Verify that the email is not already registered.
      * 2. Reject public SYSTEM_ADMIN registration.
      * 3. Create the User entity.
      * 4. Encode the raw password.
      * 5. Persist the user.
-     * 6. Load Spring Security UserDetails.
-     * 7. Create an authenticated Authentication object.
-     * 8. Store Authentication in the SecurityContext.
-     * 9. Generate JWT.
-     * 10. Return authentication response.
+     * 6. Generate a JWT for the newly registered user.
+     * 7. Return the authentication response.
+     *
+     * Architecture:
+     *
+     * This service is responsible for user registration and JWT issuance.
+     * Since the application uses stateless JWT authentication, it does not
+     * create a Spring Security Authentication or populate the SecurityContext.
+     *
+     * The returned JWT is presented by the client on subsequent requests.
+     * The API Gateway validates the JWT, authenticates the request, performs
+     * authorization, and forwards the trusted user identity to downstream
+     * microservices.
      *
      * Transaction:
      *
-     * A read-write transaction is required because a new User record
-     * is inserted into the database.
+     * A read-write transaction is required because a new User record is
+     * inserted into the database.
      *
      * Any runtime persistence failure causes the transaction to roll back.
      *
      * @param req registration request containing user information
-     * @return authentication response containing user details and JWT
+     * @return authentication response containing the registered user and JWT
      * @throws UserException when registration validation fails
      */
     @Override
@@ -190,11 +198,10 @@ public class AuthServiceImpl implements AuthService {
                 req.getRole()
         );
 
-
         /*
          * Check whether another user already exists with the same email.
          *
-         * Email uniqueness should also be enforced through a database
+         * Email uniqueness is also enforced through a database
          * UNIQUE constraint because an application-level check alone
          * cannot completely prevent concurrent duplicate registrations.
          */
@@ -207,9 +214,8 @@ public class AuthServiceImpl implements AuthService {
                     req.getEmail()
             );
 
-            throw new UserException("Email already registered");
+            throw new UserException("Email " + existingUser.getEmail() + " already registered");
         }
-
 
         /*
          * Prevent public registration of SYSTEM_ADMIN accounts.
@@ -229,11 +235,11 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-
         /*
-         * Create and populate the persistent User entity.
+         * Create and populate the save User entity.
          *
-         * The raw password is encoded before the entity is persisted.
+         * The raw password is encoded before the entity is saved to
+         * ensure that plaintext passwords are never stored.
          */
         User newUser = new User();
 
@@ -248,81 +254,38 @@ public class AuthServiceImpl implements AuthService {
         newUser.setRole(req.getRole());
 
         /*
-         * Since registration represents the user's first successful
-         * authentication, initialize lastLogin with the current timestamp.
+         * Initialize the user's last login timestamp.
+         *
+         * Since this application immediately issues a JWT after successful
+         * registration, the registration time is also treated as the user's
+         * first successful login.
          */
         newUser.setLastLogin(LocalDateTime.now());
 
-
         /*
-         * Persist the new user.
+         * Save the new user.
          */
         User savedUser = userRepository.save(newUser);
 
         log.info(
-                "User successfully persisted during registration: userId={}, email={}, role={}",
+                "User successfully registered: userId={}, email={}, role={}",
                 savedUser.getId(),
                 savedUser.getEmail(),
                 savedUser.getRole()
         );
 
-
         /*
-         * Load UserDetails after persistence.
+         * Generate a JWT for the newly registered user.
          *
-         * This provides the authorities expected by Spring Security and
-         * by JwtProvider when generating authorization claims.
+         * The client will include this JWT in the Authorization header of
+         * future requests. The API Gateway validates the JWT, authenticates
+         * the request, performs authorization, and forwards the trusted
+         * user identity to downstream microservices.
          */
-        UserDetails userDetails =
-                customUserDetailsService.loadUserByUsername(
-                        savedUser.getEmail()
-                );
-
+        String jwt = jwtProvider.generateToken(savedUser);
 
         /*
-         * Create an authenticated Authentication object.
-         *
-         * Principal:
-         * UserDetails containing authenticated user information.
-         *
-         * Credentials:
-         * null because the password is no longer needed after successful
-         * registration.
-         *
-         * Authorities:
-         * User roles and permissions used for authorization and JWT claims.
-         */
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-
-        /*
-         * Store Authentication in the current request thread's
-         * Spring SecurityContext.
-         */
-        SecurityContextHolder
-                .getContext()
-                .setAuthentication(authentication);
-
-
-        /*
-         * Generate the JWT only after successful user creation and
-         * Authentication construction.
-         *
-         * The JWT value itself must never be logged.
-         */
-        String jwt = jwtProvider.generateToken(
-                authentication,
-                savedUser.getId()
-        );
-
-
-        /*
-         * Build the response returned to the client.
+         * Build the authentication response.
          */
         AuthResponse response = new AuthResponse();
 
@@ -339,7 +302,6 @@ public class AuthServiceImpl implements AuthService {
         );
 
         response.setJwt(jwt);
-
 
         log.info(
                 "User registration completed successfully: userId={}, email={}",
@@ -360,24 +322,31 @@ public class AuthServiceImpl implements AuthService {
      *
      * Processing flow:
      *
-     * 1. Validate email and password.
-     * 2. Create authenticated Authentication object.
-     * 3. Populate SecurityContext.
-     * 4. Load the application User entity.
-     * 5. Generate JWT.
-     * 6. Update lastLogin timestamp.
-     * 7. Return authentication response.
+     * 1. Validate the supplied email and password.
+     * 2. Generate a JWT for the authenticated user.
+     * 3. Update the user's last successful login timestamp.
+     * 4. Return the authentication response.
+     *
+     * Architecture:
+     *
+     * This service validates user credentials and issues a JWT.
+     * Authentication and authorization of subsequent requests are
+     * performed by the API Gateway by validating the JWT.
+     *
+     * Since the application uses stateless JWT authentication,
+     * no SecurityContext is created or maintained in this service.
      *
      * Transaction:
      *
-     * A read-write transaction is required because the method modifies
+     * A read-write transaction is required because the method updates
      * the user's lastLogin timestamp.
      *
      * @param email user email
      * @param password raw password supplied by the client
-     * @return authentication response containing user details and JWT
+     * @return authentication response containing the authenticated user and JWT
      * @throws UserException when authentication fails
      */
+
     @Override
     @Transactional
     public AuthResponse login(
@@ -389,93 +358,50 @@ public class AuthServiceImpl implements AuthService {
                 email
         );
 
-
         /*
-         * Validate credentials and create an authenticated
-         * Authentication object.
-         */
-        Authentication authentication =
-                authenticate(email, password);
-
-
-        /*
-         * Store the authenticated identity in the current
-         * Spring SecurityContext.
-         */
-        SecurityContextHolder
-                .getContext()
-                .setAuthentication(authentication);
-
-
-        /*
-         * Load the domain User entity required for:
+         * Authenticate the supplied credentials.
          *
-         * - user ID
-         * - profile information
-         * - lastLogin update
+         * This validates the email and password and returns the
+         * authenticated User entity.
          */
-        User user = userRepository.findByEmail(email);
+        User user = authenticate(email, password);
 
         /*
-         * Defensive check.
+         * Generate a JWT for the authenticated user.
          *
-         * Normally authenticate() has already loaded the same user through
-         * CustomUserDetailsService. This protects against unexpected
-         * inconsistencies in the authentication/user lookup flow.
-         */
-        if (user == null) {
-
-            log.error(
-                    "Authenticated principal has no matching User entity: email={}",
-                    email
-            );
-
-            throw new UserException("User not found");
-        }
-
-
-        /*
-         * Generate JWT for the successfully authenticated user.
+         * The client will include this token in the Authorization header
+         * of every subsequent request.
          *
-         * The token value is intentionally not logged.
+         * Authentication and authorization for protected requests are
+         * performed by the API Gateway after validating the JWT.
          */
-        String token = jwtProvider.generateToken(
-                authentication,
-                user.getId()
-        );
-
+        String jwt = jwtProvider.generateToken(user);
 
         /*
          * Update the timestamp of the latest successful login.
          *
-         * Since the User entity is managed inside the current transaction,
-         * JPA dirty checking can persist this change automatically at commit.
-         *
-         * An explicit userRepository.save(user) is therefore not required
-         * when the entity was loaded and remains managed in this transaction.
+         * Since the User entity is managed by the current persistence
+         * context, JPA dirty checking will automatically persist this
+         * change when the transaction commits.
          */
         user.setLastLogin(LocalDateTime.now());
-
 
         /*
          * Build the authentication response.
          */
         AuthResponse response = new AuthResponse();
 
-        response.setTitle(
-                "Login successful"
-        );
+        response.setTitle("Login successful");
 
         response.setMessage(
                 "Welcome back " + user.getFullName()
         );
 
-        response.setJwt(token);
+        response.setJwt(jwt);
 
         response.setUser(
                 UserMapper.toDTO(user)
         );
-
 
         log.info(
                 "User login completed successfully: userId={}, email={}, role={}",
@@ -488,32 +414,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    // ============================================================
-    // CREDENTIAL AUTHENTICATION
-    // ============================================================
-
-    /**
-     * Validates the supplied email and password.
-     *
-     * Processing flow:
-     *
-     * 1. Load UserDetails using the email.
-     * 2. Compare the raw password with the stored encoded password.
-     * 3. Reject invalid credentials.
-     * 4. Create an authenticated Authentication object.
-     *
-     * Transaction behavior:
-     *
-     * This method is private and is called from transactional login().
-     * Therefore, it participates in the transaction already active for
-     * the login operation.
-     *
-     * @param email user email
-     * @param password raw password supplied by the client
-     * @return authenticated Spring Security Authentication object
-     * @throws UserException when password validation fails
-     */
-    private Authentication authenticate(
+    private User authenticate(
             String email,
             String password) throws UserException {
 
@@ -522,34 +423,32 @@ public class AuthServiceImpl implements AuthService {
                 email
         );
 
-
         /*
-         * Load the user through Spring Security's UserDetailsService.
-         *
-         * UserDetails contains:
-         *
-         * - username
-         * - encoded password
-         * - authorities
+         * Load the user from the database.
          */
-        UserDetails userDetails =
-                customUserDetailsService.loadUserByUsername(email);
+        User user = userRepository.findByEmail(email);
 
+        if (user == null) {
+
+            log.warn(
+                    "Login authentication failed: user not found, email={}",
+                    email
+            );
+
+            throw new UserException(
+                    "Invalid email or password."
+            );
+        }
 
         /*
-         * Compare:
-         *
-         * raw password from login request
-         *
-         * against
-         *
+         * Compare the raw password supplied by the client with the
          * encoded password stored in the database.
          *
          * Password values must never be logged.
          */
         if (!passwordEncoder.matches(
                 password,
-                userDetails.getPassword())) {
+                user.getPassword())) {
 
             log.warn(
                     "Login authentication failed: invalid credentials, email={}",
@@ -557,34 +456,15 @@ public class AuthServiceImpl implements AuthService {
             );
 
             throw new UserException(
-                    "Invalid email or password"
+                    "Invalid email or password."
             );
         }
-
 
         log.debug(
                 "Login credentials validated successfully: email={}",
                 email
         );
 
-
-        /*
-         * Return an authenticated token containing:
-         *
-         * Principal:
-         * UserDetails
-         *
-         * Credentials:
-         * null because credentials should not remain in memory longer
-         * than necessary.
-         *
-         * Authorities:
-         * roles and permissions loaded from the user account.
-         */
-        return new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities()
-        );
+        return user;
     }
 }

@@ -1,23 +1,29 @@
 # =============================================================================
-# USER SERVICE — Local Configuration
+# SERVER
 # =============================================================================
-#
-# Local configuration should contain configuration required to identify the
-# application and connect to the Config Server.
-#
-# Config Server provides shared and service-specific operational configuration.
-# Avoid defining the same operational property in multiple configuration
-# sources unless the intended precedence has been deliberately verified.
+
+server:
+  # HTTP port on which this microservice listens.
+  # Uses SERVER_PORT if provided; otherwise defaults to 5001.
+  port: ${SERVER_PORT:5001}
+
+
+# =============================================================================
+# SPRING
 # =============================================================================
 
 spring:
   application:
-    # Unique service name used by Config Server, Eureka, and observability tools.
+    # Unique service name used by Eureka, Micrometer, and observability tools.
     name: user-service
 
-  config:
-    # Loads externalized configuration from the Spring Cloud Config Server.
-    import: optional:configserver:http://localhost:8888
+  datasource:
+    # Database connection details are supplied through environment variables.
+    # This keeps sensitive information out of source control and allows
+    # different values for local, Docker, and production environments.
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
 
 # =============================================================================
@@ -108,7 +114,7 @@ management:
     export:
       zipkin:
         # Exports tracing spans to Grafana Tempo using the Zipkin protocol.
-        endpoint: http://localhost:9411/api/v2/spans
+        endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 
 # =============================================================================
@@ -116,6 +122,10 @@ management:
 # =============================================================================
 
 logging:
+  level:
+    root: INFO
+    com.nikhil.services: DEBUG
+
   pattern:
     # Includes Trace ID and Span ID in every log entry for log-trace correlation.
     correlation: "[%X{traceId:-},%X{spanId:-}] "
@@ -127,4 +137,4 @@ logging:
 
 loki:
   # Loki endpoint used by the Logback appender for centralized log aggregation.
-  url: http://localhost:3100/loki/api/v1/push
+  url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}

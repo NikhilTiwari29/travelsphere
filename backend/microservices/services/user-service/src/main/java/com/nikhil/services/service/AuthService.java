@@ -11,6 +11,6 @@ import com.nikhil.common_lib.payload.response.AuthResponse;
  * Gateway forwards public /auth/** requests to user-service.
  */
 public interface AuthService {
-    AuthResponse login(String email, String password) throws UserException;
     AuthResponse signup(UserDTO req) throws UserException;
+    AuthResponse login(String email, String password) throws UserException;
 }

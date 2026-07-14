@@ -1,5 +1,6 @@
 package com.nikhil.services.config;
 
+import com.nikhil.services.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -30,38 +31,25 @@ public class JwtProvider {
             JwtConstant.SECRET_KEY.getBytes());
 
     /*
-     * Purpose: Create signed JWT for authenticated user.
-     * Called By: AuthServiceImpl login/signup
-     * Flow: authorities → claims (email, roles, userId) → sign → compact token
+     * Generates a signed JWT containing the authenticated user's identity
+     * and authorization claims. The API Gateway validates this token to
+     * authenticate and authorize subsequent requests.
      */
-    public String generateToken(Authentication auth, Long userId) {
-        Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
-        String roles = populateAuthorities(authorities);
+    public String generateToken(User user) {
 
         return Jwts.builder()
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 86400000)) // 24h
-                .claim("email", auth.getName())
-                .claim("authorities", roles)
-                .claim("userId", userId)
+                /*
+                    Expiration time is 1 day or 24 hours
+                 */
+                .expiration(new Date(System.currentTimeMillis() + 86400000))
+                .claim("email", user.getEmail())
+                .claim("userId", user.getId())
+                /*
+                 * Store the role as its enum name.
+                 */
+                .claim("authorities", user.getRole().name())
                 .signWith(key)
                 .compact();
-    }
-
-    public String getEmailFromJwtToken(String jwt) {
-        if (jwt.startsWith(JwtConstant.TOKEN_PREFIX)) {
-            jwt = jwt.substring(JwtConstant.TOKEN_PREFIX.length());
-        }
-        Claims claims = Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(jwt).getPayload();
-        return String.valueOf(claims.get("email"));
-    }
-
-    private String populateAuthorities(Collection<? extends GrantedAuthority> authorities) {
-        Set<String> auths = new HashSet<>();
-        for (GrantedAuthority authority : authorities) {
-            auths.add(authority.getAuthority());
-        }
-        return String.join(",", auths);
     }
 }

@@ -26,21 +26,15 @@ spring:
     # Also used by Config Server to locate gateway-specific configuration.
     name: api-gateway
 
-  config:
-    # Loads centralized configuration from Config Server.
-    #
-    # "optional:" allows the gateway to start even if
-    # Config Server is temporarily unavailable.
-    import: optional:configserver:http://localhost:8888
-
   data:
     redis:
       # Redis is used by TokenBlacklistService.
       # Logged-out JWTs are stored here so they cannot be reused.
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      #For development, we can use the dev docker compose file.
+      host: ${REDIS_HOST:localhost}
 
       # Redis server port.
-      port: ${SPRING_DATA_REDIS_PORT:6379}
+      port: ${REDIS_PORT:6379}
 
       # Maximum time to wait for a Redis response.
       timeout: 2000ms
@@ -110,12 +104,14 @@ resilience4j:
 
         # Opens the circuit when 50% or more requests in the current
         # sliding window have failed.
+        #So suppose if all 5 req is failed and since minimum-number-of-calls: 5 then on 6th req
+        #it will see that failre rate is more than 50% and it will open the circuit
         failure-rate-threshold: 50
 
-        # Duration to remain OPEN before allowing trial requests.
+        # Duration to remain OPEN before allowing trial requests in half-open state.
         wait-duration-in-open-state: 30s
 
-        # Trial requests allowed in HALF_OPEN state.
+        # Trial requests allowed in HALF_OPEN state after that it will move to close state again.
         permitted-number-of-calls-in-half-open-state: 3
 
         # Automatically transition
@@ -286,10 +282,4 @@ logging:
 loki:
 
   # Loki push endpoint.
-  #
-  # User Service runs directly on the host through IntelliJ.
-  # Loki runs inside Docker and exposes container port 3100
-  # as host port 3100.
-  #
-  # Therefore the application reaches Loki through localhost.
-  url: http://localhost:3100/loki/api/v1/push
+  url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}

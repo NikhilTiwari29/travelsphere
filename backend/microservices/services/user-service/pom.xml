@@ -126,16 +126,6 @@
         -->
 
         <!--
-            Config Client: Fetches configuration from Config Server at startup.
-            Instead of hardcoding DB credentials in this service's application.yaml,
-            they're pulled from config-repo/user-service.yml via Config Server.
-        -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-config</artifactId>
-        </dependency>
-
-        <!--
             Eureka Client: Registers this service with Eureka Server.
             Other services (like API Gateway) can then discover user-service
             by name instead of hardcoding IP:port.

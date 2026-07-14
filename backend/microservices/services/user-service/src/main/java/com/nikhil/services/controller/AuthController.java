@@ -97,42 +97,19 @@ public class AuthController {
      *          v
      * AuthResponse
      * </pre>
-     *
-     * @param request validated user registration details
-     * @return authentication response containing the JWT and user information
-     * @throws UserException when the user cannot be registered
      */
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(
             @RequestBody @Valid UserDTO request
     ) throws UserException {
 
-        /*
-         * Log the arrival of the registration request.
-         *
-         * The complete request object is intentionally not logged because
-         * registration DTOs can contain passwords and personal information.
-         */
         log.info(
                 "Received user signup request"
         );
 
-
-        /*
-         * Delegate registration business logic to the service layer.
-         *
-         * The controller does not perform password encoding, persistence,
-         * role assignment, or token generation.
-         */
         AuthResponse response =
                 authService.signup(request);
 
-
-        /*
-         * This log confirms that the complete signup operation finished
-         * successfully. Failed operations are handled by the centralized
-         * exception handling layer.
-         */
         log.info(
                 "User signup completed successfully"
         );

@@ -31,13 +31,7 @@ import java.net.URI;
  * 6. Checks revoked tokens using Redis.
  * 7. Propagates trusted user identity headers.
  * 8. Performs route-level role authorization where required.
- *
- * Important:
- *
- * This configuration class does not require @Transactional because it does
- * not perform relational database persistence operations. Redis blacklist
- * lookups are independent remote operations and should not be wrapped in a
- * relational database transaction.
+
  */
 @Slf4j
 @Configuration

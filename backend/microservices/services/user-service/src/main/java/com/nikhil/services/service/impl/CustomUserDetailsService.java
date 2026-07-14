@@ -45,8 +45,16 @@ public class CustomUserDetailsService implements UserDetailsService {
         Collection<GrantedAuthority> authorities = Collections
                 .singletonList(authority);
 
+        /*
+         * Convert our application's User entity into Spring Security's UserDetails
+         * implementation so Spring Security knows the username, password, and
+         * authorities to use during authentication to avoid complexity of handling System own User class
+         *  since every system will have their Own User logic
+         */
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(), user.getPassword(), authorities
+                user.getEmail(),
+                user.getPassword(),
+                authorities
         );
     }
 }
