@@ -25,6 +25,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+
 
 # =============================================================================
 # EUREKA CLIENT

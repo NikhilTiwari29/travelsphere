@@ -22,6 +22,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+
   # Feign circuit breakers protect calls to downstream microservices.
   cloud:
     openfeign:

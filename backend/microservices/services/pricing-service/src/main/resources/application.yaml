@@ -22,6 +22,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+
   # Redis backs Spring Cache for frequently accessed fare data.
   data:
     redis:

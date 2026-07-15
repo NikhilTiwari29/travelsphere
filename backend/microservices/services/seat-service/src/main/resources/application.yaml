@@ -24,7 +24,6 @@ spring:
 
   jpa:
     hibernate:
-      # Suitable for development. Use Flyway/Liquibase migrations in production.
       ddl-auto: update
 
   # Consumes flight and booking events to maintain seat inventory.

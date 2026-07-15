@@ -24,7 +24,6 @@ spring:
 
   jpa:
     hibernate:
-      # Suitable for development. Use Flyway/Liquibase migrations in production.
       ddl-auto: update
 
   # Redis backs Spring Cache for frequently accessed flight data.
