@@ -8,7 +8,6 @@ This document describes the architecture implemented by the source code, Maven m
 flowchart TB
   Client[Client applications] --> Gateway[API Gateway<br/>:5000]
   Gateway --> Eureka[Service Registry<br/>Eureka :8761]
-  Config[Config Server<br/>:8888] --> Eureka
 
   Gateway --> User[user-service<br/>:5001]
   Gateway --> Airline[airline-core-service<br/>:5003]
@@ -231,7 +230,6 @@ flowchart TB
       APIGW
       Services[Business service tasks]
       Eureka[Eureka tasks]
-      Config[Config Server tasks]
     end
     subgraph Data[Private data subnets]
       RDS[(Amazon RDS MySQL<br/>database per service)]

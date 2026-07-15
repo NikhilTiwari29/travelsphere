@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">TravelSphere AWS deployment architecture</title>
+  <desc id="desc">AWS architecture for TravelSphere showing users, Route 53, public load balancer, private ECS or EKS service tier, Eureka, RDS MySQL databases, ElastiCache Redis, MSK Kafka, observability, secrets, ECR, and external providers.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .panel { fill: #ffffff; stroke: #c8d2df; stroke-width: 2; rx: 14; }
+      .subnet-public { fill: #eef7ff; stroke: #8cbbe8; stroke-width: 2; rx: 12; }
+      .subnet-private { fill: #f1f8f1; stroke: #8fc58d; stroke-width: 2; rx: 12; }
+      .subnet-data { fill: #fff5e8; stroke: #e0aa5b; stroke-width: 2; rx: 12; }
+      .box { fill: #ffffff; stroke: #52677d; stroke-width: 2; rx: 10; }
+      .aws { fill: #fff9eb; stroke: #ff9900; stroke-width: 2; rx: 10; }
+      .service { fill: #eef5ff; stroke: #3d74b6; stroke-width: 2; rx: 9; }
+      .data { fill: #fff1dc; stroke: #b66e16; stroke-width: 2; rx: 9; }
+      .obs { fill: #f2efff; stroke: #7460c8; stroke-width: 2; rx: 9; }
+      .external { fill: #f8f8f8; stroke: #7a7a7a; stroke-width: 2; rx: 9; }
+      .title { fill: #142033; font: 700 28px Arial, sans-serif; }
+      .section { fill: #26384f; font: 700 17px Arial, sans-serif; }
+      .label { fill: #172536; font: 700 15px Arial, sans-serif; }
+      .small { fill: #34495e; font: 12px Arial, sans-serif; }
+      .tiny { fill: #425466; font: 11px Arial, sans-serif; }
+      .arrow { stroke: #52677d; stroke-width: 2.5; fill: none; marker-end: url(#arrowhead); }
+      .dashed { stroke-dasharray: 7 5; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#52677d"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1280" height="760"/>
+  <text class="title" x="50" y="54">TravelSphere AWS Deployment Architecture</text>
+  <text class="small" x="50" y="80">Production target derived from the repository's Docker Compose topology and Spring service boundaries.</text>
+
+  <rect class="panel" x="40" y="110" width="1200" height="585"/>
+  <text class="section" x="64" y="140">AWS Cloud / VPC</text>
+
+  <rect class="subnet-public" x="70" y="165" width="270" height="410"/>
+  <text class="section" x="92" y="195">Public Subnets</text>
+
+  <rect class="subnet-private" x="370" y="165" width="455" height="410"/>
+  <text class="section" x="392" y="195">Private Application Subnets</text>
+
+  <rect class="subnet-data" x="855" y="165" width="355" height="410"/>
+  <text class="section" x="877" y="195">Private Data Subnets</text>
+
+  <rect class="box" x="68" y="612" width="1142" height="62"/>
+  <text class="section" x="90" y="642">Operations Plane</text>
+  <text class="small" x="90" y="662">CloudWatch, Amazon Managed Prometheus/Grafana or self-hosted Grafana, Loki, Tempo, alarms, dashboards, and traces.</text>
+
+  <rect class="external" x="60" y="25" width="155" height="52"/>
+  <text class="label" x="88" y="49">Users</text>
+  <text class="tiny" x="82" y="66">Web / mobile clients</text>
+
+  <rect class="aws" x="92" y="225" width="190" height="56"/>
+  <text class="label" x="128" y="249">Route 53</text>
+  <text class="tiny" x="122" y="266">DNS and hosted zone</text>
+
+  <rect class="aws" x="92" y="320" width="190" height="62"/>
+  <text class="label" x="118" y="346">Application LB</text>
+  <text class="tiny" x="112" y="364">TLS termination</text>
+
+  <rect class="aws" x="92" y="455" width="190" height="62"/>
+  <text class="label" x="128" y="481">NAT Gateway</text>
+  <text class="tiny" x="110" y="499">Outbound provider calls</text>
+
+  <rect class="service" x="405" y="225" width="170" height="64"/>
+  <text class="label" x="438" y="250">API Gateway</text>
+  <text class="tiny" x="425" y="268">ECS/Fargate or EKS</text>
+
+  <rect class="service" x="610" y="225" width="170" height="64"/>
+  <text class="label" x="659" y="250">Eureka</text>
+  <text class="tiny" x="636" y="268">service-registry</text>
+
+  <rect class="service" x="405" y="325" width="375" height="64"/>
+  <text class="label" x="650" y="350">Services</text>
+  <text class="tiny" x="516" y="368">user, airline, location, flight, seat, pricing</text>
+  <text class="tiny" x="512" y="382">ancillary, booking, payment, notification</text>
+
+  <rect class="service" x="405" y="455" width="375" height="70"/>
+  <text class="label" x="514" y="481">Container Images</text>
+  <text class="tiny" x="485" y="501">ECR repositories built from Dockerfile or Jib</text>
+
+  <rect class="data" x="890" y="225" width="135" height="72"/>
+  <text class="label" x="919" y="251">RDS MySQL</text>
+  <text class="tiny" x="913" y="269">database per</text>
+  <text class="tiny" x="922" y="283">service</text>
+
+  <rect class="data" x="1042" y="225" width="135" height="72"/>
+  <text class="label" x="1068" y="251">ElastiCache</text>
+  <text class="tiny" x="1074" y="269">Redis cache</text>
+  <text class="tiny" x="1068" y="283">token blacklist</text>
+
+  <rect class="data" x="890" y="340" width="135" height="72"/>
+  <text class="label" x="936" y="366">MSK</text>
+  <text class="tiny" x="918" y="384">Kafka topics</text>
+
+  <rect class="data" x="1042" y="340" width="135" height="72"/>
+  <text class="label" x="1069" y="366">Secrets</text>
+  <text class="tiny" x="1062" y="384">Secrets Manager</text>
+  <text class="tiny" x="1078" y="398">or SSM</text>
+
+  <rect class="obs" x="890" y="455" width="287" height="70"/>
+  <text class="label" x="944" y="481">Observability Stack</text>
+  <text class="tiny" x="930" y="501">metrics, logs, traces, dashboards, alerts</text>
+
+  <rect class="external" x="1010" y="25" width="185" height="66"/>
+  <text class="label" x="1048" y="50">External APIs</text>
+  <text class="tiny" x="1038" y="68">Razorpay, SMTP, Twilio</text>
+
+  <path class="arrow" d="M215 52 C265 78, 120 180, 170 225"/>
+  <path class="arrow" d="M187 281 L187 320"/>
+  <path class="arrow" d="M282 351 L405 257"/>
+  <path class="arrow" d="M575 257 L610 257"/>
+  <path class="arrow" d="M575 357 L610 357"/>
+  <path class="arrow" d="M695 289 L695 325"/>
+  <path class="arrow" d="M780 357 L890 261"/>
+  <path class="arrow" d="M780 357 L1042 261"/>
+  <path class="arrow" d="M780 357 L890 376"/>
+  <path class="arrow" d="M780 357 L1042 376"/>
+  <path class="arrow" d="M695 389 L1015 455"/>
+  <path class="arrow dashed" d="M592 455 L592 389"/>
+  <path class="arrow" d="M282 486 C420 545, 925 108, 1010 58"/>
+  <path class="arrow dashed" d="M1034 525 L1034 612"/>
+
+  <text class="tiny" x="300" y="337">HTTPS</text>
+  <text class="tiny" x="802" y="245">JDBC</text>
+  <text class="tiny" x="806" y="326">cache</text>
+  <text class="tiny" x="810" y="382">events</text>
+  <text class="tiny" x="805" y="430">secrets</text>
+  <text class="tiny" x="740" y="445">pull images</text>
+</svg>

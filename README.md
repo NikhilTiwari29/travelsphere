@@ -7,7 +7,7 @@ TravelSphere is a Spring Boot microservice platform for airline travel search, i
 - Java 21, Spring Boot 4.0.2, Spring Cloud 2025.1.0.
 - Maven parent project: `backend/microservices/pom.xml`.
 - Shared library: `common-lib` for request/response payloads, enums, embeddables, exceptions, and Kafka events.
-- Cloud modules: API Gateway, Eureka service registry, and Config Server.
+- Cloud modules: API Gateway and Eureka service registry.
 - Business services: user, airline core, location, flight operations, seat, pricing, ancillary, booking, payment, notification, and subscription.
 - Infrastructure: MySQL per service, Redis, Kafka in KRaft mode, Prometheus, Grafana, Loki, and Tempo.
 
@@ -18,7 +18,6 @@ backend/microservices/
   common-lib/                 Shared DTOs, enums, events, exceptions
   cloud/
     api-gateway/              Public entry point, JWT validation, routing
-    config-server/            Spring Cloud Config Server
     service-registry/         Eureka server
   services/
     user-service/             Signup, login, JWT issuing, user profiles
@@ -54,7 +53,10 @@ backend/microservices/
 | subscription-service | 5010 | Subscription service module scaffold | configured through `DB_URL` |
 | notification-service | 8094 | Consumes booking confirmation events and sends email/SMS | none |
 | service-registry | 8761 | Eureka registry | none |
-| config-server | 8888 | Config server | none |
+
+## AWS Architecture
+
+![TravelSphere AWS Architecture](docs/assets/aws-architecture.svg)
 
 ## Request Model
 

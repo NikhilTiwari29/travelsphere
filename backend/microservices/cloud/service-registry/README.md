@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`service-registry` is the Eureka server used by the gateway, config server, and business services for service discovery.
+`service-registry` is the Eureka server used by the gateway and business services for service discovery.
 
 ## Architecture
 

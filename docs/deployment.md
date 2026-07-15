@@ -74,9 +74,8 @@ For local manual runs, start infrastructure first:
 2. Redis
 3. Kafka
 4. `service-registry`
-5. `config-server` if used by your run profile
-6. `api-gateway`
-7. Domain services
+5. `api-gateway`
+6. Domain services
 
 For booking flows, run at least:
 
@@ -102,9 +101,11 @@ Secrets in production should be provided by a secrets manager, not committed `.e
 
 A production AWS deployment should preserve the existing runtime boundaries:
 
+![TravelSphere AWS Architecture](assets/aws-architecture.svg)
+
 - Public edge: Route 53 plus an Application Load Balancer.
 - Application tier: API Gateway and services on ECS Fargate or EKS in private subnets.
-- Discovery/config tier: Eureka and Config Server as internal services, or replace discovery with platform-native service discovery if the code is adapted.
+- Discovery tier: Eureka as an internal service, or replace discovery with platform-native service discovery if the code is adapted.
 - Data tier: Amazon RDS MySQL, one schema/database per service boundary.
 - Cache: Amazon ElastiCache Redis for token blacklisting and Spring Cache.
 - Messaging: Amazon MSK Kafka or a compatible Kafka service.
@@ -115,7 +116,7 @@ A production AWS deployment should preserve the existing runtime boundaries:
 Recommended network placement:
 
 - ALB in public subnets.
-- API Gateway, domain services, Eureka, and Config Server in private app subnets.
+- API Gateway, domain services, and Eureka in private app subnets.
 - RDS, Redis, and Kafka in private data subnets.
 - NAT Gateway for outbound calls to Razorpay, SMTP, Twilio, and image/package registries where required.
 
@@ -125,7 +126,7 @@ Recommended network placement:
 2. Create RDS MySQL databases matching the service-owned database names.
 3. Create ElastiCache Redis and MSK Kafka clusters.
 4. Store database credentials, JWT secret material, Razorpay, SMTP, and Twilio credentials in Secrets Manager or SSM.
-5. Deploy Eureka and Config Server internally.
+5. Deploy Eureka internally.
 6. Deploy domain services with environment variables mapped from secrets and service endpoints.
 7. Deploy API Gateway behind the public ALB.
 8. Configure health checks against `/actuator/health`.
