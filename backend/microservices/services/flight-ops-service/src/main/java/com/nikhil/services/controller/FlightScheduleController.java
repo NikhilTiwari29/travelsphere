@@ -11,44 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/*
- * REST API for managing recurring FlightSchedule definitions.
- *
- * A FlightSchedule defines when a Flight operates over a date range
- * and on which days of the week it should run.
- *
- * Example:
- *
- * Flight:
- *   6E201 → DEL to BOM
- *
- * FlightSchedule:
- *   2026-07-01 to 2026-07-31
- *   Operating days → MONDAY, WEDNESDAY, FRIDAY
- *
- * Generated FlightInstances:
- *   6E201 → 2026-07-01
- *   6E201 → 2026-07-03
- *   6E201 → 2026-07-06
- *   ...
- *
- * Request Flow
- * ------------
- * FlightScheduleController
- *          ↓
- * FlightScheduleService
- *          ↓
- * Save FlightSchedule
- *          ↓
- * Generate FlightInstances for operating dates
- *          ↓
- * Publish flight-instance-created Kafka events
- *          ↓
- * Seat Service provisions runtime cabin and seat inventory
- *
- * Gateway route:
- * /api/flight-schedules/** → flight-ops-service
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/flight-schedules")

@@ -18,10 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/*
- * Provisions seat inventory when Flight Ops publishes a new flight instance.
- * Upstream: flight-instance-created → local SeatInstance rows (AVAILABLE).
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor

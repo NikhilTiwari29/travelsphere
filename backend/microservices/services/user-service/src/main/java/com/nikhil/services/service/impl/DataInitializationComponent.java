@@ -21,30 +21,44 @@ public class DataInitializationComponent implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-
-
     @Override
     public void run(String... args) {
-        initializeAdminUser();
+        initializeAdminUsers();
     }
 
-    /*
-     * Purpose: Create default SYSTEM_ADMIN if not present.
-     * Called By: run() on application startup
-     * Flow: findByEmail → if absent → encode password → save admin user
+    /**
+     * Creates default SYSTEM_ADMIN users if they do not already exist.
      */
-    private void initializeAdminUser() {
-        String adminUsername = "nikhiltiwarip29@gmail.com";
+    private void initializeAdminUsers() {
 
-        if (userRepository.findByEmail(adminUsername)==null) {
-            User adminUser = new User();
+        String[][] admins = {
+                {"nikhiltiwari@gmail.com", "Nikhil Tiwari"},
+                {"indigo.admin@travelsphere.com", "IndiGo Admin"},
+                {"airindia.admin@travelsphere.com", "Air India Admin"},
+                {"emirates.admin@travelsphere.com", "Emirates Admin"},
+                {"qatar.admin@travelsphere.com", "Qatar Airways Admin"},
+                {"singapore.admin@travelsphere.com", "Singapore Airlines Admin"},
+                {"lufthansa.admin@travelsphere.com", "Lufthansa Admin"},
+                {"british.admin@travelsphere.com", "British Airways Admin"},
+                {"american.admin@travelsphere.com", "American Airlines Admin"},
+                {"delta.admin@travelsphere.com", "Delta Air Lines Admin"}
+        };
 
-            adminUser.setPassword(passwordEncoder.encode("NikTiwari@1234"));
-            adminUser.setFullName("nikhil");
-            adminUser.setEmail(adminUsername);
-            adminUser.setRole(UserRole.ROLE_SYSTEM_ADMIN);
+        for (String[] admin : admins) {
 
-            User admin=userRepository.save(adminUser);
+            String email = admin[0];
+            String fullName = admin[1];
+
+            if (userRepository.findByEmail(email) == null) {
+
+                User user = new User();
+                user.setEmail(email);
+                user.setFullName(fullName);
+                user.setPassword(passwordEncoder.encode("Password@123"));
+                user.setRole(UserRole.ROLE_SYSTEM_ADMIN);
+
+                userRepository.save(user);
+            }
         }
     }
 }

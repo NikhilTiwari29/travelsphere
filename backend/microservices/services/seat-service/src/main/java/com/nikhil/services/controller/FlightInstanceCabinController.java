@@ -12,31 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST API for managing cabin-level seat inventory for flight instances.
- *
- * A FlightInstanceCabin represents one cabin class, such as ECONOMY,
- * BUSINESS, or FIRST, for a specific flight occurrence.
- *
- * Domain hierarchy:
- *
- * FlightInstance
- *      → FlightInstanceCabin
- *          → SeatInstance
- *
- * Provisioning hierarchy:
- *
- * CabinClass
- *      → SeatMap
- *          → Seat templates
- *              → SeatInstances for a flight occurrence
- *
- * Gateway route:
- * /api/flight-instance-cabins/** → seat-service (JWT required)
- *
- * Cabin inventory may be provisioned manually through this API or
- * asynchronously from a flight-instance-created Kafka event.
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/flight-instance-cabins")

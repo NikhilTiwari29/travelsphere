@@ -100,7 +100,7 @@ public class FlightServiceImpl implements FlightService {
     public FlightResponse createFlight(
             Long userId,
             FlightRequest request
-    ) throws AirportException {
+    ) {
 
         log.info(
                 "Creating flight userId={} flightNumber={} aircraftId={} departureAirportId={} arrivalAirportId={}",

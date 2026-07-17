@@ -14,16 +14,6 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
- * Kafka listener infrastructure for seat-service-group.
- *
- * Consumed Topics
- * ---------------
- * flight-instance-created  → FlightInstanceEventConsumer (from flight-ops-service)
- * booking.confirmed        → BookingEventListener (from booking-service)
- *
- * JsonDeserializer trusts com.nikhil.common_lib.event payloads from both producers.
- */
 @Configuration
 public class KafkaConsumerConfig {
 

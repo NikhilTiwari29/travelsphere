@@ -6,32 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-/*
- * Kafka producer responsible for publishing FlightInstance lifecycle events.
- *
- * Producer:
- *   flight-ops-service
- *
- * Consumer:
- *   seat-service
- *
- * Event Flow
- * ----------
- * FlightInstanceService
- *          ↓
- * FlightInstanceEventProducer
- *          ↓
- * Kafka topic: flight-instance-created
- *          ↓
- * Seat Service consumer
- *          ↓
- * Create FlightInstanceCabin records
- *          ↓
- * Create runtime SeatInstance records
- *
- * This producer does not contain business logic. Its responsibility is only
- * to publish FlightInstance events to Kafka for downstream processing.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -49,25 +23,6 @@ public class FlightInstanceEventProducer {
     private final KafkaTemplate<String, FlightInstanceCreatedEvent> kafkaTemplate;
 
 
-    /**
-     * Publishes a FlightInstanceCreatedEvent after a new FlightInstance
-     * has been created.
-     *
-     * Seat Service consumes this event and provisions runtime inventory
-     * for the newly created flight occurrence.
-     *
-     * Consumer-side flow:
-     *
-     * FlightInstanceCreatedEvent
-     *          ↓
-     * Find CabinClasses configured for the Aircraft
-     *          ↓
-     * Find SeatMap for each CabinClass
-     *          ↓
-     * Create FlightInstanceCabin records
-     *          ↓
-     * Clone template Seats into runtime SeatInstances
-     */
     public void sendFlightInstanceCreated(
             FlightInstanceCreatedEvent event
     ) {
@@ -80,12 +35,6 @@ public class FlightInstanceEventProducer {
                 FLIGHT_INSTANCE_CREATED_TOPIC
         );
 
-        /*
-         * KafkaTemplate.send() is asynchronous.
-         *
-         * The returned CompletableFuture is used to log whether Kafka
-         * successfully acknowledged the message or whether publishing failed.
-         */
         kafkaTemplate
                 .send(
                         FLIGHT_INSTANCE_CREATED_TOPIC,
