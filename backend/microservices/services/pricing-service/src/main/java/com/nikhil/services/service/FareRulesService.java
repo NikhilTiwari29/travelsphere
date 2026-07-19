@@ -8,6 +8,7 @@ import java.util.List;
 public interface FareRulesService {
 
     FareRulesResponse createFareRules(FareRulesRequest request);
+    List<FareRulesResponse> createFareRules(List<FareRulesRequest> requests);
     FareRulesResponse getFareRulesById(Long id);
     FareRulesResponse getFareRulesByFareId(Long fareId);
     List<FareRulesResponse> getFareRulesByAirlineId(Long airlineId);

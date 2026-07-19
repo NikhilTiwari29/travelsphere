@@ -139,6 +139,72 @@ public class FareRulesServiceImpl implements FareRulesService {
     }
 
 
+    @Override
+    @Transactional
+    public List<FareRulesResponse> createFareRules(
+            List<FareRulesRequest> requests
+    ) {
+
+        log.info(
+                "Bulk fare rules creation started requestedCount={}",
+                requests.size()
+        );
+
+        List<FareRules> toSave =
+                requests.stream()
+                        .map(request -> {
+
+                            Fare fare =
+                                    fareRepository.findById(request.getFareId())
+                                            .orElseThrow(() -> {
+
+                                                log.warn(
+                                                        "Fare not found fareId={}",
+                                                        request.getFareId()
+                                                );
+
+                                                return new EntityNotFoundException(
+                                                        "Fare not found with id: "
+                                                                + request.getFareId()
+                                                );
+                                            });
+
+                            if (fareRulesRepository.existsByFareId(
+                                    request.getFareId()
+                            )) {
+
+                                log.warn(
+                                        "Skipping fare rules creation because rules already exist fareId={}",
+                                        request.getFareId()
+                                );
+
+                                throw new IllegalArgumentException(
+                                        "Fare rules already exist for fare "
+                                                + request.getFareId()
+                                );
+                            }
+
+                            return FareRulesMapper.toEntity(
+                                    request,
+                                    fare
+                            );
+                        })
+                        .toList();
+
+        List<FareRules> saved =
+                fareRulesRepository.saveAll(toSave);
+
+        log.info(
+                "Bulk fare rules creation completed createdCount={}",
+                saved.size()
+        );
+
+        return saved.stream()
+                .map(FareRulesMapper::toResponse)
+                .toList();
+    }
+
+
     /**
      * Retrieves FareRules using their primary identifier.
      *

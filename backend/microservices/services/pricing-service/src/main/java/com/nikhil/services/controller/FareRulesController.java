@@ -82,6 +82,15 @@ public class FareRulesController {
     }
 
 
+    @PostMapping("/bulk")
+    public ResponseEntity<List<FareRulesResponse>> createFareRules(
+            @Valid @RequestBody List<FareRulesRequest> requests) {
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(fareRulesService.createFareRules(requests));
+    }
+
+
     /**
      * Retrieves fare rules by their unique identifier.
      *
