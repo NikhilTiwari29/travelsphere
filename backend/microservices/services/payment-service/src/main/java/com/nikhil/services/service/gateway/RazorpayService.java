@@ -111,7 +111,6 @@ public class RazorpayService {
         if (!isConfigured()) throw new PaymentException("razorpay not configured. please setup api key and secret");
 
 
-        System.out.println("RAZORYPAY PAYMENT_ID: ------- " + paymentId);
 
         try {
             RazorpayClient razorpay = new RazorpayClient(razorpayKeyId, razorpayKeySecret);

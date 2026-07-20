@@ -2,9 +2,14 @@ package com.nikhil.services.service.impl;
 
 import com.nikhil.common_lib.dto.UserDTO;
 import com.nikhil.common_lib.enums.UserRole;
+import com.nikhil.common_lib.exception.UnauthorizedException;
 import com.nikhil.common_lib.exception.UserException;
 import com.nikhil.common_lib.payload.response.AuthResponse;
 import com.nikhil.services.config.JwtProvider;
+import com.nikhil.services.exception.InvalidCredentialsException;
+import com.nikhil.services.exception.UnauthorizedRoleException;
+import com.nikhil.services.exception.UserAlreadyExistsException;
+import com.nikhil.services.exception.UserNotFoundException;
 import com.nikhil.services.mapper.UserMapper;
 import com.nikhil.services.model.User;
 import com.nikhil.services.repository.UserRepository;
@@ -190,7 +195,7 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     @Transactional
-    public AuthResponse signup(UserDTO req) throws UserException {
+    public AuthResponse signup(UserDTO req) {
 
         log.info(
                 "User registration started: email={}, role={}",
@@ -205,7 +210,8 @@ public class AuthServiceImpl implements AuthService {
          * UNIQUE constraint because an application-level check alone
          * cannot completely prevent concurrent duplicate registrations.
          */
-        User existingUser = userRepository.findByEmail(req.getEmail());
+        User existingUser = userRepository.findByEmail(req.getEmail())
+                .orElseThrow(() -> new UserNotFoundException(req.getEmail()));;
 
         if (existingUser != null) {
 
@@ -214,7 +220,9 @@ public class AuthServiceImpl implements AuthService {
                     req.getEmail()
             );
 
-            throw new UserException("Email " + existingUser.getEmail() + " already registered");
+            throw new UserAlreadyExistsException(
+                    existingUser.getEmail()
+            );
         }
 
         /*
@@ -230,13 +238,11 @@ public class AuthServiceImpl implements AuthService {
                     req.getEmail()
             );
 
-            throw new UserException(
-                    "Cannot register as SYSTEM_ADMIN"
-            );
+            throw new UnauthorizedRoleException(req.getRole().name());
         }
 
         /*
-         * Create and populate the save User entity.
+         * Create and populate the User entity.
          *
          * The raw password is encoded before the entity is saved to
          * ensure that plaintext passwords are never stored.
@@ -351,7 +357,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponse login(
             String email,
-            String password) throws UserException {
+            String password) {
 
         log.info(
                 "User login attempt started: email={}",
@@ -416,7 +422,7 @@ public class AuthServiceImpl implements AuthService {
 
     private User authenticate(
             String email,
-            String password) throws UserException {
+            String password) {
 
         log.debug(
                 "Validating login credentials: email={}",
@@ -426,7 +432,8 @@ public class AuthServiceImpl implements AuthService {
         /*
          * Load the user from the database.
          */
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));;
 
         if (user == null) {
 
@@ -435,9 +442,12 @@ public class AuthServiceImpl implements AuthService {
                     email
             );
 
-            throw new UserException(
-                    "Invalid email or password."
-            );
+            /*
+             * Do not reveal whether the email or password is incorrect.
+             * Returning a generic authentication failure prevents user
+             * enumeration attacks.
+             */
+            throw new InvalidCredentialsException();
         }
 
         /*
@@ -455,9 +465,11 @@ public class AuthServiceImpl implements AuthService {
                     email
             );
 
-            throw new UserException(
-                    "Invalid email or password."
-            );
+            /*
+             * Return the same exception for both invalid email and password
+             * to avoid leaking account existence.
+             */
+            throw new InvalidCredentialsException();
         }
 
         log.debug(

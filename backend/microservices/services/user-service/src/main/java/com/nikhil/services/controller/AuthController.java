@@ -4,10 +4,12 @@ import com.nikhil.common_lib.dto.UserDTO;
 import com.nikhil.common_lib.exception.UserException;
 import com.nikhil.common_lib.payload.request.LoginRequest;
 import com.nikhil.common_lib.payload.response.AuthResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -99,7 +101,7 @@ public class AuthController {
      * </pre>
      */
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signup(
+    public ResponseEntity<ApiResponse<AuthResponse>> signup(
             @RequestBody @Valid UserDTO request
     ) throws UserException {
 
@@ -115,7 +117,14 @@ public class AuthController {
         );
 
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "User registered successfully.",
+                                response
+                        )
+                );
     }
 
 
@@ -155,7 +164,7 @@ public class AuthController {
      * @throws UserException when authentication fails
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
             @RequestBody @Valid LoginRequest request
     ) throws UserException {
 
@@ -196,6 +205,12 @@ public class AuthController {
         );
 
 
-        return ResponseEntity.ok(response);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "User authenticated successfully.",
+                        response
+                )
+        );
     }
 }

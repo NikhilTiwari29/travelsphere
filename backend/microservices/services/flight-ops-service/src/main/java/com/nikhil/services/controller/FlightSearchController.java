@@ -53,7 +53,6 @@ public class FlightSearchController {
             @RequestParam(required = false) String alliance,
             Pageable pageable) {
 
-        System.out.println("------ search flights"+arrivalAirportId+" "+departureAirportId);
 
         FlightSearchRequest request = FlightSearchRequest.builder()
                 .departureAirportId(departureAirportId)

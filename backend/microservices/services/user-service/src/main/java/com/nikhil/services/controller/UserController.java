@@ -2,10 +2,12 @@ package com.nikhil.services.controller;
 
 import com.nikhil.common_lib.dto.UserDTO;
 import com.nikhil.common_lib.exception.UserException;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.mapper.UserMapper;
 import com.nikhil.services.model.User;
 import com.nikhil.services.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,34 +27,67 @@ import java.util.List;
  *
  * Profile endpoint reads X-User-Email set by the Gateway, not the JWT directly.
  */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
 
-    /*
-     * Purpose: Return the authenticated user's profile.
-     * Called By: Client via Gateway GET /api/users/profile
-     * Flow: Read X-User-Email header → UserService → UserMapper.toDTO
+    /**
+     * Returns the authenticated user's profile.
      */
-    @GetMapping("/api/users/profile")
-    public ResponseEntity<UserDTO> getUserProfile(
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserProfile(
             @RequestHeader("X-User-Email") String email) throws UserException {
+
+        log.info("Fetching authenticated user profile.");
+
         User user = userService.getUserByEmail(email);
-        return ResponseEntity.ok(UserMapper.toDTO(user));
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "User profile retrieved successfully.",
+                        UserMapper.toDTO(user)
+                )
+        );
     }
 
-    @GetMapping("/api/users/{userId}")
-    public ResponseEntity<UserDTO> getUserById(
+    /**
+     * Returns a user by id.
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(
             @PathVariable Long userId) throws UserException {
+
+        log.info("Fetching user by id={}", userId);
+
         User user = userService.getUserById(userId);
-        return ResponseEntity.ok(UserMapper.toDTO(user));
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "User retrieved successfully.",
+                        UserMapper.toDTO(user)
+                )
+        );
     }
 
-    @GetMapping("/api/users")
-    public ResponseEntity<List<UserDTO>> getUsers() throws UserException {
+    /**
+     * Returns all users.
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getUsers() throws UserException {
+
+        log.info("Fetching all users.");
+
         List<User> users = userService.getUsers();
-        return ResponseEntity.ok(UserMapper.toDTOList(users));
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Users retrieved successfully.",
+                        UserMapper.toDTOList(users)
+                )
+        );
     }
 }

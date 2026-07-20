@@ -62,7 +62,6 @@ public class FlightSearchServiceImpl implements FlightSearchService {
     @Transactional(readOnly = true)
     public Page<FlightInstanceResponse> searchFlights(FlightSearchRequest request, Pageable pageable) {
 
-        System.out.println("searchFlights called with request: {}"+ request);
 
 
         // ── Phase 2: paginated DB query with dynamic Specification ────────────
@@ -72,8 +71,6 @@ public class FlightSearchServiceImpl implements FlightSearchService {
                 FlightInstanceSpecification.buildSearchSpec(request);
 
         Page<FlightInstance> dbPage = flightInstanceRepository.findAll(spec, sortedPageable);
-
-        System.out.println(" searchFlights: DB returned {} results " + dbPage.getContent().size());
 
         if (dbPage.isEmpty()) {
             return Page.empty(sortedPageable);
@@ -178,7 +175,6 @@ public class FlightSearchServiceImpl implements FlightSearchService {
         // ── Enrichment: airline + airport (per-request cache), fare already fetched ──
         List<FlightInstanceResponse> responses = enrichWithExternalData(instances, fareMap);
 
-        System.out.println("searchFlights: returning {} enriched results"+ responses.size());
 
         // totalElements from DB page may slightly overcount when price filter
         // removes results post-DB. For perfect counts at scale use a search index.

@@ -6,6 +6,7 @@ import io.micrometer.observation.annotation.Observed;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -16,7 +17,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * Lookup user by unique email. Used by AuthServiceImpl (login/signup),
      * CustomUserDetailsService, and DataInitializationComponent.
      */
-    User findByEmail(String email);
+    Optional<User> findByEmail(String email);
 
     /*
      * Find all users with a given role. Supports admin or batch queries

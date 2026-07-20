@@ -30,57 +30,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
-/**
- * Application service responsible for payment lifecycle orchestration.
- *
- * Responsibilities:
- *
- * 1. Create and persist Payment records.
- * 2. Initialize checkout with the configured payment gateway.
- * 3. Verify gateway payment results.
- * 4. Transition Payment status.
- * 5. Publish payment lifecycle events to Kafka.
- * 6. Provide Payment data for Booking Service enrichment.
- *
- * Main flow:
- *
- * Booking Service
- *        |
- *        | initiatePayment()
- *        v
- * Payment Service
- *        |
- *        +-- Create PENDING Payment
- *        |
- *        +-- Fetch customer information from User Service
- *        |
- *        +-- Create Razorpay payment link
- *        |
- *        v
- * Customer completes checkout
- *        |
- *        | verifyPayment()
- *        v
- * Payment Service
- *        |
- *        +-- Fetch payment state from gateway
- *        |
- *        +-- Validate payment status and amount
- *        |
- *        +-- Update Payment state
- *        |
- *        +-- Publish payment.completed or payment.failed
- *                    |
- *                    v
- *                  Kafka
- *                    |
- *                    v
- *              Booking Service
- *
- * Read operations use the class-level read-only transaction policy.
- * State-changing operations explicitly override it with write transactions.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
