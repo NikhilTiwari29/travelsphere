@@ -3,8 +3,8 @@ package com.nikhil.services.controller;
 import com.nikhil.common_lib.exception.OperationNotPermittedException;
 import com.nikhil.common_lib.exception.ResourceNotFoundException;
 import com.nikhil.common_lib.payload.request.CityRequest;
-import com.nikhil.common_lib.payload.response.ApiResponse;
 import com.nikhil.common_lib.payload.response.CityResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.CityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,9 +42,8 @@ public class CityController {
      * and duplicate city-code checks.
      */
     @PostMapping
-    public ResponseEntity<CityResponse> createCity(
-            @Valid @RequestBody CityRequest request)
-            throws OperationNotPermittedException {
+    public ResponseEntity<ApiResponse<CityResponse>> createCity(
+            @Valid @RequestBody CityRequest request) {
 
         log.info(
                 "Received request to create city with code={}",
@@ -54,9 +53,16 @@ public class CityController {
         CityResponse response =
                 cityService.createCity(request);
 
+        CityResponse response = cityService.createCity(request);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(
+                        ApiResponse.success(
+                                "City created successfully.",
+                                response
+                        )
+                );
     }
 
 
@@ -67,7 +73,7 @@ public class CityController {
      * by the service layer.
      */
     @PostMapping("/bulk")
-    public ResponseEntity<List<CityResponse>> createBulkCities(
+    public ResponseEntity<ApiResponse<List<CityResponse>>> createBulkCities(
             @Valid @RequestBody List<CityRequest> requests)
             throws OperationNotPermittedException {
 
@@ -81,7 +87,12 @@ public class CityController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(responses);
+                .body(
+                        ApiResponse.success(
+                                "Cities created successfully.",
+                                responses
+                        )
+                );
     }
 
 
@@ -94,7 +105,7 @@ public class CityController {
      * or fetch it from the database on a cache miss.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<CityResponse> getCityById(
+    public ResponseEntity<ApiResponse<CityResponse>> getCityById(
             @PathVariable Long id)
             throws ResourceNotFoundException {
 
@@ -104,7 +115,10 @@ public class CityController {
         );
 
         return ResponseEntity.ok(
-                cityService.getCityById(id)
+                ApiResponse.success(
+                        "City retrieved successfully.",
+                        cityService.getCityById(id)
+                )
         );
     }
 
@@ -116,7 +130,7 @@ public class CityController {
      * GET /api/cities?page=0&size=20&sortBy=name&sortDirection=asc
      */
     @GetMapping
-    public ResponseEntity<Page<CityResponse>> getAllCities(
+    public ResponseEntity<ApiResponse<Page<CityResponse>>> getAllCities(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "name") String sortBy,
@@ -144,7 +158,10 @@ public class CityController {
         );
 
         return ResponseEntity.ok(
-                cityService.getAllCities(pageable)
+                ApiResponse.success(
+                        "Cities retrieved successfully.",
+                        cityService.getAllCities(pageable)
+                )
         );
     }
 
@@ -158,7 +175,7 @@ public class CityController {
      * already assigned to another city.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<CityResponse> updateCity(
+    public ResponseEntity<ApiResponse<CityResponse>> updateCity(
             @PathVariable Long id,
             @Valid @RequestBody CityRequest request)
             throws ResourceNotFoundException,
@@ -171,7 +188,10 @@ public class CityController {
         );
 
         return ResponseEntity.ok(
-                cityService.updateCity(id, request)
+                ApiResponse.success(
+                        "City updated successfully.",
+                        cityService.updateCity(id, request)
+                )
         );
     }
 
@@ -182,7 +202,7 @@ public class CityController {
      * Deletes a city by its database ID.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> deleteCity(
+    public ResponseEntity<ApiResponse<Void>> deleteCity(
             @PathVariable Long id)
             throws ResourceNotFoundException {
 
@@ -194,7 +214,9 @@ public class CityController {
         cityService.deleteCity(id);
 
         return ResponseEntity.ok(
-                new ApiResponse("City deleted successfully")
+                ApiResponse.success(
+                        "City deleted successfully."
+                )
         );
     }
 
@@ -208,7 +230,7 @@ public class CityController {
      * country name, or region code.
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<CityResponse>> searchCities(
+    public ResponseEntity<ApiResponse<Page<CityResponse>>> searchCities(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -224,9 +246,12 @@ public class CityController {
                 PageRequest.of(page, size);
 
         return ResponseEntity.ok(
-                cityService.searchCities(
-                        keyword,
-                        pageable
+                ApiResponse.success(
+                        "Cities retrieved successfully.",
+                        cityService.searchCities(
+                                keyword,
+                                pageable
+                        )
                 )
         );
     }
@@ -239,7 +264,7 @@ public class CityController {
      * GET /api/cities/country/IN
      */
     @GetMapping("/country/{countryCode}")
-    public ResponseEntity<Page<CityResponse>> getCitiesByCountryCode(
+    public ResponseEntity<ApiResponse<Page<CityResponse>>> getCitiesByCountryCode(
             @PathVariable String countryCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -255,9 +280,12 @@ public class CityController {
                 PageRequest.of(page, size);
 
         return ResponseEntity.ok(
-                cityService.getCitiesByCountryCode(
-                        countryCode.toUpperCase(),
-                        pageable
+                ApiResponse.success(
+                        "Cities retrieved successfully.",
+                        cityService.getCitiesByCountryCode(
+                                countryCode.toUpperCase(),
+                                pageable
+                        )
                 )
         );
     }
@@ -272,7 +300,7 @@ public class CityController {
      * GET /api/cities/exists/BOM
      */
     @GetMapping("/exists/{cityCode}")
-    public ResponseEntity<Boolean> checkCityExists(
+    public ResponseEntity<ApiResponse<Boolean>> checkCityExists(
             @PathVariable String cityCode) {
 
         log.debug(
@@ -281,8 +309,11 @@ public class CityController {
         );
 
         return ResponseEntity.ok(
-                cityService.cityExists(
-                        cityCode.toUpperCase()
+                ApiResponse.success(
+                        "City existence checked successfully.",
+                        cityService.cityExists(
+                                cityCode.toUpperCase()
+                        )
                 )
         );
     }

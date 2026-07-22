@@ -3,7 +3,7 @@ package com.nikhil.services.controller;
 import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.exception.CityException;
 import com.nikhil.common_lib.payload.request.AirportRequest;
-import com.nikhil.common_lib.payload.response.ApiResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.common_lib.payload.response.AirportResponse;
 import com.nikhil.services.service.AirportService;
 import jakarta.validation.Valid;
@@ -33,50 +33,36 @@ public class AirportController {
 
     private final AirportService airportService;
 
-
     // ==================== CREATE ====================
 
-    /**
-     * Creates a new airport and links it to the city specified by cityId.
-     *
-     * The request is validated before being passed to the service layer.
-     * Returns HTTP 201 CREATED when the airport is created successfully.
-     */
     @PostMapping
-    public ResponseEntity<AirportResponse> createAirport(
-            @Valid @RequestBody AirportRequest request)
-            throws AirportException, CityException {
+    public ResponseEntity<ApiResponse<AirportResponse>> createAirport(
+            @Valid @RequestBody AirportRequest request) throws AirportException, CityException {
 
         log.info(
                 "Received request to create airport with IATA code={}",
                 request.getIataCode()
         );
 
-        AirportResponse response =
-                airportService.createAirport(request);
+        AirportResponse response = airportService.createAirport(request);
 
         log.info(
                 "Airport created successfully with IATA code={}",
                 request.getIataCode()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "Airport created successfully.",
+                                response
+                        )
+                );
     }
 
-
-    /**
-     * Creates multiple airports in a single request.
-     *
-     * The service processes each airport request, creates valid airports,
-     * and skips records whose IATA code already exists or whose cityId
-     * does not reference an existing city.
-     */
     @PostMapping("/bulk")
-    public ResponseEntity<List<AirportResponse>> createBulkAirports(
-            @Valid @RequestBody List<AirportRequest> requests)
-            throws AirportException, CityException {
+    public ResponseEntity<ApiResponse<List<AirportResponse>>> createBulkAirports(
+            @Valid @RequestBody List<AirportRequest> requests) throws AirportException, CityException {
 
         log.info(
                 "Received bulk airport creation request with {} records",
@@ -92,24 +78,20 @@ public class AirportController {
                 requests.size()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(responses);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "Airports created successfully.",
+                                responses
+                        )
+                );
     }
-
 
     // ==================== READ ====================
 
-    /**
-     * Returns an airport by its database ID.
-     *
-     * This is the primary endpoint used by Feign clients in other
-     * microservices when airport details are required for enrichment.
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<AirportResponse> getAirportById(
-            @PathVariable Long id)
-            throws AirportException {
+    public ResponseEntity<ApiResponse<AirportResponse>> getAirportById(
+            @PathVariable Long id) {
 
         log.debug(
                 "Received request to fetch airport with id={}",
@@ -117,32 +99,28 @@ public class AirportController {
         );
 
         return ResponseEntity.ok(
-                airportService.getAirportById(id)
+                ApiResponse.success(
+                        "Airport retrieved successfully.",
+                        airportService.getAirportById(id)
+                )
         );
     }
 
-
-    /**
-     * Returns all airports available in the system.
-     */
     @GetMapping
-    public ResponseEntity<List<AirportResponse>> getAllAirports() {
+    public ResponseEntity<ApiResponse<List<AirportResponse>>> getAllAirports() {
 
         log.debug("Received request to fetch all airports");
 
         return ResponseEntity.ok(
-                airportService.getAllAirports()
+                ApiResponse.success(
+                        "Airports retrieved successfully.",
+                        airportService.getAllAirports()
+                )
         );
     }
 
-
-    /**
-     * Returns all airports linked to the specified city ID.
-     *
-     * A city can have multiple airports, so the endpoint returns a list.
-     */
     @GetMapping("/city/{cityId}")
-    public ResponseEntity<List<AirportResponse>> getAirportsByCityId(
+    public ResponseEntity<ApiResponse<List<AirportResponse>>> getAirportsByCityId(
             @PathVariable Long cityId) {
 
         log.debug(
@@ -151,24 +129,19 @@ public class AirportController {
         );
 
         return ResponseEntity.ok(
-                airportService.getAirportsByCityId(cityId)
+                ApiResponse.success(
+                        "Airports retrieved successfully.",
+                        airportService.getAirportsByCityId(cityId)
+                )
         );
     }
 
-
     // ==================== UPDATE ====================
 
-    /**
-     * Updates an existing airport identified by its ID.
-     *
-     * The service validates the airport data, verifies the referenced city,
-     * and prevents duplicate IATA codes from being assigned to different airports.
-     */
     @PutMapping("/{id}")
-    public ResponseEntity<AirportResponse> updateAirport(
+    public ResponseEntity<ApiResponse<AirportResponse>> updateAirport(
             @PathVariable Long id,
-            @Valid @RequestBody AirportRequest request)
-            throws AirportException, CityException {
+            @Valid @RequestBody AirportRequest request) throws AirportException, CityException {
 
         log.info(
                 "Received request to update airport id={}, IATA code={}",
@@ -184,21 +157,19 @@ public class AirportController {
                 id
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airport updated successfully.",
+                        response
+                )
+        );
     }
-
 
     // ==================== DELETE ====================
 
-    /**
-     * Deletes the airport identified by the given ID.
-     *
-     * Returns a success message after the airport is deleted.
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> deleteAirport(
-            @PathVariable Long id)
-            throws AirportException {
+    public ResponseEntity<ApiResponse<Void>> deleteAirport(
+            @PathVariable Long id) throws AirportException {
 
         log.info(
                 "Received request to delete airport id={}",
@@ -213,7 +184,9 @@ public class AirportController {
         );
 
         return ResponseEntity.ok(
-                new ApiResponse("Airport deleted successfully")
+                ApiResponse.success(
+                        "Airport deleted successfully."
+                )
         );
     }
 }

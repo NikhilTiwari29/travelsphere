@@ -1,6 +1,7 @@
 package com.nikhil.services.controller;
 
 import com.nikhil.common_lib.enums.CabinClassType;
+import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.FlightSearchRequest;
 import com.nikhil.common_lib.payload.response.FlightInstanceResponse;
 import com.nikhil.services.service.FlightSearchService;
@@ -29,8 +30,6 @@ public class FlightSearchController {
 
     private final FlightSearchService flightSearchService;
 
-
-
     /**
      * Searches bookable flight instances by route, date, cabin, and optional filters.
      * Called by frontend via API Gateway; response includes enriched airline/airport/fare data.
@@ -39,7 +38,9 @@ public class FlightSearchController {
     public ResponseEntity<Page<FlightInstanceResponse>> searchFlights(
             @RequestParam Long departureAirportId,
             @RequestParam Long arrivalAirportId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate departureDate,
             @RequestParam Integer passengers,
             @RequestParam CabinClassType cabinClass,
             @RequestParam(required = false) List<Long> airlines,
@@ -51,8 +52,8 @@ public class FlightSearchController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortOrder,
             @RequestParam(required = false) String alliance,
-            Pageable pageable) {
-
+            Pageable pageable
+    ) throws AirportException {
 
         FlightSearchRequest request = FlightSearchRequest.builder()
                 .departureAirportId(departureAirportId)
@@ -70,10 +71,10 @@ public class FlightSearchController {
                 .sortBy(sortBy)
                 .sortOrder(sortOrder)
                 .build();
-        Page<FlightInstanceResponse> res= flightSearchService.searchFlights(request, pageable);
 
-        return ResponseEntity.ok(res);
+        Page<FlightInstanceResponse> response =
+                flightSearchService.searchFlights(request, pageable);
+
+        return ResponseEntity.ok(response);
     }
-
-
 }

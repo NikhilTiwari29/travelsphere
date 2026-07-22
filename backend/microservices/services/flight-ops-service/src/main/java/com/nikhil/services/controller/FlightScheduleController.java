@@ -3,6 +3,7 @@ package com.nikhil.services.controller;
 import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.FlightScheduleRequest;
 import com.nikhil.common_lib.payload.response.FlightScheduleResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.FlightScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -32,7 +35,7 @@ public class FlightScheduleController {
      * provisioning through Kafka.
      */
     @PostMapping
-    public ResponseEntity<FlightScheduleResponse> createFlightSchedule(
+    public ResponseEntity<ApiResponse<FlightScheduleResponse>> createFlightSchedule(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FlightScheduleRequest request
     ) throws Exception {
@@ -58,7 +61,12 @@ public class FlightScheduleController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(
+                        ApiResponse.success(
+                                "Flight schedule created successfully.",
+                                response
+                        )
+                );
     }
 
 
@@ -68,7 +76,7 @@ public class FlightScheduleController {
      * Returns a FlightSchedule using its database identifier.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<FlightScheduleResponse> getFlightScheduleById(
+    public ResponseEntity<ApiResponse<FlightScheduleResponse>> getFlightScheduleById(
             @PathVariable Long id
     ) throws AirportException {
 
@@ -85,7 +93,12 @@ public class FlightScheduleController {
                 id
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight schedule retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -96,24 +109,30 @@ public class FlightScheduleController {
      * to resolve the airline and retrieve its schedule definitions.
      */
     @GetMapping
-    public ResponseEntity<?> getFlightSchedules(
+    public ResponseEntity<ApiResponse<List<FlightScheduleResponse>>> getFlightSchedules(
             @RequestHeader("X-User-Id") Long userId
-    ) {
+    ) throws AirportException {
 
         log.debug(
                 "Airline flight schedule lookup request received userId={}",
                 userId
         );
 
-        var responses =
+        List<FlightScheduleResponse> responses =
                 flightScheduleService.getFlightScheduleByAirline(userId);
 
         log.debug(
-                "Airline flight schedule lookup completed userId={}",
-                userId
+                "Airline flight schedule lookup completed userId={} returnedCount={}",
+                userId,
+                responses.size()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight schedules retrieved successfully.",
+                        responses
+                )
+        );
     }
 
 
@@ -125,7 +144,7 @@ public class FlightScheduleController {
      * Schedule validation and persistence are handled by the service layer.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<FlightScheduleResponse> updateFlightSchedule(
+    public ResponseEntity<ApiResponse<FlightScheduleResponse>> updateFlightSchedule(
             @PathVariable Long id,
             @Valid @RequestBody FlightScheduleRequest request
     ) throws AirportException {
@@ -148,7 +167,12 @@ public class FlightScheduleController {
                 request.getFlightId()
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight schedule updated successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -161,9 +185,9 @@ public class FlightScheduleController {
      * deletion rules is handled by the service layer.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFlightSchedule(
+    public ResponseEntity<ApiResponse<Void>> deleteFlightSchedule(
             @PathVariable Long id
-    ) {
+    ) throws AirportException {
 
         log.info(
                 "Flight schedule deletion request received scheduleId={}",
@@ -177,8 +201,10 @@ public class FlightScheduleController {
                 id
         );
 
-        return ResponseEntity
-                .noContent()
-                .build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight schedule deleted successfully."
+                )
+        );
     }
 }

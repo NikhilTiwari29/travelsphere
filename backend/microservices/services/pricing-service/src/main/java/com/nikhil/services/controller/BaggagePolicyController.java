@@ -1,7 +1,9 @@
 package com.nikhil.services.controller;
 
+import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.BaggagePolicyRequest;
 import com.nikhil.common_lib.payload.response.BaggagePolicyResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.BaggagePolicyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -75,9 +77,9 @@ public class BaggagePolicyController {
      * @return newly created baggage policy
      */
     @PostMapping
-    public ResponseEntity<BaggagePolicyResponse> createBaggagePolicy(
+    public ResponseEntity<ApiResponse<BaggagePolicyResponse>> createBaggagePolicy(
             @Valid @RequestBody BaggagePolicyRequest request
-    ) {
+    )  {
 
         log.info(
                 "Received request to create baggage policy fareId={}",
@@ -95,7 +97,12 @@ public class BaggagePolicyController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(
+                        ApiResponse.success(
+                                "Baggage policy created successfully.",
+                                response
+                        )
+                );
     }
 
 
@@ -121,9 +128,9 @@ public class BaggagePolicyController {
      * @return list of newly created baggage policies
      */
     @PostMapping("/bulk")
-    public ResponseEntity<List<BaggagePolicyResponse>> createBaggagePolicies(
+    public ResponseEntity<ApiResponse<List<BaggagePolicyResponse>>> createBaggagePolicies(
             @Valid @RequestBody List<BaggagePolicyRequest> requests
-    ) {
+    )  {
 
         log.info(
                 "Received request to create baggage policies in bulk count={}",
@@ -141,7 +148,12 @@ public class BaggagePolicyController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(responses);
+                .body(
+                        ApiResponse.success(
+                                "Baggage policies created successfully.",
+                                responses
+                        )
+                );
     }
 
 
@@ -152,9 +164,9 @@ public class BaggagePolicyController {
      * @return baggage-policy details
      */
     @GetMapping("/{id}")
-    public ResponseEntity<BaggagePolicyResponse> getBaggagePolicyById(
+    public ResponseEntity<ApiResponse<BaggagePolicyResponse>> getBaggagePolicyById(
             @PathVariable Long id
-    ) {
+    )  {
 
         log.debug(
                 "Received request to fetch baggage policy baggagePolicyId={}",
@@ -169,7 +181,12 @@ public class BaggagePolicyController {
                 id
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Baggage policy retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -183,9 +200,9 @@ public class BaggagePolicyController {
      * @return baggage policy associated with the fare
      */
     @GetMapping("/fare/{fareId}")
-    public ResponseEntity<BaggagePolicyResponse> getBaggagePolicyByFareId(
+    public ResponseEntity<ApiResponse<BaggagePolicyResponse>> getBaggagePolicyByFareId(
             @PathVariable Long fareId
-    ) {
+    )  {
 
         log.debug(
                 "Received request to fetch baggage policy by fareId={}",
@@ -200,7 +217,12 @@ public class BaggagePolicyController {
                 fareId
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Baggage policy retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -214,9 +236,9 @@ public class BaggagePolicyController {
      * @return list of baggage policies belonging to the airline
      */
     @GetMapping("/airline/{airlineId}")
-    public ResponseEntity<List<BaggagePolicyResponse>> getBaggagePoliciesByAirlineId(
+    public ResponseEntity<ApiResponse<List<BaggagePolicyResponse>>> getBaggagePoliciesByAirlineId(
             @PathVariable Long airlineId
-    ) {
+    )  {
 
         log.debug(
                 "Received request to fetch baggage policies airlineId={}",
@@ -232,7 +254,12 @@ public class BaggagePolicyController {
                 responses.size()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Baggage policies retrieved successfully.",
+                        responses
+                )
+        );
     }
 
 
@@ -247,7 +274,7 @@ public class BaggagePolicyController {
      * @return updated baggage policy
      */
     @PutMapping("/{id}")
-    public ResponseEntity<BaggagePolicyResponse> updateBaggagePolicy(
+    public ResponseEntity<ApiResponse<BaggagePolicyResponse>> updateBaggagePolicy(
             @PathVariable Long id,
             @Valid @RequestBody BaggagePolicyRequest request
     ) {
@@ -266,7 +293,12 @@ public class BaggagePolicyController {
                 id
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Baggage policy updated successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -277,12 +309,12 @@ public class BaggagePolicyController {
      * before performing the deletion.
      *
      * @param id baggage-policy ID
-     * @return HTTP 204 No Content after successful deletion
+     * @return success response after deletion
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBaggagePolicy(
+    public ResponseEntity<ApiResponse<Void>> deleteBaggagePolicy(
             @PathVariable Long id
-    ) {
+    )  {
 
         log.info(
                 "Received request to delete baggage policy baggagePolicyId={}",
@@ -296,6 +328,10 @@ public class BaggagePolicyController {
                 id
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Baggage policy deleted successfully."
+                )
+        );
     }
 }

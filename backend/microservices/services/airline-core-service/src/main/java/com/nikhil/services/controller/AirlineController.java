@@ -4,12 +4,14 @@ import com.nikhil.common_lib.enums.AirlineStatus;
 import com.nikhil.common_lib.payload.request.AirlineRequest;
 import com.nikhil.common_lib.payload.response.AirlineDropdownItem;
 import com.nikhil.common_lib.payload.response.AirlineResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.AirlineService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +51,7 @@ public class AirlineController {
      * Registers a new airline for the authenticated owner.
      */
     @PostMapping
-    public ResponseEntity<AirlineResponse> createAirline(
+    public ResponseEntity<ApiResponse<AirlineResponse>> createAirline(
             @Valid @RequestBody AirlineRequest request,
             @RequestHeader("X-User-Id") Long userId
     ) {
@@ -69,7 +71,14 @@ public class AirlineController {
                 userId
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "Airline created successfully.",
+                                response
+                        )
+                );
     }
 
 
@@ -80,7 +89,7 @@ public class AirlineController {
      * resolve the airline associated with the propagated user identity.
      */
     @GetMapping("/admin")
-    public ResponseEntity<AirlineResponse> getAirlineByOwner(
+    public ResponseEntity<ApiResponse<AirlineResponse>> getAirlineByOwner(
             @RequestHeader("X-User-Id") Long userId
     ) {
 
@@ -92,7 +101,12 @@ public class AirlineController {
         AirlineResponse response =
                 airlineService.getAirlineByOwner(userId);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -100,7 +114,7 @@ public class AirlineController {
      * Returns an airline by its unique database ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<AirlineResponse> getAirlineById(
+    public ResponseEntity<ApiResponse<AirlineResponse>> getAirlineById(
             @PathVariable Long id
     ) {
 
@@ -112,7 +126,12 @@ public class AirlineController {
         AirlineResponse response =
                 airlineService.getAirlineById(id);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -123,7 +142,7 @@ public class AirlineController {
      * parameters such as page, size, and sort.
      */
     @GetMapping
-    public ResponseEntity<Page<AirlineResponse>> getAllAirlines(
+    public ResponseEntity<ApiResponse<Page<AirlineResponse>>> getAllAirlines(
             Pageable pageable
     ) {
 
@@ -144,7 +163,12 @@ public class AirlineController {
                 response.getTotalElements()
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airlines retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -153,7 +177,7 @@ public class AirlineController {
      * and selection interfaces.
      */
     @GetMapping("/dropdown")
-    public ResponseEntity<List<AirlineDropdownItem>> getAirlinesForDropdown() {
+    public ResponseEntity<ApiResponse<List<AirlineDropdownItem>>> getAirlinesForDropdown() {
 
         log.debug(
                 "Get airline dropdown request received"
@@ -167,7 +191,12 @@ public class AirlineController {
                 response.size()
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline dropdown retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -175,7 +204,7 @@ public class AirlineController {
      * Updates the airline associated with the authenticated owner.
      */
     @PutMapping
-    public ResponseEntity<AirlineResponse> updateAirline(
+    public ResponseEntity<ApiResponse<AirlineResponse>> updateAirline(
             @Valid @RequestBody AirlineRequest request,
             @RequestHeader("X-User-Id") Long userId
     ) {
@@ -194,7 +223,12 @@ public class AirlineController {
                 userId
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline updated successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -202,7 +236,7 @@ public class AirlineController {
      * Deletes an airline after ownership validation in the service layer.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAirline(
+    public ResponseEntity<ApiResponse<Void>> deleteAirline(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long userId
     ) {
@@ -221,7 +255,11 @@ public class AirlineController {
                 userId
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline deleted successfully."
+                )
+        );
     }
 
 
@@ -231,7 +269,7 @@ public class AirlineController {
      * Activates an airline after administrative approval.
      */
     @PostMapping("/{id}/approve")
-    public ResponseEntity<AirlineResponse> approveAirline(
+    public ResponseEntity<ApiResponse<AirlineResponse>> approveAirline(
             @PathVariable Long id
     ) {
 
@@ -252,7 +290,12 @@ public class AirlineController {
                 AirlineStatus.ACTIVE
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline approved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -260,7 +303,7 @@ public class AirlineController {
      * Suspends an airline by changing its operational status to INACTIVE.
      */
     @PostMapping("/{id}/suspend")
-    public ResponseEntity<AirlineResponse> suspendAirline(
+    public ResponseEntity<ApiResponse<AirlineResponse>> suspendAirline(
             @PathVariable Long id
     ) {
 
@@ -281,7 +324,12 @@ public class AirlineController {
                 AirlineStatus.INACTIVE
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline suspended successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -289,7 +337,7 @@ public class AirlineController {
      * Bans an airline by changing its operational status to BANNED.
      */
     @PostMapping("/{id}/ban")
-    public ResponseEntity<AirlineResponse> banAirline(
+    public ResponseEntity<ApiResponse<AirlineResponse>> banAirline(
             @PathVariable Long id
     ) {
 
@@ -310,6 +358,11 @@ public class AirlineController {
                 AirlineStatus.BANNED
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Airline banned successfully.",
+                        response
+                )
+        );
     }
 }

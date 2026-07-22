@@ -1,8 +1,14 @@
 package com.nikhil.services.service.impl;
 
+import com.nikhil.common_lib.enums.ErrorCode;
+import com.nikhil.common_lib.exception.BadRequestException;
 import com.nikhil.common_lib.exception.ResourceNotFoundException;
 import com.nikhil.common_lib.payload.request.AircraftRequest;
 import com.nikhil.common_lib.payload.response.AircraftResponse;
+import com.nikhil.services.exception.AircraftAlreadyExistsException;
+import com.nikhil.services.exception.AircraftNotFoundException;
+import com.nikhil.services.exception.AircraftOwnershipMismatchException;
+import com.nikhil.services.exception.AirlineNotFoundException;
 import com.nikhil.services.mapper.AircraftMapper;
 import com.nikhil.services.model.Aircraft;
 import com.nikhil.services.model.Airline;
@@ -68,9 +74,7 @@ public class AircraftServiceImpl implements AircraftService {
                             ownerId
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found for owner: " + ownerId
-                    );
+                    return new AirlineNotFoundException(ownerId);
                 });
 
         Aircraft aircraft =
@@ -87,10 +91,8 @@ public class AircraftServiceImpl implements AircraftService {
                     aircraft.getCode()
             );
 
-            throw new IllegalArgumentException(
-                    "Aircraft with code "
-                            + aircraft.getCode()
-                            + " already exists"
+            throw new AircraftAlreadyExistsException(
+                    aircraft.getCode()
             );
         }
 
@@ -138,9 +140,7 @@ public class AircraftServiceImpl implements AircraftService {
                             id
                     );
 
-                    return new ResourceNotFoundException(
-                            "Aircraft not found with id: " + id
-                    );
+                    return new AircraftNotFoundException(id);
                 });
 
         return AircraftMapper.toResponse(aircraft);
@@ -168,9 +168,7 @@ public class AircraftServiceImpl implements AircraftService {
                             ownerId
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found for owner: " + ownerId
-                    );
+                    return new AirlineNotFoundException(ownerId);
                 });
 
         List<AircraftResponse> aircrafts =
@@ -224,9 +222,7 @@ public class AircraftServiceImpl implements AircraftService {
                             ownerId
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found for owner: " + ownerId
-                    );
+                    return new AirlineNotFoundException(ownerId);
                 });
 
         Aircraft aircraft = aircraftRepository.findById(id)
@@ -236,9 +232,7 @@ public class AircraftServiceImpl implements AircraftService {
                             id
                     );
 
-                    return new ResourceNotFoundException(
-                            "Aircraft not found with id: " + id
-                    );
+                    return new AircraftNotFoundException(id);
                 });
 
         /*
@@ -254,9 +248,7 @@ public class AircraftServiceImpl implements AircraftService {
                     airline.getId()
             );
 
-            throw new IllegalArgumentException(
-                    "Aircraft does not belong to the owner's airline"
-            );
+            throw new AircraftOwnershipMismatchException();
         }
 
         String oldCode = aircraft.getCode();
@@ -278,11 +270,7 @@ public class AircraftServiceImpl implements AircraftService {
                     id
             );
 
-            throw new IllegalArgumentException(
-                    "Aircraft with code "
-                            + newCode
-                            + " already exists"
-            );
+            throw new AircraftAlreadyExistsException(newCode);
         }
 
         // Apply changes only after ownership and uniqueness validation succeeds.
@@ -339,9 +327,7 @@ public class AircraftServiceImpl implements AircraftService {
                             id
                     );
 
-                    return new ResourceNotFoundException(
-                            "Aircraft not found with id: " + id
-                    );
+                    return new AircraftNotFoundException(id);
                 });
 
         aircraftRepository.delete(aircraft);
@@ -375,8 +361,9 @@ public class AircraftServiceImpl implements AircraftService {
                     aircraft.getSeatingCapacity()
             );
 
-            throw new IllegalArgumentException(
-                    "Seating capacity must be positive"
+            throw new BadRequestException(
+                    ErrorCode.INVALID_SEATING_CAPACITY,
+                    "Seating capacity must be greater than zero."
             );
         }
 
@@ -407,8 +394,9 @@ public class AircraftServiceImpl implements AircraftService {
                     aircraft.getSeatingCapacity()
             );
 
-            throw new IllegalArgumentException(
-                    "Total specified seats exceed aircraft seating capacity"
+            throw new BadRequestException(
+                    ErrorCode.INVALID_AIRCRAFT_CONFIGURATION,
+                    "Total specified seats exceed aircraft seating capacity."
             );
         }
 
@@ -423,8 +411,9 @@ public class AircraftServiceImpl implements AircraftService {
                     aircraft.getYearOfManufacture()
             );
 
-            throw new IllegalArgumentException(
-                    "Invalid year of manufacture"
+            throw new BadRequestException(
+                    ErrorCode.INVALID_MANUFACTURE_YEAR,
+                    "Invalid year of manufacture."
             );
         }
     }

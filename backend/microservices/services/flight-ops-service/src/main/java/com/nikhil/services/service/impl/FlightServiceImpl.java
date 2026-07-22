@@ -9,6 +9,9 @@ import com.nikhil.common_lib.payload.response.AirportResponse;
 import com.nikhil.common_lib.payload.response.FlightResponse;
 import com.nikhil.services.client.AirlineClient;
 import com.nikhil.services.client.LocationClient;
+import com.nikhil.services.exception.AircraftNotFoundException;
+import com.nikhil.services.exception.FlightAlreadyExistsException;
+import com.nikhil.services.exception.FlightNotFoundException;
 import com.nikhil.services.mapper.FlightMapper;
 import com.nikhil.services.model.Flight;
 import com.nikhil.services.repository.FlightRepository;
@@ -123,10 +126,8 @@ public class FlightServiceImpl implements FlightService {
                     request.getFlightNumber()
             );
 
-            throw new IllegalArgumentException(
-                    "Flight with number '"
-                            + request.getFlightNumber()
-                            + "' already exists"
+            throw new FlightAlreadyExistsException(
+                    request.getFlightNumber()
             );
         }
 
@@ -385,9 +386,7 @@ public class FlightServiceImpl implements FlightService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight not found with id: " + id
-                            );
+                            return new FlightNotFoundException(id);
                         });
 
         log.debug(
@@ -424,10 +423,7 @@ public class FlightServiceImpl implements FlightService {
                                     flightNumber
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight not found with number: "
-                                            + flightNumber
-                            );
+                            return new FlightNotFoundException(flightNumber);
                         });
 
         log.debug(
@@ -709,9 +705,7 @@ public class FlightServiceImpl implements FlightService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight not found with id: " + id
-                            );
+                            return new FlightNotFoundException(id);
                         });
 
         /*
@@ -741,10 +735,8 @@ public class FlightServiceImpl implements FlightService {
                     id
             );
 
-            throw new IllegalArgumentException(
-                    "Flight with number '"
-                            + request.getFlightNumber()
-                            + "' already exists"
+            throw new FlightAlreadyExistsException(
+                    request.getFlightNumber()
             );
         }
 
@@ -792,9 +784,7 @@ public class FlightServiceImpl implements FlightService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight not found with id: " + id
-                            );
+                            return new FlightNotFoundException(id);
                         });
 
         FlightStatus previousStatus =
@@ -835,9 +825,7 @@ public class FlightServiceImpl implements FlightService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight not found with id: " + id
-                            );
+                            return new FlightNotFoundException(id);
                         });
 
         flightRepository.delete(flight);
@@ -869,13 +857,7 @@ public class FlightServiceImpl implements FlightService {
     }
 
 
-    /**
-     * Resolves the Airline owned by the authenticated user through
-     * Airline Core Service.
-     *
-     * A 404 response is translated into EntityNotFoundException, while
-     * other Feign failures are treated as downstream service failures.
-     */
+
     private Long getAirlineForUser(Long userId) {
 
         log.debug(
@@ -954,9 +936,7 @@ public class FlightServiceImpl implements FlightService {
                     aircraftId
             );
 
-            throw new EntityNotFoundException(
-                    "Aircraft not found with id: " + aircraftId
-            );
+            throw new AircraftNotFoundException(aircraftId);
 
         } catch (FeignException exception) {
 

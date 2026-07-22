@@ -3,6 +3,7 @@ package com.nikhil.services.controller;
 import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.FlightInstanceRequest;
 import com.nikhil.common_lib.payload.response.FlightInstanceResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.FlightInstanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -73,30 +74,10 @@ public class FlightInstanceController {
 
     private final FlightInstanceService flightInstanceService;
 
-
     // ==================== Create Operations ====================
 
-    /**
-     * Creates one concrete FlightInstance.
-     *
-     * A FlightInstance represents one actual occurrence of a Flight
-     * at a specific departure and arrival date-time.
-     *
-     * Example:
-     *
-     * Flight:
-     *   6E201 → DEL to BOM
-     *
-     * FlightInstance:
-     *   6E201
-     *   Departure → 2026-07-10 10:00
-     *   Arrival   → 2026-07-10 12:30
-     *
-     * The service layer also handles the related runtime cabin and
-     * seat-inventory provisioning flow.
-     */
     @PostMapping
-    public ResponseEntity<FlightInstanceResponse> createFlightInstance(
+    public ResponseEntity<ApiResponse<FlightInstanceResponse>> createFlightInstance(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FlightInstanceRequest request
     ) throws Exception {
@@ -124,34 +105,18 @@ public class FlightInstanceController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(
+                        ApiResponse.success(
+                                "Flight instance created successfully.",
+                                response
+                        )
+                );
     }
-
 
     // ==================== Batch Operations ====================
 
-    /**
-     * Returns multiple FlightInstances using their database identifiers.
-     *
-     * Booking Service uses this endpoint to retrieve several flight-instance
-     * records in one network request instead of calling the service separately
-     * for every FlightInstance.
-     *
-     * Example request:
-     *
-     * [101, 102, 103]
-     *
-     * Response:
-     *
-     * {
-     *   101: FlightInstanceResponse,
-     *   102: FlightInstanceResponse,
-     *   103: FlightInstanceResponse
-     * }
-     */
     @PostMapping("/batch")
-    public ResponseEntity<Map<Long, FlightInstanceResponse>>
-    getFlightInstancesByIds(
+    public ResponseEntity<ApiResponse<Map<Long, FlightInstanceResponse>>> getFlightInstancesByIds(
             @RequestBody List<Long> ids
     ) {
 
@@ -169,22 +134,20 @@ public class FlightInstanceController {
                 responses.size()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight instances retrieved successfully.",
+                        responses
+                )
+        );
     }
-
 
     // ==================== Read Operations ====================
 
-    /**
-     * Returns one FlightInstance using its database identifier.
-     *
-     * The returned response may contain enriched Flight, Airline,
-     * Aircraft, and Airport information depending on the service mapping.
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<FlightInstanceResponse> getFlightInstanceById(
+    public ResponseEntity<ApiResponse<FlightInstanceResponse>> getFlightInstanceById(
             @PathVariable Long id
-    ) throws AirportException {
+    ) {
 
         log.debug(
                 "Flight instance lookup request received flightInstanceId={}",
@@ -199,20 +162,16 @@ public class FlightInstanceController {
                 id
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight instance retrieved successfully.",
+                        response
+                )
+        );
     }
 
-
-    /**
-     * Returns all FlightInstance records.
-     *
-     * This endpoint performs an unrestricted list operation and should mainly
-     * be used for internal administration or development purposes. For normal
-     * airline-specific queries, use the paginated filtered endpoint.
-     */
     @GetMapping("/list")
-    public ResponseEntity<List<FlightInstanceResponse>>
-    getFlightInstances() throws AirportException {
+    public ResponseEntity<ApiResponse<List<FlightInstanceResponse>>> getFlightInstances() {
 
         log.debug(
                 "All flight instances lookup request received"
@@ -226,39 +185,16 @@ public class FlightInstanceController {
                 responses.size()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight instances retrieved successfully.",
+                        responses
+                )
+        );
     }
 
-
-    /**
-     * Returns paginated FlightInstances belonging to the authenticated
-     * user's airline.
-     *
-     * Optional filters can narrow the result by:
-     *
-     * - departure airport
-     * - arrival airport
-     * - Flight ID
-     * - operating date
-     *
-     * Examples:
-     *
-     * All airline instances:
-     *   GET /api/flight-instances
-     *
-     * Route filter:
-     *   GET /api/flight-instances
-     *       ?departureAirportId=1
-     *       &arrivalAirportId=2
-     *
-     * Flight filter:
-     *   GET /api/flight-instances?flightId=10
-     *
-     * Date filter:
-     *   GET /api/flight-instances?onDate=2026-07-10
-     */
     @GetMapping
-    public ResponseEntity<Page<FlightInstanceResponse>> getByAirlineId(
+    public ResponseEntity<ApiResponse<Page<FlightInstanceResponse>>> getByAirlineId(
             @RequestHeader("X-User-Id") Long userId,
             @RequestParam(required = false) Long departureAirportId,
             @RequestParam(required = false) Long arrivalAirportId,
@@ -296,27 +232,21 @@ public class FlightInstanceController {
                 responses.getTotalPages()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight instances retrieved successfully.",
+                        responses
+                )
+        );
     }
-
 
     // ==================== Update Operations ====================
 
-    /**
-     * Updates an existing FlightInstance.
-     *
-     * The service layer validates the target FlightInstance and applies
-     * the requested runtime flight changes.
-     *
-     * Changes to flight timing or operational data should be handled
-     * carefully because the FlightInstance may already have related
-     * cabin inventory, SeatInstances, or booking references.
-     */
     @PutMapping("/{id}")
-    public ResponseEntity<FlightInstanceResponse> updateFlightInstance(
+    public ResponseEntity<ApiResponse<FlightInstanceResponse>> updateFlightInstance(
             @PathVariable Long id,
             @Valid @RequestBody FlightInstanceRequest request
-    ) throws AirportException {
+    ) {
 
         log.info(
                 "Flight instance update request received flightInstanceId={} flightId={} departureDateTime={}",
@@ -337,21 +267,18 @@ public class FlightInstanceController {
                 request.getFlightId()
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight instance updated successfully.",
+                        response
+                )
+        );
     }
-
 
     // ==================== Delete Operations ====================
 
-    /**
-     * Deletes a FlightInstance using its database identifier.
-     *
-     * The service layer is responsible for validating whether deletion is
-     * allowed when related cabin inventory, SeatInstances, or booking data
-     * already exist.
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFlightInstance(
+    public ResponseEntity<ApiResponse<Void>> deleteFlightInstance(
             @PathVariable Long id
     ) {
 
@@ -367,8 +294,10 @@ public class FlightInstanceController {
                 id
         );
 
-        return ResponseEntity
-                .noContent()
-                .build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight instance deleted successfully."
+                )
+        );
     }
 }

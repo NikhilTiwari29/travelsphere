@@ -2,6 +2,7 @@ package com.nikhil.services.controller;
 
 import com.nikhil.common_lib.payload.request.FareRulesRequest;
 import com.nikhil.common_lib.payload.response.FareRulesResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.FareRulesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -59,8 +60,9 @@ public class FareRulesController {
      * @return newly created fare rules
      */
     @PostMapping
-    public ResponseEntity<FareRulesResponse> createFareRules(
-            @Valid @RequestBody FareRulesRequest request) {
+    public ResponseEntity<ApiResponse<FareRulesResponse>> createFareRules(
+            @Valid @RequestBody FareRulesRequest request
+    )  {
 
         log.info(
                 "Received request to create fare rules fareId={}",
@@ -78,16 +80,42 @@ public class FareRulesController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(
+                        ApiResponse.success(
+                                "Fare rules created successfully.",
+                                response
+                        )
+                );
     }
 
 
     @PostMapping("/bulk")
-    public ResponseEntity<List<FareRulesResponse>> createFareRules(
-            @Valid @RequestBody List<FareRulesRequest> requests) {
+    public ResponseEntity<ApiResponse<List<FareRulesResponse>>> createFareRules(
+            @Valid @RequestBody List<FareRulesRequest> requests
+    )  {
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(fareRulesService.createFareRules(requests));
+        log.info(
+                "Bulk fare rules creation request received requestedCount={}",
+                requests.size()
+        );
+
+        List<FareRulesResponse> responses =
+                fareRulesService.createFareRules(requests);
+
+        log.info(
+                "Bulk fare rules creation completed requestedCount={} createdCount={}",
+                requests.size(),
+                responses.size()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "Fare rules created successfully.",
+                                responses
+                        )
+                );
     }
 
 
@@ -98,8 +126,9 @@ public class FareRulesController {
      * @return fare-rule details
      */
     @GetMapping("/{id}")
-    public ResponseEntity<FareRulesResponse> getFareRulesById(
-            @PathVariable Long id) {
+    public ResponseEntity<ApiResponse<FareRulesResponse>> getFareRulesById(
+            @PathVariable Long id
+    ) {
 
         log.debug(
                 "Received request to fetch fare rules fareRulesId={}",
@@ -109,7 +138,12 @@ public class FareRulesController {
         FareRulesResponse response =
                 fareRulesService.getFareRulesById(id);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Fare rules retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -123,8 +157,9 @@ public class FareRulesController {
      * @return fare rules associated with the fare
      */
     @GetMapping("/fare/{fareId}")
-    public ResponseEntity<FareRulesResponse> getFareRulesByFareId(
-            @PathVariable Long fareId) {
+    public ResponseEntity<ApiResponse<FareRulesResponse>> getFareRulesByFareId(
+            @PathVariable Long fareId
+    )  {
 
         log.debug(
                 "Received request to fetch fare rules by fareId={}",
@@ -134,7 +169,12 @@ public class FareRulesController {
         FareRulesResponse response =
                 fareRulesService.getFareRulesByFareId(fareId);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Fare rules retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -147,8 +187,9 @@ public class FareRulesController {
      * @return list of fare rules belonging to the airline
      */
     @GetMapping("/airline/{airlineId}")
-    public ResponseEntity<List<FareRulesResponse>> getFareRulesByAirlineId(
-            @PathVariable Long airlineId) {
+    public ResponseEntity<ApiResponse<List<FareRulesResponse>>> getFareRulesByAirlineId(
+            @PathVariable Long airlineId
+    )  {
 
         log.debug(
                 "Received request to fetch fare rules by airlineId={}",
@@ -164,7 +205,12 @@ public class FareRulesController {
                 responses.size()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Fare rules retrieved successfully.",
+                        responses
+                )
+        );
     }
 
 
@@ -176,9 +222,10 @@ public class FareRulesController {
      * @return updated fare rules
      */
     @PutMapping("/{id}")
-    public ResponseEntity<FareRulesResponse> updateFareRules(
+    public ResponseEntity<ApiResponse<FareRulesResponse>> updateFareRules(
             @PathVariable Long id,
-            @Valid @RequestBody FareRulesRequest request) {
+            @Valid @RequestBody FareRulesRequest request
+    )  {
 
         log.info(
                 "Received request to update fare rules fareRulesId={} fareId={}",
@@ -194,7 +241,12 @@ public class FareRulesController {
                 id
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Fare rules updated successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -204,8 +256,9 @@ public class FareRulesController {
      * @param id fare-rules ID
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFareRules(
-            @PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteFareRules(
+            @PathVariable Long id
+    )  {
 
         log.info(
                 "Received request to delete fare rules fareRulesId={}",
@@ -219,6 +272,10 @@ public class FareRulesController {
                 id
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Fare rules deleted successfully."
+                )
+        );
     }
 }

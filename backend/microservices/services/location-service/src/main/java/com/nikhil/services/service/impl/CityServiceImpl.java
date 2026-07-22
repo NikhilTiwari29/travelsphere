@@ -1,9 +1,13 @@
 package com.nikhil.services.service.impl;
 
+import com.nikhil.common_lib.enums.ErrorCode;
+import com.nikhil.common_lib.exception.BadRequestException;
 import com.nikhil.common_lib.exception.OperationNotPermittedException;
 import com.nikhil.common_lib.exception.ResourceNotFoundException;
 import com.nikhil.common_lib.payload.request.CityRequest;
 import com.nikhil.common_lib.payload.response.CityResponse;
+import com.nikhil.services.exception.CityAlreadyExistsException;
+import com.nikhil.services.exception.CityNotFoundException;
 import com.nikhil.services.mapper.CityMapper;
 import com.nikhil.services.model.City;
 import com.nikhil.services.repository.CityRepository;
@@ -61,10 +65,8 @@ public class CityServiceImpl implements CityService {
         if (cityRepository.existsByCityCode(
                 request.getCityCode())) {
 
-            throw new OperationNotPermittedException(
-                    "City with code "
-                            + request.getCityCode()
-                            + " already exists"
+            throw new CityAlreadyExistsException(
+                    request.getCityCode()
             );
         }
 
@@ -219,9 +221,7 @@ public class CityServiceImpl implements CityService {
         City city = cityRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "City not found with id: " + id
-                        )
+                        new CityNotFoundException(id)
                 );
 
 
@@ -302,9 +302,7 @@ public class CityServiceImpl implements CityService {
         City city = cityRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "City not found with id: " + id
-                        )
+                        new CityNotFoundException(id)
                 );
 
 
@@ -331,10 +329,8 @@ public class CityServiceImpl implements CityService {
                 request.getCityCode(),
                 id)) {
 
-            throw new OperationNotPermittedException(
-                    "City with code "
-                            + request.getCityCode()
-                            + " already exists"
+            throw new CityAlreadyExistsException(
+                    request.getCityCode()
             );
         }
 
@@ -398,9 +394,7 @@ public class CityServiceImpl implements CityService {
         City city = cityRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "City not found with id: " + id
-                        )
+                        new CityNotFoundException(id)
                 );
 
 
@@ -530,9 +524,9 @@ public class CityServiceImpl implements CityService {
         if (!validateCityCode(
                 request.getCityCode())) {
 
-            throw new IllegalArgumentException(
-                    "Invalid city code format. "
-                            + "Must be 2-10 alphanumeric characters."
+            throw new BadRequestException(
+                    ErrorCode.BAD_REQUEST,
+                    "Invalid city code format. Must be 2-10 alphanumeric characters."
             );
         }
 
@@ -542,8 +536,9 @@ public class CityServiceImpl implements CityService {
                 || !request.getCountryCode()
                 .matches("[A-Z]{2,5}")) {
 
-            throw new IllegalArgumentException(
-                    "Country code must be 2-5 uppercase letters"
+            throw new BadRequestException(
+                    ErrorCode.BAD_REQUEST,
+                    "Country code must be 2-5 uppercase letters."
             );
         }
 
@@ -553,8 +548,9 @@ public class CityServiceImpl implements CityService {
                 && !request.getTimeZoneOffset()
                 .matches("[+-]\\d{2}:\\d{2}")) {
 
-            throw new IllegalArgumentException(
-                    "Time zone offset must be in format ±HH:MM"
+            throw new BadRequestException(
+                    ErrorCode.BAD_REQUEST,
+                    "Time zone offset must be in format ±HH:MM."
             );
         }
     }

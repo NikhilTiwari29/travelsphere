@@ -47,6 +47,7 @@ public enum ErrorCode {
     AIRLINE_ALREADY_EXISTS,
     AIRCRAFT_NOT_FOUND,
     AIRCRAFT_ALREADY_EXISTS,
+    AIRLINE_OWNERSHIP_MISMATCH,
 
     // =========================================================================
     // Flight Service
@@ -62,6 +63,7 @@ public enum ErrorCode {
     FARE_NOT_FOUND,
     FARE_RULE_NOT_FOUND,
     BAGGAGE_POLICY_NOT_FOUND,
+    BAGGAGE_POLICY_ALREADY_EXISTS,
 
     // =========================================================================
     // Seat Service
@@ -88,5 +90,24 @@ public enum ErrorCode {
     // =========================================================================
     PAYMENT_FAILED,
     PAYMENT_NOT_FOUND,
-    REFUND_FAILED
+    REFUND_FAILED,
+
+    // =========================================================================
+    // City Service
+    // =========================================================================
+    CITY_ALREADY_EXISTS,
+
+    // =========================================================================
+    // Airline Core Service
+    // =========================================================================
+    AIRCRAFT_OWNERSHIP_MISMATCH,
+    INVALID_AIRCRAFT_CONFIGURATION,
+    INVALID_SEATING_CAPACITY,
+    INVALID_MANUFACTURE_YEAR,
+
+    // =========================================================================
+    // Fare Service
+    // =========================================================================
+    FARE_ALREADY_EXISTS,
+    FARE_RULE_ALREADY_EXISTS
 }

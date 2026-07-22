@@ -2,6 +2,10 @@ package com.nikhil.services.service.impl;
 
 import com.nikhil.common_lib.payload.request.FareRulesRequest;
 import com.nikhil.common_lib.payload.response.FareRulesResponse;
+import com.nikhil.services.exception.FareAlreadyExistsException;
+import com.nikhil.services.exception.FareNotFoundException;
+import com.nikhil.services.exception.FareRuleAlreadyExistException;
+import com.nikhil.services.exception.FareRuleNotFoundException;
 import com.nikhil.services.mapper.FareRulesMapper;
 import com.nikhil.services.model.Fare;
 import com.nikhil.services.model.FareRules;
@@ -77,7 +81,9 @@ public class FareRulesServiceImpl implements FareRulesService {
      */
     @Override
     @Transactional
-    public FareRulesResponse createFareRules(FareRulesRequest request) {
+    public FareRulesResponse createFareRules(
+            FareRulesRequest request
+    ) {
 
         log.info(
                 "Creating fare rules fareId={}",
@@ -96,9 +102,7 @@ public class FareRulesServiceImpl implements FareRulesService {
                             request.getFareId()
                     );
 
-                    return new EntityNotFoundException(
-                            "Fare not found with id: " + request.getFareId()
-                    );
+                    return new FareNotFoundException(request.getFareId());
                 });
 
         /*
@@ -113,10 +117,7 @@ public class FareRulesServiceImpl implements FareRulesService {
                     request.getFareId()
             );
 
-            throw new IllegalArgumentException(
-                    "Fare rules already exist for fare id: "
-                            + request.getFareId()
-            );
+            throw new FareAlreadyExistsException(request.getFareId());
         }
 
         /*
@@ -163,10 +164,7 @@ public class FareRulesServiceImpl implements FareRulesService {
                                                         request.getFareId()
                                                 );
 
-                                                return new EntityNotFoundException(
-                                                        "Fare not found with id: "
-                                                                + request.getFareId()
-                                                );
+                                                return new FareNotFoundException(request.getFareId());
                                             });
 
                             if (fareRulesRepository.existsByFareId(
@@ -178,10 +176,7 @@ public class FareRulesServiceImpl implements FareRulesService {
                                         request.getFareId()
                                 );
 
-                                throw new IllegalArgumentException(
-                                        "Fare rules already exist for fare "
-                                                + request.getFareId()
-                                );
+                                throw new FareRuleAlreadyExistException(request.getFareId());
                             }
 
                             return FareRulesMapper.toEntity(
@@ -212,25 +207,26 @@ public class FareRulesServiceImpl implements FareRulesService {
      * @return fare-rule details
      */
     @Override
-    public FareRulesResponse getFareRulesById(Long id) {
+    public FareRulesResponse getFareRulesById(
+            Long id
+    ) {
 
         log.debug(
                 "Fetching fare rules fareRulesId={}",
                 id
         );
 
-        FareRules fareRules = fareRulesRepository.findById(id)
-                .orElseThrow(() -> {
+        FareRules fareRules =
+                fareRulesRepository.findById(id)
+                        .orElseThrow(() -> {
 
-                    log.warn(
-                            "Fare rules not found fareRulesId={}",
-                            id
-                    );
+                            log.warn(
+                                    "Fare rules not found fareRulesId={}",
+                                    id
+                            );
 
-                    return new EntityNotFoundException(
-                            "Fare rules not found with id: " + id
-                    );
-                });
+                            return new FareRuleNotFoundException(id);
+                        });
 
         log.debug(
                 "Fare rules fetched successfully fareRulesId={}",
@@ -251,25 +247,26 @@ public class FareRulesServiceImpl implements FareRulesService {
      * @return fare rules associated with the fare
      */
     @Override
-    public FareRulesResponse getFareRulesByFareId(Long fareId) {
+    public FareRulesResponse getFareRulesByFareId(
+            Long fareId
+    ) {
 
         log.debug(
                 "Fetching fare rules by fareId={}",
                 fareId
         );
 
-        FareRules fareRules = fareRulesRepository.findByFareId(fareId)
-                .orElseThrow(() -> {
+        FareRules fareRules =
+                fareRulesRepository.findByFareId(fareId)
+                        .orElseThrow(() -> {
 
-                    log.warn(
-                            "Fare rules not found for fareId={}",
-                            fareId
-                    );
+                            log.warn(
+                                    "Fare rules not found for fareId={}",
+                                    fareId
+                            );
 
-                    return new EntityNotFoundException(
-                            "Fare rules not found for fare id: " + fareId
-                    );
-                });
+                            return new FareRuleNotFoundException(fareId);
+                        });
 
         log.debug(
                 "Fare rules fetched successfully fareId={} fareRulesId={}",
@@ -291,7 +288,9 @@ public class FareRulesServiceImpl implements FareRulesService {
      * @return list of fare-rule configurations
      */
     @Override
-    public List<FareRulesResponse> getFareRulesByAirlineId(Long airlineId) {
+    public List<FareRulesResponse> getFareRulesByAirlineId(
+            Long airlineId
+    ) {
 
         log.debug(
                 "Fetching fare rules by airlineId={}",
@@ -338,18 +337,17 @@ public class FareRulesServiceImpl implements FareRulesService {
                 request.getFareId()
         );
 
-        FareRules existing = fareRulesRepository.findById(id)
-                .orElseThrow(() -> {
+        FareRules existing =
+                fareRulesRepository.findById(id)
+                        .orElseThrow(() -> {
 
-                    log.warn(
-                            "Cannot update fare rules because record was not found fareRulesId={}",
-                            id
-                    );
+                            log.warn(
+                                    "Cannot update fare rules because record was not found fareRulesId={}",
+                                    id
+                            );
 
-                    return new EntityNotFoundException(
-                            "Fare rules not found with id: " + id
-                    );
-                });
+                            return new FareRuleNotFoundException(id);
+                        });
 
         /*
          * Apply request values to the managed entity.
@@ -357,7 +355,10 @@ public class FareRulesServiceImpl implements FareRulesService {
          * Because this method runs inside a writable transaction,
          * JPA dirty checking can persist changes automatically.
          */
-        FareRulesMapper.updateEntity(request, existing);
+        FareRulesMapper.updateEntity(
+                request,
+                existing
+        );
 
         FareRules saved =
                 fareRulesRepository.save(existing);
@@ -375,31 +376,32 @@ public class FareRulesServiceImpl implements FareRulesService {
      * Deletes an existing FareRules configuration.
      *
      * The record is first loaded to ensure that a meaningful
-     * EntityNotFoundException is returned when the ID does not exist.
+     * exception is returned when the ID does not exist.
      *
      * @param id fare-rules ID
      */
     @Override
     @Transactional
-    public void deleteFareRules(Long id) {
+    public void deleteFareRules(
+            Long id
+    ) {
 
         log.info(
                 "Deleting fare rules fareRulesId={}",
                 id
         );
 
-        FareRules fareRules = fareRulesRepository.findById(id)
-                .orElseThrow(() -> {
+        FareRules fareRules =
+                fareRulesRepository.findById(id)
+                        .orElseThrow(() -> {
 
-                    log.warn(
-                            "Cannot delete fare rules because record was not found fareRulesId={}",
-                            id
-                    );
+                            log.warn(
+                                    "Cannot delete fare rules because record was not found fareRulesId={}",
+                                    id
+                            );
 
-                    return new EntityNotFoundException(
-                            "Fare rules not found with id: " + id
-                    );
-                });
+                            return new FareRuleNotFoundException(id);
+                        });
 
         fareRulesRepository.delete(fareRules);
 

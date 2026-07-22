@@ -1,14 +1,17 @@
 package com.nikhil.services.service.impl;
 
+import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.BaggagePolicyRequest;
 import com.nikhil.common_lib.payload.response.BaggagePolicyResponse;
+import com.nikhil.services.exception.BaggagePolicyAlreadyExistsException;
+import com.nikhil.services.exception.BaggagePolicyNotFoundException;
+import com.nikhil.services.exception.FareNotFoundException;
 import com.nikhil.services.mapper.BaggagePolicyMapper;
 import com.nikhil.services.model.BaggagePolicy;
 import com.nikhil.services.model.Fare;
 import com.nikhil.services.repository.BaggagePolicyRepository;
 import com.nikhil.services.repository.FareRepository;
 import com.nikhil.services.service.BaggagePolicyService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -110,9 +113,7 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                             request.getFareId()
                     );
 
-                    return new EntityNotFoundException(
-                            "Fare not found with id: " + request.getFareId()
-                    );
+                    return new FareNotFoundException(request.getFareId());
                 });
 
         /*
@@ -126,10 +127,7 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                     request.getFareId()
             );
 
-            throw new IllegalArgumentException(
-                    "Baggage policy already exists for fare id: "
-                            + request.getFareId()
-            );
+            throw new BaggagePolicyAlreadyExistsException(request.getFareId());
         }
 
         /*
@@ -154,35 +152,6 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
 
     /**
      * Creates baggage policies for multiple Fares in a single operation.
-     *
-     * This implementation avoids the N+1 query problem by batch-fetching
-     * Fare entities and existing baggage-policy associations.
-     *
-     * Processing flow:
-     *
-     * List<BaggagePolicyRequest>
-     *          ↓
-     * Extract Fare IDs
-     *          ↓
-     * Batch-fetch Fare entities
-     *          ↓
-     * Validate all Fare IDs
-     *          ↓
-     * Fetch Fare IDs having existing policies
-     *          ↓
-     * Skip existing policies
-     *          ↓
-     * Map remaining requests
-     *          ↓
-     * saveAll()
-     *          ↓
-     * Return created responses
-     *
-     * The complete bulk operation executes inside one transaction.
-     * If validation or persistence fails, the transaction is rolled back.
-     *
-     * @param requests baggage-policy creation requests
-     * @return list of newly created baggage policies
      */
     @Override
     @Transactional
@@ -195,12 +164,6 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                 requests.size()
         );
 
-        /*
-         * Extract all Fare IDs referenced by the incoming requests.
-         *
-         * These IDs are used for batch fetching instead of executing
-         * one Fare lookup query for every request.
-         */
         List<Long> fareIds = requests.stream()
                 .map(BaggagePolicyRequest::getFareId)
                 .toList();
@@ -210,12 +173,6 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                 fareIds.size()
         );
 
-        /*
-         * Batch-fetch all referenced Fare entities in a single query
-         * and build a lookup map:
-         *
-         * fareId → Fare
-         */
         Map<Long, Fare> fareMap =
                 fareRepository.findAllById(fareIds)
                         .stream()
@@ -228,11 +185,8 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
 
         /*
          * Verify that every Fare ID supplied in the request exists.
-         *
-         * findAllById() does not throw an exception for missing IDs,
-         * so explicit validation is required.
          */
-        fareIds.forEach(fareId -> {
+        for (Long fareId : fareIds) {
 
             if (!fareMap.containsKey(fareId)) {
 
@@ -241,31 +195,21 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                         fareId
                 );
 
-                throw new EntityNotFoundException(
-                        "Fare not found with id: " + fareId
-                );
+                throw new FareNotFoundException(fareId);
             }
-        });
+        }
 
         /*
          * Fetch all Fare IDs that already have a BaggagePolicy.
-         *
-         * This avoids executing existsByFareId() separately for every
-         * request in the bulk payload.
          */
         Set<Long> alreadyHasPolicy =
-                baggagePolicyRepository
-                        .findFareIdsWithExistingPolicy(fareIds);
+                baggagePolicyRepository.findFareIdsWithExistingPolicy(fareIds);
 
         log.debug(
                 "Existing baggage policies found during bulk creation existingCount={}",
                 alreadyHasPolicy.size()
         );
 
-        /*
-         * Skip requests whose Fare already has a policy and convert
-         * only eligible requests into BaggagePolicy entities.
-         */
         List<BaggagePolicy> policiesToSave =
                 requests.stream()
                         .filter(
@@ -295,12 +239,6 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                 skippedCount
         );
 
-        /*
-         * Persist all eligible baggage policies.
-         *
-         * saveAll() is executed within the same transaction as validation
-         * and preparation of the bulk operation.
-         */
         List<BaggagePolicy> savedPolicies =
                 baggagePolicyRepository.saveAll(policiesToSave);
 
@@ -326,7 +264,9 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
      * @return baggage-policy details
      */
     @Override
-    public BaggagePolicyResponse getBaggagePolicyById(Long id) {
+    public BaggagePolicyResponse getBaggagePolicyById(
+            Long id
+    ) {
 
         log.debug(
                 "Fetching baggage policy baggagePolicyId={}",
@@ -342,9 +282,7 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Baggage policy not found with id: " + id
-                            );
+                            return new BaggagePolicyNotFoundException(id);
                         });
 
         log.debug(
@@ -366,7 +304,9 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
      * @return baggage policy associated with the fare
      */
     @Override
-    public BaggagePolicyResponse getBaggagePolicyByFareId(Long fareId) {
+    public BaggagePolicyResponse getBaggagePolicyByFareId(
+            Long fareId
+    ) {
 
         log.debug(
                 "Fetching baggage policy by fareId={}",
@@ -382,10 +322,7 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                                     fareId
                             );
 
-                            return new EntityNotFoundException(
-                                    "Baggage policy not found for fare id: "
-                                            + fareId
-                            );
+                            return new BaggagePolicyNotFoundException(fareId);
                         });
 
         log.debug(
@@ -469,9 +406,7 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Baggage policy not found with id: " + id
-                            );
+                            return new BaggagePolicyNotFoundException(id);
                         });
 
         /*
@@ -502,14 +437,16 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
      * Deletes an existing baggage policy.
      *
      * The entity is loaded before deletion so that a meaningful
-     * EntityNotFoundException can be returned when the requested
+     * exception can be returned when the requested
      * baggage-policy ID does not exist.
      *
      * @param id baggage-policy ID
      */
     @Override
     @Transactional
-    public void deleteBaggagePolicy(Long id) {
+    public void deleteBaggagePolicy(
+            Long id
+    ) {
 
         log.info(
                 "Deleting baggage policy baggagePolicyId={}",
@@ -525,9 +462,7 @@ public class BaggagePolicyServiceImpl implements BaggagePolicyService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Baggage policy not found with id: " + id
-                            );
+                            return new BaggagePolicyNotFoundException(id);
                         });
 
         baggagePolicyRepository.delete(policy);

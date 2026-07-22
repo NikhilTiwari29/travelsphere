@@ -60,125 +60,177 @@ public class FlightSearchServiceImpl implements FlightSearchService {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<FlightInstanceResponse> searchFlights(FlightSearchRequest request, Pageable pageable) {
+    public Page<FlightInstanceResponse> searchFlights(
+            FlightSearchRequest request,
+            Pageable pageable
+    ) {
 
+        log.debug(
+                "Searching flights departureAirportId={} arrivalAirportId={} departureDate={} cabinClass={} passengers={}",
+                request.getDepartureAirportId(),
+                request.getArrivalAirportId(),
+                request.getDepartureDate(),
+                request.getCabinClass(),
+                request.getPassengers()
+        );
 
+        // ── Phase 1: Build pageable with requested sorting ───────────────────────
+        Pageable sortedPageable =
+                applySort(
+                        pageable,
+                        request.getSortBy(),
+                        request.getSortOrder()
+                );
 
-        // ── Phase 2: paginated DB query with dynamic Specification ────────────
-        Pageable sortedPageable = applySort(pageable, request.getSortBy(), request.getSortOrder());
-
+        // ── Phase 2: Execute dynamic database search ─────────────────────────────
         Specification<FlightInstance> spec =
                 FlightInstanceSpecification.buildSearchSpec(request);
 
-        Page<FlightInstance> dbPage = flightInstanceRepository.findAll(spec, sortedPageable);
+        Page<FlightInstance> dbPage =
+                flightInstanceRepository.findAll(
+                        spec,
+                        sortedPageable
+                );
 
         if (dbPage.isEmpty()) {
+
+            log.debug(
+                    "No flight instances found for search request."
+            );
+
             return Page.empty(sortedPageable);
         }
 
-        List<FlightInstance> instances = new ArrayList<>(dbPage.getContent());
+        List<FlightInstance> instances =
+                new ArrayList<>(dbPage.getContent());
 
-        // ── Phase 3: cabin-class + price filtering via pricing-service ────────
-        // Resolve cabin class ID once (not per-instance), fetch fares once.
-        Map<Long, FareResponse> fareMap = Collections.emptyMap();
+        Map<Long, FareResponse> fareMap =
+                Collections.emptyMap();
 
-//        if (request.getCabinClass() != null) {
-//            Long cabinClassId = resolveCabinClassId(request, instances);
-//
-//            if (cabinClassId == null) {
-//                log.warn("searchFlights: cabin class '{}' not found in seat-service – returning empty page",
-//                        request.getCabinClass());
-//                return Page.empty(sortedPageable);
-//            }
-//
-//            List<Long> flightIds = instances.stream()
-//                    .map(instance->instance.getFlight().getId())
-//                    .distinct()
-//                    .collect(Collectors.toList());
-//
-//            fareMap = fetchLowestFares(flightIds, cabinClassId);
-//
-//
-//
-//            // Apply cabin-class + price range filter
-//            final Map<Long, FareResponse> finalFareMap = fareMap;
-//            System.out.println("is fare map empty? " + finalFareMap.toString());
-//            final boolean hasPriceFilter = request.getMinPrice() != null || request.getMaxPrice() != null;
-//
-//            instances = instances.stream()
-//                    .filter(fi -> {
-//                        FareResponse fare = finalFareMap.get(fi.getFlight().getId());
-//                        if (fare == null) return false; // no fare for requested cabin class
-//
-//                        if (hasPriceFilter) {
-//                            Double price = fare.getTotalPrice();
-//                            if (price == null) return false;
-//                            if (request.getMinPrice() != null && price < request.getMinPrice()) return false;
-//                            if (request.getMaxPrice() != null && price > request.getMaxPrice()) return false;
-//                        }
-//                        return true;
-//                    })
-//                    .collect(Collectors.toList());
-//
-//            System.out.println("cabin class not null "+ cabinClassId + " --- " + instances.size());
-//
-//            if (instances.isEmpty()) {
-//                return Page.empty(sortedPageable);
-//            }
-//        }
-
+        // ── Phase 3: Cabin-class & pricing filter ────────────────────────────────
         if (request.getCabinClass() != null) {
-            final boolean hasPriceFilter = request.getMinPrice() != null || request.getMaxPrice() != null;
-            Map<Long, FareResponse> mergedFareMap = new HashMap<>();
 
-            List<FlightInstance> filtered = new ArrayList<>();
+            final boolean hasPriceFilter =
+                    request.getMinPrice() != null
+                            || request.getMaxPrice() != null;
+
+            Map<Long, FareResponse> mergedFareMap =
+                    new HashMap<>();
+
+            List<FlightInstance> filtered =
+                    new ArrayList<>();
 
             for (FlightInstance fi : instances) {
 
-                // 1. get cabinClassId for this specific aircraft
-                Long cabinClassId = resolveCabinClassId(
-                        request.getCabinClass(),
-                        fi.getFlight().getAircraftId()
-                );
+                Long cabinClassId =
+                        resolveCabinClassId(
+                                request.getCabinClass(),
+                                fi.getFlight().getAircraftId()
+                        );
 
-                if (cabinClassId == null) continue; // this aircraft doesn't have the requested cabin
+                if (cabinClassId == null) {
 
-                // 2. fetch fare for this specific flight + cabinClass
-                FareResponse fare = pricingClient.getLowestFareForFlightAndCabinClass(
-                        fi.getFlight().getId(),
-                        cabinClassId
-                );
+                    log.debug(
+                            "Cabin class {} not available for aircraftId={}",
+                            request.getCabinClass(),
+                            fi.getFlight().getAircraftId()
+                    );
 
-                if (fare == null) continue; // no fare available
-
-                // 3. apply price filter
-                if (hasPriceFilter) {
-                    Double price = fare.getTotalPrice();
-                    if (price == null) continue;
-                    if (request.getMinPrice() != null && price < request.getMinPrice()) continue;
-                    if (request.getMaxPrice() != null && price > request.getMaxPrice()) continue;
+                    continue;
                 }
 
-                mergedFareMap.put(fi.getFlight().getId(), fare);
-                filtered.add(fi);
+                try {
+
+                    FareResponse fare =
+                            pricingClient.getLowestFareForFlightAndCabinClass(
+                                    fi.getFlight().getId(),
+                                    cabinClassId
+                            );
+
+                    if (fare == null) {
+
+                        log.debug(
+                                "No fare found for flightId={} cabinClassId={}",
+                                fi.getFlight().getId(),
+                                cabinClassId
+                        );
+
+                        continue;
+                    }
+
+                    if (hasPriceFilter) {
+
+                        Double price =
+                                fare.getTotalPrice();
+
+                        if (price == null) {
+                            continue;
+                        }
+
+                        if (request.getMinPrice() != null
+                                && price < request.getMinPrice()) {
+                            continue;
+                        }
+
+                        if (request.getMaxPrice() != null
+                                && price > request.getMaxPrice()) {
+                            continue;
+                        }
+                    }
+
+                    mergedFareMap.put(
+                            fi.getFlight().getId(),
+                            fare
+                    );
+
+                    filtered.add(fi);
+
+                } catch (Exception exception) {
+
+                    log.warn(
+                            "Pricing lookup failed flightId={} cabinClassId={}. Skipping flight.",
+                            fi.getFlight().getId(),
+                            cabinClassId,
+                            exception
+                    );
+                }
             }
 
             fareMap = mergedFareMap;
             instances = filtered;
 
             if (instances.isEmpty()) {
+
+                log.debug(
+                        "No flight instances remained after cabin-class and pricing filters."
+                );
+
                 return Page.empty(sortedPageable);
             }
         }
 
+        // ── Phase 4: Enrich response with airline, airport and fare data ─────────
+        List<FlightInstanceResponse> responses =
+                enrichWithExternalData(
+                        instances,
+                        fareMap
+                );
 
-        // ── Enrichment: airline + airport (per-request cache), fare already fetched ──
-        List<FlightInstanceResponse> responses = enrichWithExternalData(instances, fareMap);
+        log.debug(
+                "Flight search completed matchedInstances={} returnedResponses={}",
+                instances.size(),
+                responses.size()
+        );
 
-
-        // totalElements from DB page may slightly overcount when price filter
-        // removes results post-DB. For perfect counts at scale use a search index.
-        return new PageImpl<>(responses, sortedPageable, dbPage.getTotalElements());
+        /*
+         * totalElements reflects the database query before post-processing.
+         * Price filtering occurs after retrieval, so counts may differ slightly.
+         */
+        return new PageImpl<>(
+                responses,
+                sortedPageable,
+                dbPage.getTotalElements()
+        );
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -188,34 +240,41 @@ public class FlightSearchServiceImpl implements FlightSearchService {
      * Tries each unique aircraft in the result set until one succeeds.
      * Returns null if seat-service is unavailable or the cabin class doesn't exist.
      */
-    private Long resolveCabinClassId(CabinClassType cabinClassName, Long aircraftId) {
+    private Long resolveCabinClassId(
+            CabinClassType cabinClassName,
+            Long aircraftId
+    ) {
+
         try {
-            CabinClassResponse cabin = seatClient.getCabinClassByAircraftIdAndName(cabinClassName, aircraftId);
-            if (cabin != null) return cabin.getId();
-        } catch (Exception e) {
-            log.warn("seat-service call failed for aircraftId={}: {}", aircraftId, e.getMessage());
+
+            CabinClassResponse cabin =
+                    seatClient.getCabinClassByAircraftIdAndName(
+                            cabinClassName,
+                            aircraftId
+                    );
+
+            if (cabin != null) {
+                return cabin.getId();
+            }
+
+            log.debug(
+                    "Cabin class {} not found for aircraftId={}",
+                    cabinClassName,
+                    aircraftId
+            );
+
+        } catch (Exception exception) {
+
+            log.warn(
+                    "Failed to resolve cabin class {} for aircraftId={}",
+                    cabinClassName,
+                    aircraftId,
+                    exception
+            );
         }
+
         return null;
     }
-
-    /**
-     * Single batch call to pricing-service.
-     * Returns an empty map on failure so the search degrades gracefully.
-     */
-//    private Map<Long, FareResponse> fetchLowestFares(List<Long> flightIds, Long cabinClassId) {
-//        System.out.println("fetchLowestFares cabinClassId: " + cabinClassId + " flightIds: " + flightIds.size());
-//        if (cabinClassId == null || flightIds.isEmpty()) return Collections.emptyMap();
-//        try {
-//            Map<Long, FareResponse> result = pricingClient.getLowestFarePerFlight(flightIds, cabinClassId);
-//            System.out.println("result: " + result);
-//            return result ;
-//        } catch (FeignException e) {
-//            System.out.println("searchFlights: pricing-service call failed – price/cabin filter skipped: {}"+
-//                    e.getMessage());
-//            return Collections.emptyMap();
-//        }
-//    }
-
 
 
     /**
@@ -225,40 +284,76 @@ public class FlightSearchServiceImpl implements FlightSearchService {
      */
     private List<FlightInstanceResponse> enrichWithExternalData(
             List<FlightInstance> instances,
-            Map<Long, FareResponse> fareMap) {
+            Map<Long, FareResponse> fareMap
+    ) {
 
-        Map<Long, AirlineResponse> airlineCache  = new HashMap<>();
-        Map<Long, AirportResponse> airportCache  = new HashMap<>();
-        Map<Long, AircraftResponse> aircraftCache = new HashMap<>();
-        List<FlightInstanceResponse> results = new ArrayList<>(instances.size());
+        Map<Long, AirlineResponse> airlineCache =
+                new HashMap<>();
 
-        for (FlightInstance fi : instances) {
+        Map<Long, AirportResponse> airportCache =
+                new HashMap<>();
+
+        Map<Long, AircraftResponse> aircraftCache =
+                new HashMap<>();
+
+        List<FlightInstanceResponse> results =
+                new ArrayList<>(instances.size());
+
+        for (FlightInstance flightInstance : instances) {
+
             try {
-                AircraftResponse aircraft = aircraftCache.computeIfAbsent(
-                        fi.getFlight().getAircraftId(), airlineClient::getAircraftById);
 
-                AirlineResponse airline = airlineCache.computeIfAbsent(
-                        fi.getAirlineId(), airlineClient::getAirlineById);
+                AircraftResponse aircraft =
+                        aircraftCache.computeIfAbsent(
+                                flightInstance.getFlight().getAircraftId(),
+                                airlineClient::getAircraftById
+                        );
 
-                AirportResponse depAirport = airportCache.computeIfAbsent(
-                        fi.getDepartureAirportId(), locationClient::getAirportById);
+                AirlineResponse airline =
+                        airlineCache.computeIfAbsent(
+                                flightInstance.getAirlineId(),
+                                airlineClient::getAirlineById
+                        );
 
-                AirportResponse arrAirport = airportCache.computeIfAbsent(
-                        fi.getArrivalAirportId(), locationClient::getAirportById);
+                AirportResponse departureAirport =
+                        airportCache.computeIfAbsent(
+                                flightInstance.getDepartureAirportId(),
+                                locationClient::getAirportById
+                        );
 
-                FlightInstanceResponse response = FlightInstanceMapper.toResponse(
-                        fi, aircraft, airline, depAirport, arrAirport);
+                AirportResponse arrivalAirport =
+                        airportCache.computeIfAbsent(
+                                flightInstance.getArrivalAirportId(),
+                                locationClient::getAirportById
+                        );
 
-                // Attach the pre-fetched fare (null if no cabin filter was applied)
-                response.setFare(fareMap.get(fi.getFlight().getId()));
+                FlightInstanceResponse response =
+                        FlightInstanceMapper.toResponse(
+                                flightInstance,
+                                aircraft,
+                                airline,
+                                departureAirport,
+                                arrivalAirport
+                        );
+
+                response.setFare(
+                        fareMap.get(
+                                flightInstance.getFlight().getId()
+                        )
+                );
 
                 results.add(response);
 
-            } catch (Exception e) {
-                log.error("searchFlights: enrichment failed for FlightInstance id={} – skipping: {}",
-                        fi.getId(), e.getMessage());
+            } catch (Exception exception) {
+
+                log.error(
+                        "Failed to enrich flight instance response flightInstanceId={}. Skipping record.",
+                        flightInstance.getId(),
+                        exception
+                );
             }
         }
+
         return results;
     }
 
@@ -273,19 +368,39 @@ public class FlightSearchServiceImpl implements FlightSearchService {
      *   <tr><td>price</td><td>falls back to departureDateTime (price lives in pricing-service)</td></tr>
      * </table>
      */
-    private Pageable applySort(Pageable pageable, String sortBy, String sortOrder) {
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortOrder)
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
+    private Pageable applySort(
+            Pageable pageable,
+            String sortBy,
+            String sortOrder
+    ) {
 
-        Sort sort = (sortBy == null || sortBy.isBlank())
-                ? Sort.by(direction, "departureDateTime")
-                : switch (sortBy.toLowerCase()) {
-                    case "arrival"  -> Sort.by(direction, "arrivalDateTime");
-                    case "duration" -> JpaSort.unsafe(direction,
-                            "TIMESTAMPDIFF(MINUTE, departure_date_time, arrival_date_time)");
-                    default         -> Sort.by(direction, "departureDateTime");
+        Sort.Direction direction =
+                "desc".equalsIgnoreCase(sortOrder)
+                        ? Sort.Direction.DESC
+                        : Sort.Direction.ASC;
+
+        Sort sort =
+                (sortBy == null || sortBy.isBlank())
+                        ? Sort.by(direction, "departureDateTime")
+                        : switch (sortBy.toLowerCase()) {
+
+                    case "arrival" ->
+                            Sort.by(direction, "arrivalDateTime");
+
+                    case "duration" ->
+                            JpaSort.unsafe(
+                                    direction,
+                                    "TIMESTAMPDIFF(MINUTE, departure_date_time, arrival_date_time)"
+                            );
+
+                    default ->
+                            Sort.by(direction, "departureDateTime");
                 };
 
-        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
+        );
     }
 }

@@ -1,7 +1,10 @@
 package com.nikhil.services.service.impl;
 
+import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.FareRequest;
 import com.nikhil.common_lib.payload.response.FareResponse;
+import com.nikhil.services.exception.FareAlreadyExistsException;
+import com.nikhil.services.exception.FareNotFoundException;
 import com.nikhil.services.mapper.FareMapper;
 import com.nikhil.services.model.Fare;
 import com.nikhil.services.repository.FareRepository;
@@ -75,11 +78,7 @@ public class FareServiceImpl implements FareService {
                     request.getName()
             );
 
-            throw new IllegalArgumentException(
-                    "Fare '"
-                            + request.getName()
-                            + "' already exists for this flight and cabin class"
-            );
+            throw new FareAlreadyExistsException(request.getName());
         }
 
         Fare fare =
@@ -180,7 +179,7 @@ public class FareServiceImpl implements FareService {
     }
 
 
-    // ==================== Read Operations ====================
+// ==================== Read Operations ====================
 
     /**
      * Returns a Fare by its database identifier.
@@ -211,9 +210,7 @@ public class FareServiceImpl implements FareService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Fare not found with id: " + id
-                            );
+                            return new FareNotFoundException(id);
                         });
 
         log.debug(
@@ -331,7 +328,7 @@ public class FareServiceImpl implements FareService {
     }
 
 
-    // ==================== Update Operations ====================
+// ==================== Update Operations ====================
 
     /**
      * Updates an existing Fare while preserving uniqueness of the
@@ -373,9 +370,7 @@ public class FareServiceImpl implements FareService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Fare not found with id: " + id
-                            );
+                            return new FareNotFoundException(id);
                         });
 
         /*
@@ -400,11 +395,7 @@ public class FareServiceImpl implements FareService {
                     request.getName()
             );
 
-            throw new IllegalArgumentException(
-                    "Fare '"
-                            + request.getName()
-                            + "' already exists for this flight and cabin class"
-            );
+            throw new FareAlreadyExistsException(request.getName());
         }
 
         FareMapper.updateEntity(
@@ -463,9 +454,7 @@ public class FareServiceImpl implements FareService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Fare not found with id: " + id
-                            );
+                            return new FareNotFoundException(id);
                         });
 
         fareRepository.delete(fare);
@@ -477,7 +466,7 @@ public class FareServiceImpl implements FareService {
     }
 
 
-    // ==================== Pricing Search Operations ====================
+// ==================== Pricing Search Operations ====================
 
     /**
      * Returns the cheapest Fare for each requested Flight within
@@ -512,11 +501,10 @@ public class FareServiceImpl implements FareService {
          * CabinClass in one query instead of querying each Flight separately.
          */
         List<Fare> fares =
-                fareRepository
-                        .findByFlightIdInAndCabinClassId(
-                                flightIds,
-                                cabinClassId
-                        );
+                fareRepository.findByFlightIdInAndCabinClassId(
+                        flightIds,
+                        cabinClassId
+                );
 
         log.debug(
                 "Candidate fares loaded requestedFlightCount={} cabinClassId={} candidateFareCount={}",
@@ -530,14 +518,6 @@ public class FareServiceImpl implements FareService {
          *
          * If multiple fares exist for the same Flight, the merge function
          * compares their total prices and keeps only the cheaper Fare.
-         *
-         * Example:
-         *
-         * Flight 101 → SAVER  ₹5,000
-         * Flight 101 → FLEX   ₹7,000
-         *
-         * Result:
-         * Flight 101 → SAVER  ₹5,000
          */
         Map<Long, Fare> lowestFareByFlight =
                 fares.stream()
@@ -622,12 +602,7 @@ public class FareServiceImpl implements FareService {
                                     cabinClassId
                             );
 
-                            return new EntityNotFoundException(
-                                    "No fare found for flightId: "
-                                            + flightId
-                                            + " and cabinClassId: "
-                                            + cabinClassId
-                            );
+                            return new FareNotFoundException(flightId,cabinClassId);
                         });
 
         log.debug(

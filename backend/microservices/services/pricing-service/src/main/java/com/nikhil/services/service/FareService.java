@@ -1,6 +1,7 @@
 package com.nikhil.services.service;
 
 
+import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.FareRequest;
 import com.nikhil.common_lib.payload.response.FareResponse;
 import com.nikhil.services.model.Fare;

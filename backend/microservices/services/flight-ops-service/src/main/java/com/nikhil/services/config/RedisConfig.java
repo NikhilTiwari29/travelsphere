@@ -14,6 +14,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -40,15 +41,28 @@ public class RedisConfig implements CachingConfigurer {
                 JsonTypeInfo.As.PROPERTY
         );
 
-        GenericJackson2JsonRedisSerializer jsonSerializer =
-                new GenericJackson2JsonRedisSerializer(mapper);
+        GenericJacksonJsonRedisSerializer jsonSerializer =
+                GenericJacksonJsonRedisSerializer
+                        .builder()
+                        .enableUnsafeDefaultTyping()
+                        .build();
 
-        RedisCacheConfiguration defaults = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(jsonSerializer))
-                .disableCachingNullValues();
+        RedisCacheConfiguration defaults =
+                RedisCacheConfiguration
+                        .defaultCacheConfig()
+                        .serializeKeysWith(
+                                RedisSerializationContext
+                                        .SerializationPair
+                                        .fromSerializer(
+                                                new StringRedisSerializer()
+                                        )
+                        )
+                        .serializeValuesWith(
+                                RedisSerializationContext
+                                        .SerializationPair
+                                        .fromSerializer(jsonSerializer)
+                        )
+                        .disableCachingNullValues();
 
         Map<String, RedisCacheConfiguration> cacheConfigs = Map.of(
                 // Individual flight instance lookups — 3 min (admin updates are infrequent)

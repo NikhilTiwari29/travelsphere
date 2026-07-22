@@ -4,6 +4,8 @@ import com.nikhil.common_lib.enums.AirlineStatus;
 import com.nikhil.common_lib.payload.request.AirlineRequest;
 import com.nikhil.common_lib.payload.response.AirlineDropdownItem;
 import com.nikhil.common_lib.payload.response.AirlineResponse;
+import com.nikhil.services.exception.AirlineNotFoundException;
+import com.nikhil.services.exception.AirlineOwnershipMismatchException;
 import com.nikhil.services.mapper.AirlineMapper;
 import com.nikhil.services.model.Airline;
 import com.nikhil.services.repository.AirlineRepository;
@@ -105,9 +107,7 @@ public class AirlineServiceImpl implements AirlineService {
                             ownerId
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found for owner: " + ownerId
-                    );
+                    return new AirlineNotFoundException(ownerId);
                 });
 
         return AirlineMapper.toResponse(airline);
@@ -137,9 +137,7 @@ public class AirlineServiceImpl implements AirlineService {
                             id
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found with ID: " + id
-                    );
+                    return new AirlineNotFoundException(id);
                 });
 
         return AirlineMapper.toResponse(airline);
@@ -226,10 +224,9 @@ public class AirlineServiceImpl implements AirlineService {
                             ownerId
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found for owner: " + ownerId
-                    );
+                    return new AirlineNotFoundException(ownerId);
                 });
+
 
         Long airlineId = airline.getId();
         String oldIataCode = airline.getIataCode();
@@ -302,9 +299,7 @@ public class AirlineServiceImpl implements AirlineService {
                             id
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found with ID: " + id
-                    );
+                    return new AirlineNotFoundException(id);
                 });
 
         /*
@@ -320,9 +315,7 @@ public class AirlineServiceImpl implements AirlineService {
                     airline.getOwnerId()
             );
 
-            throw new IllegalArgumentException(
-                    "Airline does not belong to owner: " + ownerId
-            );
+            throw new AirlineOwnershipMismatchException();
         }
 
         airlineRepository.delete(airline);
@@ -383,9 +376,7 @@ public class AirlineServiceImpl implements AirlineService {
                             airlineId
                     );
 
-                    return new EntityNotFoundException(
-                            "Airline not found with ID: " + airlineId
-                    );
+                    return new AirlineNotFoundException(airlineId);
                 });
 
         AirlineStatus previousStatus =

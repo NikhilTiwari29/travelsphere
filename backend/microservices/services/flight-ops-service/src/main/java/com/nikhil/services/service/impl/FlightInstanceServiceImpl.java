@@ -2,7 +2,6 @@ package com.nikhil.services.service.impl;
 
 import com.nikhil.common_lib.event.FlightInstanceCreatedEvent;
 import com.nikhil.common_lib.exception.AirportException;
-import com.nikhil.common_lib.exception.ResourceNotFoundException;
 import com.nikhil.common_lib.payload.request.FlightInstanceRequest;
 import com.nikhil.common_lib.payload.response.AircraftResponse;
 import com.nikhil.common_lib.payload.response.AirlineResponse;
@@ -11,6 +10,10 @@ import com.nikhil.common_lib.payload.response.FlightInstanceResponse;
 import com.nikhil.services.client.AirlineClient;
 import com.nikhil.services.client.LocationClient;
 import com.nikhil.services.event.FlightInstanceEventProducer;
+import com.nikhil.services.exception.AircraftNotFoundException;
+import com.nikhil.services.exception.AirlineNotFoundException;
+import com.nikhil.services.exception.FlightInstanceNotFoundException;
+import com.nikhil.services.exception.FlightNotFoundException;
 import com.nikhil.services.mapper.FlightInstanceMapper;
 import com.nikhil.services.model.Flight;
 import com.nikhil.services.model.FlightInstance;
@@ -160,9 +163,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                                     request.getFlightId()
                             );
 
-                            return new ResourceNotFoundException(
-                                    "Flight not found"
-                            );
+                            return new FlightNotFoundException(request.getFlightId());
                         });
 
         log.debug(
@@ -303,25 +304,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
 
         List<FlightInstanceResponse> responses =
                 instances.stream()
-                        .map(fi -> {
-
-                            try {
-
-                                return getFlightInstance(fi);
-
-                            } catch (AirportException exception) {
-
-                                log.error(
-                                        "Failed to enrich flight instance response flightInstanceId={}",
-                                        fi.getId(),
-                                        exception
-                                );
-
-                                throw new RuntimeException(
-                                        exception
-                                );
-                            }
-                        })
+                        .map(this::getFlightInstance)
                         .toList();
 
         log.debug(
@@ -347,7 +330,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
     )
     public FlightInstanceResponse getFlightInstanceById(
             Long id
-    ) throws AirportException {
+    ) {
 
         log.debug(
                 "Fetching flight instance flightInstanceId={}",
@@ -363,9 +346,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight instance not found with id: " + id
-                            );
+                            return new FlightInstanceNotFoundException(id);
                         });
 
         log.debug(
@@ -459,26 +440,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                                 end,
                                 pageable
                         )
-                        .map(fi -> {
-
-                            try {
-
-                                return getFlightInstance(fi);
-
-                            } catch (AirportException exception) {
-
-                                log.error(
-                                        "Failed to enrich flight instance response flightInstanceId={} airlineId={}",
-                                        fi.getId(),
-                                        airlineId,
-                                        exception
-                                );
-
-                                throw new RuntimeException(
-                                        exception
-                                );
-                            }
-                        });
+                        .map(this::getFlightInstance);
 
         log.debug(
                 "Airline flight instance lookup completed airlineId={} returnedCount={} totalElements={} totalPages={}",
@@ -510,7 +472,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
     public FlightInstanceResponse updateFlightInstance(
             Long id,
             FlightInstanceRequest request
-    ) throws AirportException {
+    ) {
 
         log.info(
                 "Updating flight instance flightInstanceId={} flightId={} departureDateTime={} arrivalDateTime={}",
@@ -529,9 +491,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight instance not found with id: " + id
-                            );
+                            return new FlightInstanceNotFoundException(id);
                         });
 
         /*
@@ -589,9 +549,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
-                                    "Flight instance not found with id: " + id
-                            );
+                            return new FlightInstanceNotFoundException(id);
                         });
 
         flightInstanceRepository.delete(
@@ -799,9 +757,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                     aircraftId
             );
 
-            throw new EntityNotFoundException(
-                    "No aircraft found for id: " + aircraftId
-            );
+            throw new AircraftNotFoundException(aircraftId);
 
         } catch (FeignException exception) {
 
@@ -856,9 +812,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
                     userId
             );
 
-            throw new EntityNotFoundException(
-                    "No airline found for user: " + userId
-            );
+            throw new AirlineNotFoundException(userId, true);
 
         } catch (FeignException exception) {
 
@@ -906,7 +860,7 @@ public class FlightInstanceServiceImpl implements FlightInstanceService {
      */
     private FlightInstanceResponse getFlightInstance(
             FlightInstance flightInstance
-    ) throws AirportException {
+    )  {
 
         log.debug(
                 "Enriching flight instance response flightInstanceId={} flightId={} airlineId={}",

@@ -1,16 +1,16 @@
 package com.nikhil.services.service.impl;
 
-import com.nikhil.common_lib.exception.AirportException;
-import com.nikhil.common_lib.exception.CityException;
 import com.nikhil.common_lib.payload.request.AirportRequest;
 import com.nikhil.common_lib.payload.response.AirportResponse;
+import com.nikhil.services.exception.AirportAlreadyExistsException;
+import com.nikhil.services.exception.AirportNotFoundException;
+import com.nikhil.services.exception.CityNotFoundException;
 import com.nikhil.services.mapper.AirportMapper;
 import com.nikhil.services.model.Airport;
 import com.nikhil.services.model.City;
 import com.nikhil.services.repository.AirportRepository;
 import com.nikhil.services.repository.CityRepository;
 import com.nikhil.services.service.AirportService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -61,18 +61,15 @@ public class AirportServiceImpl implements AirportService {
      * within one database transaction.
      */
     @Transactional
-    public AirportResponse createAirport(AirportRequest request)
-            throws AirportException, CityException {
+    public AirportResponse createAirport(AirportRequest request) {
 
         // Prevent two airports from having the same IATA code.
         if (airportRepository
                 .findByIataCode(request.getIataCode())
                 .isPresent()) {
 
-            throw new AirportException(
-                    "Airport with IATA code "
-                            + request.getIataCode()
-                            + " already exists."
+            throw new AirportAlreadyExistsException(
+                    request.getIataCode()
             );
         }
 
@@ -81,9 +78,8 @@ public class AirportServiceImpl implements AirportService {
         City city = cityRepository
                 .findById(request.getCityId())
                 .orElseThrow(() ->
-                        new CityException(
-                                "City not found with id: "
-                                        + request.getCityId()
+                        new CityNotFoundException(
+                                request.getCityId()
                         )
                 );
 
@@ -250,9 +246,7 @@ public class AirportServiceImpl implements AirportService {
         Airport airport = airportRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Airport not found with id: " + id
-                        )
+                        new AirportNotFoundException(id)
                 );
 
 
@@ -351,8 +345,7 @@ public class AirportServiceImpl implements AirportService {
     )
     public AirportResponse updateAirport(
             Long id,
-            AirportRequest request)
-            throws AirportException, CityException {
+            AirportRequest request) {
 
 
         // Find the airport being updated.
@@ -360,10 +353,7 @@ public class AirportServiceImpl implements AirportService {
                 airportRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new AirportException(
-                                        "Airport not found with id: "
-                                                + id
-                                )
+                                new AirportNotFoundException(id)
                         );
 
 
@@ -390,10 +380,8 @@ public class AirportServiceImpl implements AirportService {
                 .findByIataCode(request.getIataCode())
                 .isPresent()) {
 
-            throw new AirportException(
-                    "IATA code "
-                            + request.getIataCode()
-                            + " is already taken."
+            throw new AirportAlreadyExistsException(
+                    request.getIataCode()
             );
         }
 
@@ -407,9 +395,8 @@ public class AirportServiceImpl implements AirportService {
             City newCity = cityRepository
                     .findById(request.getCityId())
                     .orElseThrow(() ->
-                            new CityException(
-                                    "City not found with id: "
-                                            + request.getCityId()
+                            new CityNotFoundException(
+                                    request.getCityId()
                             )
                     );
 
@@ -488,17 +475,14 @@ public class AirportServiceImpl implements AirportService {
                     allEntries = true
             )
     })
-    public void deleteAirport(Long id)
-            throws AirportException {
+    public void deleteAirport(Long id) {
 
 
         // Verify that the airport exists before deleting it.
         Airport airport = airportRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new AirportException(
-                                "Airport not found with id: " + id
-                        )
+                        new AirportNotFoundException(id)
                 );
 
 

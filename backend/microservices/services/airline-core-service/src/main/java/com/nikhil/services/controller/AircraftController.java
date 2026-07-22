@@ -1,11 +1,12 @@
 package com.nikhil.services.controller;
 
-import com.nikhil.common_lib.exception.ResourceNotFoundException;
 import com.nikhil.common_lib.payload.request.AircraftRequest;
 import com.nikhil.common_lib.payload.response.AircraftResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.AircraftService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,10 +36,9 @@ public class AircraftController {
      * Creates a new aircraft for the airline owned by the authenticated user.
      */
     @PostMapping
-    public ResponseEntity<AircraftResponse> createAircraft(
+    public ResponseEntity<ApiResponse<AircraftResponse>> createAircraft(
             @RequestBody AircraftRequest request,
-            @RequestHeader("X-User-Id") Long userId)
-            throws ResourceNotFoundException {
+            @RequestHeader("X-User-Id") Long userId) {
 
         log.info("Create aircraft request received for userId={}", userId);
 
@@ -51,23 +51,33 @@ public class AircraftController {
                 userId
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.success(
+                                "Aircraft created successfully.",
+                                response
+                        )
+                );
     }
 
     /**
      * Returns aircraft details by aircraft ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<AircraftResponse> getAircraftById(
-            @PathVariable Long id)
-            throws ResourceNotFoundException {
+    public ResponseEntity<ApiResponse<AircraftResponse>> getAircraftById(
+            @PathVariable Long id) {
 
         log.debug("Get aircraft request received aircraftId={}", id);
 
         AircraftResponse response =
                 aircraftService.getAircraftById(id);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Aircraft retrieved successfully.",
+                        response
+                )
+        );
     }
 
     /**
@@ -75,7 +85,7 @@ public class AircraftController {
      * authenticated user.
      */
     @GetMapping
-    public ResponseEntity<List<AircraftResponse>> listAllAircrafts(
+    public ResponseEntity<ApiResponse<List<AircraftResponse>>> listAllAircrafts(
             @RequestHeader("X-User-Id") Long userId) {
 
         log.debug(
@@ -92,7 +102,12 @@ public class AircraftController {
                 aircrafts.size()
         );
 
-        return ResponseEntity.ok(aircrafts);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Aircraft retrieved successfully.",
+                        aircrafts
+                )
+        );
     }
 
     /**
@@ -100,11 +115,10 @@ public class AircraftController {
      * airline owner.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<AircraftResponse> updateAircraft(
+    public ResponseEntity<ApiResponse<AircraftResponse>> updateAircraft(
             @PathVariable Long id,
             @RequestBody AircraftRequest request,
-            @RequestHeader("X-User-Id") Long userId)
-            throws ResourceNotFoundException {
+            @RequestHeader("X-User-Id") Long userId) {
 
         log.info(
                 "Update aircraft request received aircraftId={} userId={}",
@@ -121,16 +135,20 @@ public class AircraftController {
                 userId
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Aircraft updated successfully.",
+                        response
+                )
+        );
     }
 
     /**
      * Deletes an aircraft by ID.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAircraft(
-            @PathVariable Long id)
-            throws ResourceNotFoundException {
+    public ResponseEntity<ApiResponse<Void>> deleteAircraft(
+            @PathVariable Long id) {
 
         log.info(
                 "Delete aircraft request received aircraftId={}",
@@ -144,6 +162,10 @@ public class AircraftController {
                 id
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Aircraft deleted successfully."
+                )
+        );
     }
 }

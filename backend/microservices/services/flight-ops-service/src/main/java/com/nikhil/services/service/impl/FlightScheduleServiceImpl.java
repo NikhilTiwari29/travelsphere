@@ -99,7 +99,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                                     request.getFlightId()
                             );
 
-                            return new EntityNotFoundException(
+                            return new AirportException(
                                     "Flight not found with id: "
                                             + request.getFlightId()
                             );
@@ -125,7 +125,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                     request.getEndDate()
             );
 
-            throw new IllegalArgumentException(
+            throw new AirportException(
                     "End date must be after start date"
             );
         }
@@ -190,21 +190,6 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
 
         /*
          * Expand the recurring schedule into actual dated FlightInstances.
-         *
-         * Walk through every date in the schedule period. A concrete
-         * FlightInstance is created only when the date's weekday is included
-         * in the configured operating days.
-         *
-         * Example:
-         *
-         * Date range:
-         *   2026-07-01 → 2026-07-31
-         *
-         * Operating days:
-         *   MONDAY, WEDNESDAY, FRIDAY
-         *
-         * Each matching Monday, Wednesday, and Friday becomes a separate
-         * FlightInstance representing one actual flight occurrence.
          */
         int generatedInstanceCount = 0;
 
@@ -216,10 +201,6 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
 
             if (operatingDays.contains(date.getDayOfWeek())) {
 
-                /*
-                 * Convert the schedule's recurring local times into exact
-                 * date-time values for this particular flight occurrence.
-                 */
                 flightInstanceRequest.setDepartureDateTime(
                         LocalDateTime.of(
                                 date,
@@ -243,14 +224,6 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                         flightInstanceRequest.getArrivalDateTime()
                 );
 
-                /*
-                 * Create the concrete flight occurrence and delegate its
-                 * runtime provisioning to FlightInstanceService.
-                 *
-                 * With default REQUIRED transaction propagation, the called
-                 * service participates in the transaction started by this
-                 * createFlightSchedule method.
-                 */
                 flightInstanceService.createFlightInstanceWithCabins(
                         userId,
                         flightInstanceRequest
@@ -300,7 +273,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
+                            return new AirportException(
                                     "Flight schedule not found with id: " + id
                             );
                         });
@@ -313,7 +286,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
     @Transactional(readOnly = true)
     public List<FlightScheduleResponse> getFlightScheduleByAirline(
             Long userId
-    ) {
+    ) throws AirportException {
 
         log.debug(
                 "Fetching flight schedules for user userId={}",
@@ -340,26 +313,28 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                 schedules.size()
         );
 
-        List<FlightScheduleResponse> responses =
-                schedules.stream()
-                        .map(schedule -> {
-                            try {
+        List<FlightScheduleResponse> responses = new java.util.ArrayList<>();
 
-                                return getFlightScheduleResponse(schedule);
+        for (FlightSchedule schedule : schedules) {
 
-                            } catch (AirportException exception) {
+            try {
 
-                                log.error(
-                                        "Failed to enrich flight schedule scheduleId={} airlineId={}",
-                                        schedule.getId(),
-                                        airlineId,
-                                        exception
-                                );
+                responses.add(
+                        getFlightScheduleResponse(schedule)
+                );
 
-                                throw new RuntimeException(exception);
-                            }
-                        })
-                        .collect(Collectors.toList());
+            } catch (AirportException exception) {
+
+                log.error(
+                        "Failed to enrich flight schedule scheduleId={} airlineId={}",
+                        schedule.getId(),
+                        airlineId,
+                        exception
+                );
+
+                throw exception;
+            }
+        }
 
         log.debug(
                 "Flight schedule lookup completed airlineId={} returnedCount={}",
@@ -397,7 +372,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
+                            return new AirportException(
                                     "Flight schedule not found with id: " + id
                             );
                         });
@@ -428,13 +403,13 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
     }
 
 
-    // ==================== Delete Operations ====================
+// ==================== Delete Operations ====================
 
     @Override
     @Transactional
     public void deleteFlightSchedule(
             Long id
-    ) {
+    ) throws AirportException {
 
         log.info(
                 "Deleting flight schedule scheduleId={}",
@@ -450,7 +425,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
                                     id
                             );
 
-                            return new EntityNotFoundException(
+                            return new AirportException(
                                     "Flight schedule not found with id: " + id
                             );
                         });
@@ -464,7 +439,7 @@ public class FlightScheduleServiceImpl implements FlightScheduleService {
     }
 
 
-    // ==================== Response Enrichment Helper ====================
+// ==================== Response Enrichment Helper ====================
 
     /**
      * Builds the API response by enriching stored Airport IDs with

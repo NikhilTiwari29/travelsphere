@@ -19,7 +19,7 @@ public interface FlightInstanceService {
 
     List<FlightInstanceResponse> getFlightInstances();
 
-    FlightInstanceResponse getFlightInstanceById(Long id) throws AirportException;
+    FlightInstanceResponse getFlightInstanceById(Long id);
 
     Page<FlightInstanceResponse> getByAirlineId(Long airlineId,
                                                 Long departureAirportId,
@@ -30,7 +30,7 @@ public interface FlightInstanceService {
 
     FlightInstanceResponse updateFlightInstance(
             Long id,
-            FlightInstanceRequest request) throws AirportException;
+            FlightInstanceRequest request);
 
     void deleteFlightInstance(Long id);
 

@@ -4,6 +4,7 @@ import com.nikhil.common_lib.enums.FlightStatus;
 import com.nikhil.common_lib.exception.AirportException;
 import com.nikhil.common_lib.payload.request.FlightRequest;
 import com.nikhil.common_lib.payload.response.FlightResponse;
+import com.nikhil.common_lib.response.ApiResponse;
 import com.nikhil.services.service.FlightService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +68,7 @@ public class FlightController {
      * X-User-Id and is used by the service layer to resolve the airline.
      */
     @PostMapping
-    public ResponseEntity<FlightResponse> createFlight(
+    public ResponseEntity<ApiResponse<FlightResponse>> createFlight(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FlightRequest request
     ) throws AirportException {
@@ -96,7 +97,12 @@ public class FlightController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(response);
+                .body(
+                        ApiResponse.success(
+                                "Flight created successfully.",
+                                response
+                        )
+                );
     }
 
 
@@ -105,7 +111,7 @@ public class FlightController {
      * airline owner in a single request.
      */
     @PostMapping("/bulk")
-    public ResponseEntity<List<FlightResponse>> createFlights(
+    public ResponseEntity<ApiResponse<List<FlightResponse>>> createFlights(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody List<FlightRequest> requests
     ) throws AirportException {
@@ -131,7 +137,12 @@ public class FlightController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(responses);
+                .body(
+                        ApiResponse.success(
+                                "Flights created successfully.",
+                                responses
+                        )
+                );
     }
 
 
@@ -144,7 +155,7 @@ public class FlightController {
      * without making one network request for every Flight.
      */
     @PostMapping("/batch")
-    public ResponseEntity<Map<Long, FlightResponse>> getFlightsByIds(
+    public ResponseEntity<ApiResponse<Map<Long, FlightResponse>>> getFlightsByIds(
             @RequestBody List<Long> ids
     ) {
 
@@ -162,7 +173,12 @@ public class FlightController {
                 responses.size()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flights retrieved successfully.",
+                        responses
+                )
+        );
     }
 
 
@@ -172,7 +188,7 @@ public class FlightController {
      * Returns a Flight route definition by its database identifier.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<FlightResponse> getFlightById(
+    public ResponseEntity<ApiResponse<FlightResponse>> getFlightById(
             @PathVariable Long id
     ) {
 
@@ -189,7 +205,12 @@ public class FlightController {
                 id
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -200,7 +221,7 @@ public class FlightController {
      * 6E201, AI302, UK955.
      */
     @GetMapping("/number/{flightNumber}")
-    public ResponseEntity<FlightResponse> getFlightByNumber(
+    public ResponseEntity<ApiResponse<FlightResponse>> getFlightByNumber(
             @PathVariable String flightNumber
     ) throws AirportException {
 
@@ -217,7 +238,12 @@ public class FlightController {
                 flightNumber
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight retrieved successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -228,7 +254,7 @@ public class FlightController {
      * narrow the result to specific routes.
      */
     @GetMapping("/airline")
-    public ResponseEntity<Page<FlightResponse>> getFlightsByAirline(
+    public ResponseEntity<ApiResponse<Page<FlightResponse>>> getFlightsByAirline(
             @RequestHeader("X-User-Id") Long userId,
             @RequestParam(required = false) Long departureAirportId,
             @RequestParam(required = false) Long arrivalAirportId,
@@ -259,7 +285,12 @@ public class FlightController {
                 responses.getTotalElements()
         );
 
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flights retrieved successfully.",
+                        responses
+                )
+        );
     }
 
 
@@ -272,7 +303,7 @@ public class FlightController {
      * Flight Service.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<FlightResponse> updateFlight(
+    public ResponseEntity<ApiResponse<FlightResponse>> updateFlight(
             @PathVariable Long id,
             @Valid @RequestBody FlightRequest request
     ) throws AirportException {
@@ -295,7 +326,12 @@ public class FlightController {
                 request.getFlightNumber()
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight updated successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -308,7 +344,7 @@ public class FlightController {
      * or in another state supported by FlightStatus.
      */
     @PatchMapping("/{id}/status")
-    public ResponseEntity<FlightResponse> changeStatus(
+    public ResponseEntity<ApiResponse<FlightResponse>> changeStatus(
             @PathVariable Long id,
             @RequestParam FlightStatus status
     ) throws AirportException {
@@ -331,7 +367,12 @@ public class FlightController {
                 status
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight status updated successfully.",
+                        response
+                )
+        );
     }
 
 
@@ -341,7 +382,7 @@ public class FlightController {
      * Deletes a Flight route definition by its database identifier.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFlight(
+    public ResponseEntity<ApiResponse<Void>> deleteFlight(
             @PathVariable Long id
     ) {
 
@@ -357,6 +398,10 @@ public class FlightController {
                 id
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Flight deleted successfully."
+                )
+        );
     }
 }
